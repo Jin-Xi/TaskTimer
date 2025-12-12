@@ -1,0 +1,5 @@
+{
+  "name": "ChronoFlow - AI Task Timer",
+  "description": "A smart task timing and productivity tracking application. Tracks time spent on tasks, visualizes progress with charts, and provides AI-powered productivity insights using Google Gemini.",
+  "requestFramePermissions": []
+}
