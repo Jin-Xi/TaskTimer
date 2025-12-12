@@ -236,7 +236,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="flex h-screen bg-transparent font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Hidden File Input for Import */}
       <input 
         type="file" 
@@ -258,41 +258,41 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden md:flex flex-col transition-colors duration-200">
-        <div className="p-6 flex items-center gap-3">
+      <aside className="w-64 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-r border-slate-200/60 dark:border-slate-800/60 hidden md:flex flex-col transition-colors duration-200 shadow-sm z-10">
+        <div className="p-5 flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <TimerIcon className="w-5 h-5" />
           </div>
           <h1 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">{APP_NAME}</h1>
         </div>
         
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 px-3 space-y-1 mt-2">
           {NAV_ITEMS.map(item => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id 
                     ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
                 {item.label}
               </button>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-white/50 dark:bg-slate-900/50">
            {/* Dark Mode Toggle */}
            <button
              onClick={toggleDarkMode}
-             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
            >
-             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+             {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
              {darkMode ? 'Light Mode' : 'Dark Mode'}
            </button>
 
@@ -300,18 +300,18 @@ const App: React.FC = () => {
            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleExportData}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors"
                 title="Save backup file"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
                 Export
               </button>
               <button
                 onClick={handleImportTrigger}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors"
                 title="Load backup file"
               >
-                <Upload className="w-4 h-4" />
+                <Upload className="w-3.5 h-3.5" />
                 Import
               </button>
            </div>
@@ -319,14 +319,14 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Mobile Header */}
-        <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between">
+        <div className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between z-20">
           <div className="flex items-center gap-2">
             <TimerIcon className="w-6 h-6 text-indigo-600" />
             <h1 className="font-bold text-slate-900 dark:text-white">{APP_NAME}</h1>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1 items-center">
             <button onClick={handleExportData} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
                 <Download className="w-5 h-5" />
             </button>
@@ -349,11 +349,12 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full gap-6">
+        {/* Content Area - Reduced padding and gaps */}
+        <div className="flex-1 overflow-hidden flex flex-col p-3 md:p-5 max-w-7xl mx-auto w-full gap-3 md:gap-4 z-0">
             
             {/* Always show Timer on Tasks Tab */}
             {activeTab === 'tasks' && (
-                <div className="flex flex-col h-full gap-6">
+                <div className="flex flex-col h-full gap-3 md:gap-4">
                     <div className="flex-shrink-0">
                          <TaskTimer 
                             activeTask={activeTask}

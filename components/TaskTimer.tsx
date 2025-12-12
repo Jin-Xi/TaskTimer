@@ -63,12 +63,12 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
 
   if (!activeTask) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center justify-center text-center h-48 transition-colors duration-200">
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-full mb-4">
-          <Clock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-center h-40 transition-colors duration-200">
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2.5 rounded-full mb-3">
+          <Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
         </div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white">No active task</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Select a task from the list to start timing.</p>
+        <h3 className="text-base font-medium text-slate-900 dark:text-white">No active task</h3>
+        <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Select a task from the list to start timing.</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
     : [];
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-indigo-100 dark:border-slate-800 p-6 relative overflow-hidden flex flex-col gap-6 transition-colors duration-200">
+    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-indigo-100 dark:border-slate-800 p-5 relative overflow-hidden flex flex-col gap-5 transition-colors duration-200">
       <div className="absolute top-0 left-0 w-full h-1 bg-indigo-100 dark:bg-slate-800">
         <div 
           className="h-full bg-indigo-500 transition-all duration-1000" 
@@ -87,71 +87,76 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
         />
       </div>
       
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
         <div className="flex-1 text-center md:text-left">
-          <span className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded mb-2">
+          <span className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold rounded mb-1.5 uppercase tracking-wide">
             {activeTask.category}
           </span>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white truncate max-w-md" title={activeTask.title}>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white truncate max-w-md" title={activeTask.title}>
             {activeTask.title}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 truncate max-w-md">
+          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1 truncate max-w-md">
             {activeTask.description || "No description provided"}
           </p>
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="text-5xl font-mono font-bold text-slate-900 dark:text-white tracking-tight mb-4 tabular-nums">
+          <div className="text-4xl md:text-5xl font-mono font-bold text-slate-900 dark:text-white tracking-tight mb-3 tabular-nums">
             {formatTime(elapsed)}
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {activeTask.status === TaskStatus.RUNNING ? (
               <Button 
                 variant="secondary" 
+                size="sm"
                 onClick={() => onPause(activeTask.id)}
-                className="w-32"
+                className="w-24"
               >
-                <Pause className="w-4 h-4 mr-2" /> Pause
+                <Pause className="w-3.5 h-3.5 mr-1.5" /> Pause
               </Button>
             ) : (
               <Button 
                 variant="primary" 
+                size="sm"
                 onClick={() => onStart(activeTask.id)}
-                className="w-32"
+                className="w-24"
               >
-                <Play className="w-4 h-4 mr-2" /> Resume
+                <Play className="w-3.5 h-3.5 mr-1.5" /> Resume
               </Button>
             )}
             
             <Button 
               variant="ghost" 
+              size="sm"
               onClick={() => onComplete(activeTask.id)}
-              className="text-slate-500 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+              className="text-slate-500 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 px-2"
               title="Complete Task"
             >
-              <Square className="w-5 h-5" />
+              <Square className="w-4 h-4" />
             </Button>
 
-            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-2"></div>
+            <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
 
              <Button 
               variant="ghost" 
+              size="sm"
               onClick={() => setShowMilestoneInput(true)}
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-2"
               title="Add Milestone"
             >
-              <Flag className="w-5 h-5" />
+              <Flag className="w-4 h-4" />
             </Button>
 
             {onEnterFocusMode && (
                <Button
                 variant="ghost"
+                size="sm"
                 onClick={onEnterFocusMode}
-                className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-2"
                 title="Enter Focus Mode"
                >
-                 <Maximize2 className="w-5 h-5" />
+                 <Maximize2 className="w-4 h-4" />
                </Button>
             )}
           </div>
@@ -160,9 +165,9 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
 
       {/* Milestone Input Overlay or Section */}
       {showMilestoneInput && (
-        <form onSubmit={handleMilestoneSubmit} className="flex flex-col sm:flex-row gap-2 animate-in fade-in slide-in-from-top-2 bg-indigo-50 dark:bg-slate-800 p-3 rounded-lg border border-indigo-100 dark:border-slate-700">
+        <form onSubmit={handleMilestoneSubmit} className="flex flex-col sm:flex-row gap-2 animate-in fade-in slide-in-from-top-2 bg-indigo-50 dark:bg-slate-800 p-2.5 rounded-lg border border-indigo-100 dark:border-slate-700">
            <div className="flex items-center flex-1 gap-2">
-               <Flag className="w-5 h-5 text-indigo-400" />
+               <Flag className="w-4 h-4 text-indigo-400" />
                <input 
                   autoFocus
                   type="text" 
@@ -178,8 +183,8 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
                 <GitBranch className="w-3 h-3 text-slate-400" />
                 <input
                     type="text"
-                    placeholder="Branch (main)"
-                    className="w-20 text-xs outline-none bg-transparent text-slate-800 dark:text-slate-200"
+                    placeholder="Branch"
+                    className="w-16 text-xs outline-none bg-transparent text-slate-800 dark:text-slate-200"
                     value={milestoneBranch}
                     onChange={(e) => setMilestoneBranch(e.target.value)}
                 />
@@ -193,13 +198,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
 
       {/* Recent Milestones Ticker */}
       {!showMilestoneInput && recentMilestones.length > 0 && (
-         <div className="flex gap-4 border-t border-slate-100 dark:border-slate-800 pt-3 overflow-hidden">
+         <div className="flex gap-4 border-t border-slate-100 dark:border-slate-800 pt-2.5 overflow-hidden">
             {recentMilestones.map(m => (
                <div key={m.id} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                  <div className={`w-2 h-2 rounded-full ${m.branch === 'main' ? 'bg-indigo-400' : 'bg-emerald-400'}`}></div>
+                  <div className={`w-1.5 h-1.5 rounded-full ${m.branch === 'main' ? 'bg-indigo-400' : 'bg-emerald-400'}`}></div>
                   <span className="font-medium text-slate-700 dark:text-slate-300">{m.title}</span>
                   {m.branch && m.branch !== 'main' && (
-                      <span className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-400">{m.branch}</span>
+                      <span className="px-1 py-0 rounded bg-slate-100 dark:bg-slate-800 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-400">{m.branch}</span>
                   )}
                   <span className="text-slate-400 opacity-75">
                     {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -25,6 +25,14 @@
       body {
         font-family: 'Inter', sans-serif;
       }
+      /* Texture Pattern */
+      .bg-dot-pattern {
+        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      .dark .bg-dot-pattern {
+        background-image: radial-gradient(#1e293b 1px, transparent 1px);
+      }
     </style>
   <script type="importmap">
 {
@@ -39,7 +47,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen overflow-hidden transition-colors duration-200">
+  <body class="bg-slate-50 dark:bg-slate-950 bg-dot-pattern text-slate-900 dark:text-slate-100 h-screen overflow-hidden transition-colors duration-200">
     <div id="root" class="h-full"></div>
   </body>
 </html>
