@@ -14,6 +14,7 @@ export interface Milestone {
   id: string;
   title: string;
   timestamp: number;
+  branch: string; // e.g., 'main', 'feature', 'bugfix'
 }
 
 export interface Task {

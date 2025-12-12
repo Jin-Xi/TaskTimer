@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon } from 'lucide-react';
-import { Task, TaskStatus } from './types';
+import { Task, TaskStatus, Milestone } from './types';
 import { saveTasks, loadTasks } from './services/storageService';
 import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
@@ -47,7 +47,7 @@ const App: React.FC = () => {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleAddMilestone = (taskId: string, title: string) => {
+  const handleAddMilestone = (taskId: string, title: string, branch: string = 'main') => {
     setTasks(prev => prev.map(t => {
       if (t.id === taskId) {
         return {
@@ -57,9 +57,24 @@ const App: React.FC = () => {
             {
               id: crypto.randomUUID(),
               title,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              branch
             }
           ]
+        };
+      }
+      return t;
+    }));
+  };
+
+  const handleEditMilestone = (taskId: string, milestoneId: string, updates: Partial<Milestone>) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        return {
+          ...t,
+          milestones: t.milestones.map(m => 
+            m.id === milestoneId ? { ...m, ...updates } : m
+          )
         };
       }
       return t;
@@ -215,6 +230,7 @@ const App: React.FC = () => {
                             onDelete={handleDeleteTask}
                             onSelect={handleStartTask}
                             onAddMilestone={handleAddMilestone}
+                            onEditMilestone={handleEditMilestone}
                         />
                     </div>
                 </div>

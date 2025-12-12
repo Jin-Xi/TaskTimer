@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Pause, Square, Clock, Flag, Plus } from 'lucide-react';
+import { Play, Pause, Square, Clock, Flag, GitBranch } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { Button } from './Button';
 
@@ -8,13 +8,14 @@ interface TaskTimerProps {
   onStart: (taskId: string) => void;
   onPause: (taskId: string) => void;
   onComplete: (taskId: string) => void;
-  onAddMilestone: (taskId: string, title: string) => void;
+  onAddMilestone: (taskId: string, title: string, branch: string) => void;
 }
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPause, onComplete, onAddMilestone }) => {
   const [elapsed, setElapsed] = useState(0);
   const [showMilestoneInput, setShowMilestoneInput] = useState(false);
   const [milestoneTitle, setMilestoneTitle] = useState('');
+  const [milestoneBranch, setMilestoneBranch] = useState('main');
 
   useEffect(() => {
     let interval: any;
@@ -52,8 +53,9 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
   const handleMilestoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (activeTask && milestoneTitle.trim()) {
-      onAddMilestone(activeTask.id, milestoneTitle.trim());
+      onAddMilestone(activeTask.id, milestoneTitle.trim(), milestoneBranch.trim() || 'main');
       setMilestoneTitle('');
+      setMilestoneBranch('main');
       setShowMilestoneInput(false);
     }
   };
@@ -146,32 +148,47 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
 
       {/* Milestone Input Overlay or Section */}
       {showMilestoneInput && (
-        <form onSubmit={handleMilestoneSubmit} className="flex gap-2 animate-in fade-in slide-in-from-top-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-           <Flag className="w-5 h-5 text-indigo-400 mt-2" />
-           <div className="flex-1">
-             <input 
-                autoFocus
-                type="text" 
-                placeholder="Milestone name (e.g., 'Finished Logic Layer')" 
-                className="w-full bg-transparent border-b border-indigo-200 focus:border-indigo-500 outline-none px-1 py-1 text-sm text-slate-800 placeholder:text-slate-400"
-                value={milestoneTitle}
-                onChange={(e) => setMilestoneTitle(e.target.value)}
-             />
-             <div className="flex justify-end gap-2 mt-2">
-               <button type="button" onClick={() => setShowMilestoneInput(false)} className="text-xs text-slate-500 hover:text-slate-700">Cancel</button>
-               <button type="submit" className="text-xs font-medium text-indigo-600 hover:text-indigo-800">Add Marker</button>
+        <form onSubmit={handleMilestoneSubmit} className="flex flex-col sm:flex-row gap-2 animate-in fade-in slide-in-from-top-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+           <div className="flex items-center flex-1 gap-2">
+               <Flag className="w-5 h-5 text-indigo-400" />
+               <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Milestone name..." 
+                  className="w-full bg-transparent border-b border-indigo-200 focus:border-indigo-500 outline-none px-1 py-1 text-sm text-slate-800 placeholder:text-slate-400"
+                  value={milestoneTitle}
+                  onChange={(e) => setMilestoneTitle(e.target.value)}
+               />
+           </div>
+           
+           <div className="flex items-center gap-2">
+             <div className="flex items-center gap-1 bg-white rounded-md border border-indigo-200 px-2 py-1">
+                <GitBranch className="w-3 h-3 text-slate-400" />
+                <input
+                    type="text"
+                    placeholder="Branch (main)"
+                    className="w-20 text-xs outline-none bg-transparent"
+                    value={milestoneBranch}
+                    onChange={(e) => setMilestoneBranch(e.target.value)}
+                />
              </div>
+             
+             <button type="submit" className="text-xs font-medium text-white bg-indigo-600 px-3 py-1.5 rounded-md hover:bg-indigo-700">Add</button>
+             <button type="button" onClick={() => setShowMilestoneInput(false)} className="text-xs text-slate-500 hover:text-slate-700 px-2">Cancel</button>
            </div>
         </form>
       )}
 
       {/* Recent Milestones Ticker */}
       {!showMilestoneInput && recentMilestones.length > 0 && (
-         <div className="flex gap-4 border-t border-slate-100 pt-3">
+         <div className="flex gap-4 border-t border-slate-100 pt-3 overflow-hidden">
             {recentMilestones.map(m => (
-               <div key={m.id} className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <div className="w-2 h-2 rounded-full bg-indigo-400"></div>
+               <div key={m.id} className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
+                  <div className={`w-2 h-2 rounded-full ${m.branch === 'main' ? 'bg-indigo-400' : 'bg-emerald-400'}`}></div>
                   <span className="font-medium text-slate-700">{m.title}</span>
+                  {m.branch && m.branch !== 'main' && (
+                      <span className="px-1 py-0.5 rounded bg-slate-100 text-[10px] uppercase tracking-wide">{m.branch}</span>
+                  )}
                   <span className="text-slate-400 opacity-75">
                     {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
