@@ -69,14 +69,14 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
   };
 
   const getBranchColor = (branch: string) => {
-      if (!branch || branch === 'main') return 'bg-indigo-500 border-white';
+      if (!branch || branch === 'main') return 'bg-indigo-500 border-white dark:border-slate-800';
       const colors = [
           'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-violet-500'
       ];
       // Simple hash to pick a color
       let hash = 0;
       for (let i = 0; i < branch.length; i++) hash = branch.charCodeAt(i) + ((hash << 5) - hash);
-      return colors[Math.abs(hash) % colors.length] + ' border-white';
+      return colors[Math.abs(hash) % colors.length] + ' border-white dark:border-slate-800';
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -93,25 +93,25 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full overflow-hidden transition-colors duration-200">
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-        <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-          Tasks <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">{filteredTasks.length}</span>
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+        <h3 className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          Tasks <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">{filteredTasks.length}</span>
         </h3>
         <div className="flex gap-2">
-          <div className="flex bg-slate-200 rounded-lg p-1">
+          <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-1">
              <button 
               onClick={() => setFilter('all')}
-              className={`text-xs px-3 py-1 rounded-md transition-colors ${filter === 'all' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`text-xs px-3 py-1 rounded-md transition-colors ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >All</button>
              <button 
               onClick={() => setFilter('active')}
-              className={`text-xs px-3 py-1 rounded-md transition-colors ${filter === 'active' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`text-xs px-3 py-1 rounded-md transition-colors ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >Active</button>
              <button 
               onClick={() => setFilter('completed')}
-              className={`text-xs px-3 py-1 rounded-md transition-colors ${filter === 'completed' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`text-xs px-3 py-1 rounded-md transition-colors ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >Done</button>
           </div>
           <Button size="sm" onClick={() => setIsAdding(!isAdding)} variant="primary">
@@ -122,12 +122,12 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
 
       {/* Add Form */}
       {isAdding && (
-        <form onSubmit={handleSubmit} className="p-4 bg-indigo-50 border-b border-indigo-100 animate-in slide-in-from-top-2">
+        <form onSubmit={handleSubmit} className="p-4 bg-indigo-50 dark:bg-slate-800 border-b border-indigo-100 dark:border-slate-700 animate-in slide-in-from-top-2">
           <input
             autoFocus
             type="text"
             placeholder="What are you working on?"
-            className="w-full mb-3 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full mb-3 px-3 py-2 border border-indigo-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
           />
@@ -135,7 +135,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
             <select 
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              className="text-sm px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="text-sm px-3 py-2 border border-indigo-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-800 dark:text-white"
             >
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -149,7 +149,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
       {/* List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {filteredTasks.length === 0 ? (
-          <div className="text-center py-10 text-slate-400">
+          <div className="text-center py-10 text-slate-400 dark:text-slate-500">
             <p>No tasks found.</p>
           </div>
         ) : (
@@ -162,9 +162,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
               key={task.id}
               className={`rounded-lg border transition-all ${
                 activeTaskId === task.id 
-                  ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
-                  : 'bg-white border-slate-100 hover:border-slate-300'
-              } ${task.status === TaskStatus.COMPLETED ? 'opacity-90 bg-slate-50' : ''}`}
+                  ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900 shadow-sm' 
+                  : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+              } ${task.status === TaskStatus.COMPLETED ? 'opacity-90 bg-slate-50 dark:bg-slate-900/50' : ''}`}
             >
               {/* Task Row */}
               <div className="flex items-center justify-between p-3 group">
@@ -175,8 +175,8 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
                       activeTaskId === task.id 
                         ? 'bg-indigo-600 text-white' 
                         : task.status === TaskStatus.COMPLETED
-                          ? 'bg-green-100 text-green-600 hover:bg-indigo-600 hover:text-white'
-                          : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                          ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-indigo-600 hover:text-white'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                     title={task.status === TaskStatus.COMPLETED ? "Restart task" : "Start task"}
                   >
@@ -193,15 +193,15 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
                   </button>
                   
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => toggleExpand(task.id)}>
-                    <h4 className={`text-sm font-medium truncate ${task.status === TaskStatus.COMPLETED ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                    <h4 className={`text-sm font-medium truncate ${task.status === TaskStatus.COMPLETED ? 'line-through text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
                       {task.title}
                     </h4>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="bg-slate-100 px-1.5 py-0.5 rounded">{task.category}</span>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{task.category}</span>
                       <span>•</span>
                       <span className="font-mono">{formatDuration(task.totalTime)}</span>
                       {hasMilestones && (
-                         <span className="flex items-center gap-0.5 text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">
+                         <span className="flex items-center gap-0.5 text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">
                            <Flag className="w-3 h-3" /> {task.milestones.length}
                          </span>
                       )}
@@ -212,14 +212,14 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
                 <div className="flex items-center gap-1">
                   <button 
                     onClick={() => toggleExpand(task.id)}
-                    className={`p-1.5 rounded-md transition-colors ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`p-1.5 rounded-md transition-colors ${isExpanded ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isExpanded ? "Hide timeline" : "Show timeline"}
                   >
                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                   <button 
                     onClick={() => onDelete(task.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1.5 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Delete task"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -229,14 +229,14 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
 
               {/* Timeline Section */}
               {isExpanded && (
-                <div className="px-4 pb-4 pt-1 bg-slate-50/50 border-t border-slate-100 rounded-b-lg">
-                   <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 pl-2 mt-2">Activity Timeline</div>
+                <div className="px-4 pb-4 pt-1 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 rounded-b-lg">
+                   <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 pl-2 mt-2">Activity Timeline</div>
                    
-                   <div className="relative pl-4 space-y-4 ml-2 border-l-2 border-slate-200">
+                   <div className="relative pl-4 space-y-4 ml-2 border-l-2 border-slate-200 dark:border-slate-700">
                       {/* Start Point */}
                       <div className="relative">
-                         <div className="absolute -left-[21px] bg-slate-200 w-3 h-3 rounded-full border-2 border-white"></div>
-                         <div className="text-xs text-slate-500">
+                         <div className="absolute -left-[21px] bg-slate-200 dark:bg-slate-700 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900"></div>
+                         <div className="text-xs text-slate-500 dark:text-slate-400">
                             Task Created • {new Date(task.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
                          </div>
                       </div>
@@ -259,29 +259,29 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
                                 ${isEditing ? 'w-full max-w-md' : 'inline-block'}
                             `}>
                                {isEditing ? (
-                                   <div className="flex items-center gap-2 bg-white border border-indigo-300 rounded p-1 shadow-sm">
+                                   <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-600 rounded p-1 shadow-sm">
                                        <input 
                                          autoFocus
-                                         className="flex-1 text-sm px-2 py-1 outline-none"
+                                         className="flex-1 text-sm px-2 py-1 outline-none bg-transparent text-slate-900 dark:text-white"
                                          value={editingMilestone.title}
                                          onChange={(e) => setEditingMilestone({...editingMilestone, title: e.target.value})}
                                        />
-                                       <div className="flex items-center gap-1 bg-slate-100 px-1 rounded">
+                                       <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1 rounded">
                                             <GitBranch className="w-3 h-3 text-slate-400"/>
                                             <input 
-                                                className="w-16 text-xs bg-transparent outline-none"
+                                                className="w-16 text-xs bg-transparent outline-none text-slate-600 dark:text-slate-300"
                                                 value={editingMilestone.branch}
                                                 onChange={(e) => setEditingMilestone({...editingMilestone, branch: e.target.value})}
                                             />
                                        </div>
-                                       <button onClick={() => handleSaveEdit(task.id)} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check className="w-4 h-4"/></button>
-                                       <button onClick={() => setEditingMilestone(null)} className="p-1 text-red-600 hover:bg-red-50 rounded"><X className="w-4 h-4"/></button>
+                                       <button onClick={() => handleSaveEdit(task.id)} className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"><Check className="w-4 h-4"/></button>
+                                       <button onClick={() => setEditingMilestone(null)} className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><X className="w-4 h-4"/></button>
                                    </div>
                                ) : (
                                    <div className="flex items-center gap-2">
-                                       <div className="bg-white border border-slate-200 rounded px-3 py-1.5 shadow-sm group-hover/milestone:border-indigo-200 transition-colors">
+                                       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-1.5 shadow-sm group-hover/milestone:border-indigo-200 dark:group-hover/milestone:border-indigo-700 transition-colors">
                                             <div className="flex items-center gap-2">
-                                                <div className="text-sm text-slate-800 font-medium">{m.title}</div>
+                                                <div className="text-sm text-slate-800 dark:text-slate-200 font-medium">{m.title}</div>
                                                 {!isMain && (
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white opacity-80 ${branchColor.split(' ')[0]}`}>
                                                         {m.branch}
@@ -295,7 +295,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
                                        
                                        <button 
                                         onClick={() => handleStartEdit(m)}
-                                        className="opacity-0 group-hover/milestone:opacity-100 p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all"
+                                        className="opacity-0 group-hover/milestone:opacity-100 p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded transition-all"
                                        >
                                            <Pencil className="w-3 h-3" />
                                        </button>
@@ -307,26 +307,26 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, activeTaskId, onAdd, 
 
                       {/* Add Milestone Input */}
                       <div className="relative">
-                         <div className="absolute -left-[21px] bg-slate-300 w-3 h-3 rounded-full border-2 border-white flex items-center justify-center">
+                         <div className="absolute -left-[21px] bg-slate-300 dark:bg-slate-600 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center">
                             <Plus className="w-2 h-2 text-white" />
                          </div>
                          <form onSubmit={(e) => handleTimelineSubmit(e, task.id)} className="flex flex-wrap gap-2 max-w-md">
                            <input 
                               type="text" 
                               placeholder="New milestone..."
-                              className="text-sm bg-white border border-slate-200 rounded px-2 py-1 flex-1 min-w-[150px] focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+                              className="text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 flex-1 min-w-[150px] focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 text-slate-900 dark:text-white"
                               value={(milestoneInputs[task.id] || {}).title || ''}
                               onChange={(e) => setMilestoneInputs(prev => {
                                 const current = prev[task.id] || { title: '', branch: 'main' };
                                 return { ...prev, [task.id]: { ...current, title: e.target.value } };
                               })}
                            />
-                           <div className="flex items-center gap-1 bg-white border border-slate-200 rounded px-2">
+                           <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2">
                                 <GitBranch className="w-3 h-3 text-slate-400" />
                                 <input 
                                     type="text" 
                                     placeholder="Branch"
-                                    className="text-xs w-16 focus:outline-none py-1"
+                                    className="text-xs w-16 focus:outline-none py-1 bg-transparent text-slate-800 dark:text-slate-200"
                                     value={(milestoneInputs[task.id] || {}).branch || ''}
                                     onChange={(e) => setMilestoneInputs(prev => {
                                       const current = prev[task.id] || { title: '', branch: 'main' };

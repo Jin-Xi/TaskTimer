@@ -27,46 +27,46 @@ export const Stats: React.FC<StatsProps> = ({ tasks }) => {
   const totalHours = (totalTime / 1000 / 3600).toFixed(1);
 
   if (tasks.length === 0) {
-    return <div className="p-8 text-center text-slate-500">Track some tasks to see analytics.</div>;
+    return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Track some tasks to see analytics.</div>;
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 animate-in fade-in duration-500">
       {/* Summary Cards */}
       <div className="col-span-1 lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs text-slate-500 font-medium uppercase">Total Time</p>
-          <p className="text-2xl font-bold text-indigo-600">{totalHours}h</p>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">Total Time</p>
+          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{totalHours}h</p>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs text-slate-500 font-medium uppercase">Tasks Completed</p>
-          <p className="text-2xl font-bold text-emerald-600">{tasks.filter(t => t.status === TaskStatus.COMPLETED).length}</p>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">Tasks Completed</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{tasks.filter(t => t.status === TaskStatus.COMPLETED).length}</p>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs text-slate-500 font-medium uppercase">Avg Task Time</p>
-          <p className="text-2xl font-bold text-blue-600">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">Avg Task Time</p>
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             {completedTasks.length ? Math.round((totalTime / 1000 / 60) / completedTasks.length) : 0}m
           </p>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs text-slate-500 font-medium uppercase">Most Active</p>
-          <p className="text-lg font-bold text-slate-700 truncate">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase">Most Active</p>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-200 truncate">
              {categoryData[0]?.name || 'N/A'}
           </p>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-800 mb-6">Time by Category (Minutes)</h3>
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-6">Time by Category (Minutes)</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={categoryData} layout="vertical" margin={{ left: 20 }}>
               <XAxis type="number" hide />
-              <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
+              <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12, fill: 'currentColor', opacity: 0.7 }} />
               <Tooltip 
                 cursor={{ fill: '#f1f5f9' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#fff', color: '#1e293b' }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
                 {categoryData.map((entry, index) => (
@@ -78,8 +78,8 @@ export const Stats: React.FC<StatsProps> = ({ tasks }) => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-800 mb-6">Task Distribution</h3>
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
+        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-6">Task Distribution</h3>
         <div className="h-64">
            <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -91,18 +91,19 @@ export const Stats: React.FC<StatsProps> = ({ tasks }) => {
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
+                stroke="none"
               >
                 {categoryData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: '#fff', color: '#1e293b' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
         <div className="flex flex-wrap gap-2 justify-center mt-4">
           {categoryData.map((entry, index) => (
-            <div key={entry.name} className="flex items-center text-xs text-slate-600">
+            <div key={entry.name} className="flex items-center text-xs text-slate-600 dark:text-slate-400">
               <span className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
               {entry.name}
             </div>

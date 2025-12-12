@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload } from 'lucide-react';
 import { Task, TaskStatus, Milestone } from './types';
-import { saveTasks, loadTasks } from './services/storageService';
+import { saveTasks, loadTasks, downloadTasksAsJson, validateImportedData } from './services/storageService';
 import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
 import { Stats } from './components/Stats';
@@ -17,6 +17,28 @@ const App: React.FC = () => {
   const [focusBgImage, setFocusBgImage] = useState<string | null>(() => {
     return localStorage.getItem('chrono_focus_bg') || null;
   });
+  const fileImportRef = useRef<HTMLInputElement>(null);
+  
+  // Dark Mode State
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chrono_dark_mode');
+      if (stored !== null) return stored === 'true';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  // Apply Dark Mode class
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('chrono_dark_mode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('chrono_dark_mode', 'false');
+    }
+  }, [darkMode]);
 
   // Load data on mount
   useEffect(() => {
@@ -32,6 +54,48 @@ const App: React.FC = () => {
   }, [tasks]);
 
   const activeTask = tasks.find(t => t.id === activeTaskId) || null;
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+
+  const handleExportData = () => {
+    downloadTasksAsJson(tasks);
+  };
+
+  const handleImportTrigger = () => {
+    fileImportRef.current?.click();
+  };
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        const validatedTasks = validateImportedData(json);
+        
+        if (validatedTasks) {
+          if (window.confirm(`Found ${validatedTasks.length} tasks in file. This will REPLACE your current tasks. Continue?`)) {
+            setTasks(validatedTasks);
+            // Stop any currently running tasks from the old state
+            setActiveTaskId(null); 
+            // Save immediately to storage
+            saveTasks(validatedTasks);
+            alert("Tasks imported successfully!");
+          }
+        } else {
+          alert("Invalid file format. Please upload a valid ChronoFlow JSON backup.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Failed to parse file.");
+      }
+      // Reset input value so same file can be selected again if needed
+      if (fileImportRef.current) fileImportRef.current.value = '';
+    };
+    reader.readAsText(file);
+  };
 
   const handleSetFocusBg = (url: string) => {
     setFocusBgImage(url);
@@ -172,7 +236,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+      {/* Hidden File Input for Import */}
+      <input 
+        type="file" 
+        ref={fileImportRef}
+        className="hidden"
+        accept=".json"
+        onChange={handleFileImport}
+      />
+
       {/* Fullscreen Focus Mode */}
       {isFocusMode && activeTask && (
         <FullscreenFocus 
@@ -185,12 +258,12 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
+      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden md:flex flex-col transition-colors duration-200">
         <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <TimerIcon className="w-5 h-5" />
           </div>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">{APP_NAME}</h1>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">{APP_NAME}</h1>
         </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4">
@@ -202,8 +275,8 @@ const App: React.FC = () => {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id 
-                    ? 'bg-indigo-50 text-indigo-700' 
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -213,11 +286,34 @@ const App: React.FC = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-           <div className="text-xs text-slate-400 text-center">
-             Frontend Mode (React)
-             <br/>
-             Ready for Electron/Boot integration
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+           {/* Dark Mode Toggle */}
+           <button
+             onClick={toggleDarkMode}
+             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+           >
+             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+             {darkMode ? 'Light Mode' : 'Dark Mode'}
+           </button>
+
+           {/* Import / Export Controls */}
+           <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleExportData}
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                title="Save backup file"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+              <button
+                onClick={handleImportTrigger}
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                title="Load backup file"
+              >
+                <Upload className="w-4 h-4" />
+                Import
+              </button>
            </div>
         </div>
       </aside>
@@ -225,17 +321,27 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Mobile Header */}
-        <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between">
+        <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TimerIcon className="w-6 h-6 text-indigo-600" />
-            <h1 className="font-bold text-slate-900">{APP_NAME}</h1>
+            <h1 className="font-bold text-slate-900 dark:text-white">{APP_NAME}</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <button onClick={handleExportData} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
+                <Download className="w-5 h-5" />
+            </button>
+            <button onClick={handleImportTrigger} className="p-2 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">
+                <Upload className="w-5 h-5" />
+            </button>
+             <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+            <button onClick={toggleDarkMode} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             {NAV_ITEMS.map(item => (
                 <button 
                     key={item.id} 
                     onClick={() => setActiveTab(item.id)}
-                    className={`p-2 rounded-md ${activeTab === item.id ? 'bg-indigo-100 text-indigo-600' : 'text-slate-500'}`}
+                    className={`p-2 rounded-md ${activeTab === item.id ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}
                 >
                     <item.icon className="w-5 h-5" />
                 </button>
