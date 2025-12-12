@@ -6,12 +6,17 @@ import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
 import { Stats } from './components/Stats';
 import { AIInsights } from './components/AIInsights';
+import { FullscreenFocus } from './components/FullscreenFocus';
 import { APP_NAME, NAV_ITEMS } from './constants';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [focusBgImage, setFocusBgImage] = useState<string | null>(() => {
+    return localStorage.getItem('chrono_focus_bg') || null;
+  });
 
   // Load data on mount
   useEffect(() => {
@@ -27,6 +32,15 @@ const App: React.FC = () => {
   }, [tasks]);
 
   const activeTask = tasks.find(t => t.id === activeTaskId) || null;
+
+  const handleSetFocusBg = (url: string) => {
+    setFocusBgImage(url);
+    try {
+      localStorage.setItem('chrono_focus_bg', url);
+    } catch (e) {
+      console.error("Failed to save bg image", e);
+    }
+  };
 
   const handleAddTask = (title: string, category: string) => {
     const newTask: Task = {
@@ -139,6 +153,16 @@ const App: React.FC = () => {
     }));
   };
 
+  const handleToggleTaskStatus = (id: string) => {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      if (task.status === TaskStatus.RUNNING) {
+          handlePauseTask(id);
+      } else {
+          handleStartTask(id);
+      }
+  };
+
   const handleCompleteTask = (id: string) => {
     handlePauseTask(id); // Ensure time is captured
     setTasks(prev => prev.map(t => 
@@ -149,6 +173,17 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
+      {/* Fullscreen Focus Mode */}
+      {isFocusMode && activeTask && (
+        <FullscreenFocus 
+          activeTask={activeTask}
+          onToggleStatus={handleToggleTaskStatus}
+          onExit={() => setIsFocusMode(false)}
+          backgroundImage={focusBgImage}
+          onSetBackgroundImage={handleSetFocusBg}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
         <div className="p-6 flex items-center gap-3">
@@ -220,6 +255,7 @@ const App: React.FC = () => {
                             onPause={handlePauseTask}
                             onComplete={handleCompleteTask}
                             onAddMilestone={handleAddMilestone}
+                            onEnterFocusMode={() => setIsFocusMode(true)}
                         />
                     </div>
                     <div className="flex-1 min-h-0">

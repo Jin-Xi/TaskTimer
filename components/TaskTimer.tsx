@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Pause, Square, Clock, Flag, GitBranch } from 'lucide-react';
+import { Play, Pause, Square, Clock, Flag, GitBranch, Maximize2 } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { Button } from './Button';
 
@@ -9,9 +9,10 @@ interface TaskTimerProps {
   onPause: (taskId: string) => void;
   onComplete: (taskId: string) => void;
   onAddMilestone: (taskId: string, title: string, branch: string) => void;
+  onEnterFocusMode?: () => void;
 }
 
-export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPause, onComplete, onAddMilestone }) => {
+export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPause, onComplete, onAddMilestone, onEnterFocusMode }) => {
   const [elapsed, setElapsed] = useState(0);
   const [showMilestoneInput, setShowMilestoneInput] = useState(false);
   const [milestoneTitle, setMilestoneTitle] = useState('');
@@ -142,6 +143,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
             >
               <Flag className="w-5 h-5" />
             </Button>
+
+            {onEnterFocusMode && (
+               <Button
+                variant="ghost"
+                onClick={onEnterFocusMode}
+                className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                title="Enter Focus Mode"
+               >
+                 <Maximize2 className="w-5 h-5" />
+               </Button>
+            )}
           </div>
         </div>
       </div>
