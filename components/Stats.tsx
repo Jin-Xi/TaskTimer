@@ -9,19 +9,23 @@ interface StatsProps {
 export const Stats: React.FC<StatsProps> = ({ tasks }) => {
   const completedTasks = tasks.filter(t => t.totalTime > 0);
   
-  // Aggregate by Category
+  // Aggregate by Tag (flattened)
   const categoryData = completedTasks.reduce((acc, task) => {
-    const existing = acc.find(i => i.name === task.category);
     const minutes = Math.round(task.totalTime / 1000 / 60);
-    if (existing) {
-      existing.value += minutes;
-    } else {
-      acc.push({ name: task.category, value: minutes });
-    }
+    const tags = task.tags && task.tags.length > 0 ? task.tags : ['Uncategorized'];
+    
+    tags.forEach(tag => {
+        const existing = acc.find(i => i.name === tag);
+        if (existing) {
+          existing.value += minutes;
+        } else {
+          acc.push({ name: tag, value: minutes });
+        }
+    });
     return acc;
   }, [] as { name: string; value: number }[]).sort((a, b) => b.value - a.value);
 
-  const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981', '#64748b'];
+  const COLORS = ['#6366f1', '#10b981', '#64748b', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899'];
 
   const totalTime = completedTasks.reduce((acc, t) => acc + t.totalTime, 0);
   const totalHours = (totalTime / 1000 / 3600).toFixed(1);
@@ -32,7 +36,6 @@ export const Stats: React.FC<StatsProps> = ({ tasks }) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in duration-500">
-      {/* Summary Cards */}
       <div className="col-span-1 lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 mb-1">
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">Total Time</p>
@@ -49,16 +52,15 @@ export const Stats: React.FC<StatsProps> = ({ tasks }) => {
           </p>
         </div>
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">Most Active</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">Most Active Tag</p>
           <p className="text-lg font-bold text-slate-700 dark:text-slate-200 truncate mt-1">
              {categoryData[0]?.name || 'N/A'}
           </p>
         </div>
       </div>
 
-      {/* Charts */}
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">Time by Category (Minutes)</h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">Time by Tag (Minutes)</h3>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={categoryData} layout="vertical" margin={{ left: 10 }}>

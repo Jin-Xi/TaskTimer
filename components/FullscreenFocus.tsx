@@ -21,7 +21,6 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
   const [elapsed, setElapsed] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Timer Logic (Duplicated from TaskTimer to ensure independence/robustness)
   useEffect(() => {
     let interval: any;
 
@@ -68,7 +67,6 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center text-white overflow-hidden bg-slate-900">
-      {/* Background Layer */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-700"
         style={{ 
@@ -81,16 +79,18 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
         )}
       </div>
 
-      {/* Overlay to ensure text contrast */}
       <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm" />
 
-      {/* Content */}
       <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-4xl px-6 text-center">
         
         <div className="mb-8 animate-in slide-in-from-top-10 duration-700">
-           <span className="inline-block px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium mb-4">
-              {activeTask.category}
-           </span>
+           <div className="flex justify-center gap-2 mb-4">
+             {(activeTask.tags || []).map(tag => (
+               <span key={tag} className="inline-block px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium">
+                  {tag}
+               </span>
+             ))}
+           </div>
            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg leading-tight">
              {activeTask.title}
            </h1>
@@ -124,7 +124,6 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
 
       </div>
 
-      {/* Bottom Controls */}
       <div className="absolute bottom-6 right-6 z-20">
          <button 
            onClick={() => fileInputRef.current?.click()}

@@ -22,11 +22,9 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
     let interval: any;
 
     if (activeTask && activeTask.status === TaskStatus.RUNNING) {
-      // Calculate elapsed based on the current log start time
       const currentLog = activeTask.logs[activeTask.logs.length - 1];
       const startTime = currentLog ? currentLog.start : Date.now();
       
-      // Initial sync
       setElapsed(activeTask.totalTime + (Date.now() - startTime));
 
       interval = setInterval(() => {
@@ -73,10 +71,11 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
     );
   }
 
-  // Get last 3 milestones to show context
   const recentMilestones = activeTask.milestones 
     ? [...activeTask.milestones].reverse().slice(0, 3) 
     : [];
+
+  const tags = activeTask.tags || [];
 
   return (
     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-indigo-100 dark:border-slate-800 p-5 relative overflow-hidden flex flex-col gap-5 transition-colors duration-200">
@@ -89,9 +88,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
       
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
         <div className="flex-1 text-center md:text-left">
-          <span className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold rounded mb-1.5 uppercase tracking-wide">
-            {activeTask.category}
-          </span>
+          <div className="flex flex-wrap justify-center md:justify-start gap-1 mb-1.5">
+             {tags.map(tag => (
+                 <span key={tag} className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold rounded uppercase tracking-wide">
+                    {tag}
+                 </span>
+             ))}
+          </div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white truncate max-w-md" title={activeTask.title}>
             {activeTask.title}
           </h2>
@@ -163,7 +166,6 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
         </div>
       </div>
 
-      {/* Milestone Input Overlay or Section */}
       {showMilestoneInput && (
         <form onSubmit={handleMilestoneSubmit} className="flex flex-col sm:flex-row gap-2 animate-in fade-in slide-in-from-top-2 bg-indigo-50 dark:bg-slate-800 p-2.5 rounded-lg border border-indigo-100 dark:border-slate-700">
            <div className="flex items-center flex-1 gap-2">
@@ -196,7 +198,6 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({ activeTask, onStart, onPau
         </form>
       )}
 
-      {/* Recent Milestones Ticker */}
       {!showMilestoneInput && recentMilestones.length > 0 && (
          <div className="flex gap-4 border-t border-slate-100 dark:border-slate-800 pt-2.5 overflow-hidden">
             {recentMilestones.map(m => (

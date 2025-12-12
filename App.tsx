@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload } from 'lucide-react';
-import { Task, TaskStatus, Milestone } from './types';
-import { saveTasks, loadTasks, downloadTasksAsJson, validateImportedData } from './services/storageService';
+import { Task, TaskStatus, Milestone, Category } from './types';
+import { saveTasks, loadTasks, downloadTasksAsJson, validateImportedData, loadCategories, saveCategories } from './services/storageService';
 import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
 import { Stats } from './components/Stats';
 import { AIInsights } from './components/AIInsights';
 import { FullscreenFocus } from './components/FullscreenFocus';
-import { APP_NAME, NAV_ITEMS } from './constants';
+import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES } from './constants';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -42,16 +43,25 @@ const App: React.FC = () => {
 
   // Load data on mount
   useEffect(() => {
-    const loaded = loadTasks();
-    setTasks(loaded);
-    const running = loaded.find(t => t.status === TaskStatus.RUNNING);
+    const loadedTasks = loadTasks();
+    setTasks(loadedTasks);
+    
+    const loadedCategories = loadCategories(DEFAULT_CATEGORIES);
+    setCategories(loadedCategories);
+
+    const running = loadedTasks.find(t => t.status === TaskStatus.RUNNING);
     if (running) setActiveTaskId(running.id);
   }, []);
 
-  // Save on change
+  // Save tasks on change
   useEffect(() => {
     if (tasks.length > 0) saveTasks(tasks);
   }, [tasks]);
+
+  // Save categories on change
+  useEffect(() => {
+    if (categories.length > 0) saveCategories(categories);
+  }, [categories]);
 
   const activeTask = tasks.find(t => t.id === activeTaskId) || null;
 
@@ -78,9 +88,7 @@ const App: React.FC = () => {
         if (validatedTasks) {
           if (window.confirm(`Found ${validatedTasks.length} tasks in file. This will REPLACE your current tasks. Continue?`)) {
             setTasks(validatedTasks);
-            // Stop any currently running tasks from the old state
             setActiveTaskId(null); 
-            // Save immediately to storage
             saveTasks(validatedTasks);
             alert("Tasks imported successfully!");
           }
@@ -91,7 +99,6 @@ const App: React.FC = () => {
         console.error(error);
         alert("Failed to parse file.");
       }
-      // Reset input value so same file can be selected again if needed
       if (fileImportRef.current) fileImportRef.current.value = '';
     };
     reader.readAsText(file);
@@ -106,11 +113,30 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddTask = (title: string, category: string) => {
+  // Category Management
+  const handleAddCategory = (name: string, color: string) => {
+    if (!categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+      setCategories(prev => [...prev, { id: crypto.randomUUID(), name, color }]);
+    }
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    if (categories.length <= 1) {
+      alert("You must have at least one category.");
+      return;
+    }
+    setCategories(prev => prev.filter(c => c.id !== id));
+  };
+
+  const handleAddTask = (title: string, description: string, tags: string[]) => {
+    // If no tags provided, try to use the first available category name, or default
+    const finalTags = tags.length > 0 ? tags : (categories.length > 0 ? [categories[0].name] : ['General']);
+
     const newTask: Task = {
       id: crypto.randomUUID(),
       title,
-      category,
+      description,
+      tags: finalTags,
       status: TaskStatus.IDLE,
       totalTime: 0,
       createdAt: Date.now(),
@@ -131,7 +157,7 @@ const App: React.FC = () => {
         return {
           ...t,
           milestones: [
-            ...(t.milestones || []), // Ensure array exists for older data
+            ...(t.milestones || []),
             {
               id: crypto.randomUUID(),
               title,
@@ -160,13 +186,11 @@ const App: React.FC = () => {
   };
 
   const handleStartTask = (id: string) => {
-    // Stop currently running task if any
     setTasks(prev => prev.map(t => {
       if (t.status === TaskStatus.RUNNING && t.id !== id) {
         const lastLog = t.logs[t.logs.length - 1];
         const newLogs = [...t.logs];
         if (lastLog && !lastLog.end) {
-            // Close the dangling log
             newLogs[newLogs.length - 1] = { ...lastLog, end: Date.now() };
         }
         return {
@@ -179,7 +203,6 @@ const App: React.FC = () => {
       return t;
     }));
 
-    // Start target task
     setActiveTaskId(id);
     setTasks(prev => prev.map(t => {
       if (t.id === id) {
@@ -200,7 +223,6 @@ const App: React.FC = () => {
         const lastLog = t.logs[lastLogIdx];
         const now = Date.now();
         
-        // Update the log
         const newLogs = [...t.logs];
         if (lastLog) {
             newLogs[lastLogIdx] = { ...lastLog, end: now };
@@ -228,7 +250,7 @@ const App: React.FC = () => {
   };
 
   const handleCompleteTask = (id: string) => {
-    handlePauseTask(id); // Ensure time is captured
+    handlePauseTask(id);
     setTasks(prev => prev.map(t => 
       t.id === id ? { ...t, status: TaskStatus.COMPLETED } : t
     ));
@@ -237,7 +259,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-transparent font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
-      {/* Hidden File Input for Import */}
       <input 
         type="file" 
         ref={fileImportRef}
@@ -246,7 +267,6 @@ const App: React.FC = () => {
         onChange={handleFileImport}
       />
 
-      {/* Fullscreen Focus Mode */}
       {isFocusMode && activeTask && (
         <FullscreenFocus 
           activeTask={activeTask}
@@ -257,7 +277,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside className="w-64 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-r border-slate-200/60 dark:border-slate-800/60 hidden md:flex flex-col transition-colors duration-200 shadow-sm z-10">
         <div className="p-5 flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
@@ -287,7 +306,6 @@ const App: React.FC = () => {
         </nav>
 
         <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-white/50 dark:bg-slate-900/50">
-           {/* Dark Mode Toggle */}
            <button
              onClick={toggleDarkMode}
              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -296,7 +314,6 @@ const App: React.FC = () => {
              {darkMode ? 'Light Mode' : 'Dark Mode'}
            </button>
 
-           {/* Import / Export Controls */}
            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleExportData}
@@ -318,9 +335,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Mobile Header */}
         <div className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between z-20">
           <div className="flex items-center gap-2">
             <TimerIcon className="w-6 h-6 text-indigo-600" />
@@ -349,10 +364,7 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Content Area - Reduced padding and gaps */}
         <div className="flex-1 overflow-hidden flex flex-col p-3 md:p-5 max-w-7xl mx-auto w-full gap-3 md:gap-4 z-0">
-            
-            {/* Always show Timer on Tasks Tab */}
             {activeTab === 'tasks' && (
                 <div className="flex flex-col h-full gap-3 md:gap-4">
                     <div className="flex-shrink-0">
@@ -374,6 +386,9 @@ const App: React.FC = () => {
                             onSelect={handleStartTask}
                             onAddMilestone={handleAddMilestone}
                             onEditMilestone={handleEditMilestone}
+                            categories={categories}
+                            onAddCategory={handleAddCategory}
+                            onDeleteCategory={handleDeleteCategory}
                         />
                     </div>
                 </div>
@@ -382,7 +397,6 @@ const App: React.FC = () => {
             {activeTab === 'dashboard' && <Stats tasks={tasks} />}
             
             {activeTab === 'ai-insights' && <AIInsights tasks={tasks} />}
-
         </div>
       </main>
     </div>

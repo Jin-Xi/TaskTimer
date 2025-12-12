@@ -17,11 +17,17 @@ export interface Milestone {
   branch: string; // e.g., 'main', 'feature', 'bugfix'
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  color: string; // e.g., 'indigo', 'emerald', 'rose'
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  category: string;
+  tags: string[]; // Replaces single category
   status: TaskStatus;
   totalTime: number; // In milliseconds
   createdAt: number;

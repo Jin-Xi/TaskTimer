@@ -1,9 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Task, TaskStatus } from "../types";
 
-// Initialize Gemini Client
-// NOTE: In a real production app, ensure this is behind a proxy or the key is restricted.
-// The user prompt specified purely frontend, so we use process.env.API_KEY directly as per instructions.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> => {
@@ -16,7 +13,7 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> 
   // Prepare data for the model
   const taskSummary = completedTasks.map(t => ({
     title: t.title,
-    category: t.category,
+    tags: t.tags ? t.tags.join(', ') : 'None',
     durationMinutes: Math.round(t.totalTime / 1000 / 60),
     status: t.status
   }));
@@ -25,7 +22,7 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> 
     Analyze the following task history and provide productivity insights.
     Data: ${JSON.stringify(taskSummary)}
     
-    Provide a summary of where time was spent, suggest improvements for time management, and give a productivity score (0-100) based on focus and completion.
+    Provide a summary of where time was spent, suggest improvements for time management based on the tags and durations, and give a productivity score (0-100).
     Return JSON.
   `;
 
