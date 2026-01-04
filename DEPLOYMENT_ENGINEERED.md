@@ -1,59 +1,44 @@
+# ChronoFlow 工程化部署手册
 
-# ChronoFlow 部署指南 (工程化版本)
+本项目已完全迁移至现代化的工程化架构。以下是构建、测试及部署到生产环境的详细步骤。
 
-本项目已升级为基于 **Vite** 的现代化 React 工程。现在支持自动构建、单元测试和环境变量管理。
+## 🛠️ 构建命令
 
-## 1. 本地开发环境准备
+在开始之前，请确保已运行 `npm install` 安装了所有必需的依赖项。
 
-1.  **安装 Node.js**: 确保已安装 Node.js 18+。
-2.  **获取代码**: 下载本项目所有文件到本地文件夹。
-3.  **安装依赖**:
-    ```bash
-    npm install
-    ```
+| 命令 | 说明 |
+| :--- | :--- |
+| `npm run dev` | 启动 Vite 开发服务器，支持热更新（HMR）。 |
+| `npm run build` | 执行 TypeScript 类型检查并进行生产环境代码混淆压缩。 |
+| `npm run preview` | 本地预览生产环境构建后的效果（dist 目录）。 |
+| `npm run test` | 启动 Vitest 运行单元测试。 |
 
-## 2. 配置环境变量
+## 🌐 部署至生产环境
 
-在项目根目录新建 `.env` 文件：
-```env
-VITE_API_KEY=你的_GOOGLE_GEMINI_API_KEY
-```
+### 1. 环境变量配置 (关键)
+无论使用何种平台，请务必设置以下环境变量，否则 AI 分析功能将无法使用：
+-   `VITE_API_KEY`: 您的 Google Gemini API Key。
 
-## 3. 开发与测试
+### 2. 托管平台推荐
 
-*   **启动开发服务器**:
-    ```bash
-    npm run dev
-    ```
-    访问 `http://localhost:5173`。
-*   **运行自动化测试**:
-    ```bash
-    npm run test
-    ```
-    这将执行 `services/storageService.test.ts` 中的逻辑验证。
-
-## 4. 生产环境打包与部署
-
-### 第一步：构建
-执行以下命令，这会进行类型检查并将代码打包到 `dist` 目录：
-```bash
-npm run build
-```
-
-### 第二步：部署到托管平台
-
-#### 方案 A: Vercel (推荐)
-1. 安装 Vercel CLI: `npm i -g vercel`
-2. 执行 `vercel` 并按照提示操作。
-3. 在 Vercel 控制面板中添加环境变量 `VITE_API_KEY`。
+#### 方案 A: Vercel (首选)
+由于项目是基于 Vite 的标准 React 应用，Vercel 会自动识别并配置：
+1.  关联 GitHub 仓库。
+2.  在 Vercel 仪表盘的 **Project Settings -> Environment Variables** 中添加 `VITE_API_KEY`。
+3.  点击 **Deploy**。
 
 #### 方案 B: GitHub Pages
-1. 在 `vite.config.ts` 中添加 `base: '/your-repo-name/'`。
-2. 执行 `npm run build`。
-3. 将 `dist` 文件夹的内容上传到 GitHub 仓库的 `gh-pages` 分支。
+1.  在 `vite.config.ts` 中配置 `base` 路径（例如 `base: '/ChronoFlow/'`）。
+2.  在 GitHub Action 中添加构建脚本。
+3.  将生成好的 `dist` 文件夹内容推送到 `gh-pages` 分支。
 
-## 5. 关键技术栈
-*   **Vite 6**: 下一代前端开发与构建工具。
-*   **Vitest**: 兼容 Vite 的高性能测试框架。
-*   **TypeScript**: 提供静态类型检查，减少运行时错误。
-*   **Tailwind CSS (JIT)**: 按需生成的原子化 CSS，性能最优。
+#### 方案 C: 私有服务器
+1.  运行 `npm run build`。
+2.  将生成的 `dist` 文件夹内容上传至 Nginx 或 Apache 的静态资源目录。
+3.  确保 Nginx 配置了正确的 SPA 路由重定向（将 404 指向 index.html）。
+
+## 🧪 持续集成
+本项目包含 `services/storageService.test.ts`。建议在 CI 流程中加入 `npm run test`，以确保每次代码提交都不会破坏核心的数据存储逻辑。
+
+## 📌 提示
+生产环境下，应用开启了 **Source Maps**（可在 `vite.config.ts` 中关闭），以便于在生产环境中排查逻辑错误。

@@ -1,128 +1,62 @@
-# ChronoFlow - AI Task Timer
+# ChronoFlow - AI 驱动的任务计时与效率追踪器
 
-ChronoFlow is a React-based task management and timing application. It features a task timer, milestone tracking, a fullscreen focus mode, data visualization, and AI-powered productivity insights using the Google Gemini API.
+ChronoFlow 是一款基于 React 19 和 Vite 构建的现代化效率管理应用。它不仅提供精准的任务计时功能，还引入了项目流规划、可视化数据分析以及基于 Google Gemini 的 AI 生产力教练，帮助您深度掌控时间。
 
-## 🚀 How to Start / Deploy
+## ✨ 核心功能
 
-This project is designed as a **No-Build** React application using ES Modules and `importmap`. This means it runs directly in the browser without needing a complex build step (like Webpack or Vite) for basic usage, though a local server is required to handle module loading.
+-   **⏱️ 智能任务计时**: 毫秒级精准计时，支持随时暂停、恢复及完成任务。
+-   **🌿 里程碑与分支系统**: 在任务执行过程中记录关键节点（里程碑），支持模拟 Git 分支管理思路，清晰展示任务演进过程。
+-   **📅 项目工作流规划**: 定义复杂的项目结构，支持任务间的**前置依赖**逻辑（父任务完成后方可开启子任务计时）。
+-   **🧘 沉浸式专注模式**: 全屏计时界面，支持自定义背景图，帮助您进入“心流”状态。
+-   **📊 深度数据可视化**: 通过 Recharts 渲染耗时分布图、标签统计图及每日效率指标。
+-   **🤖 AI 生产力教练**: 集成 Google Gemini 3 Flash，根据您的真实耗时记录，自动生成效率评估分数、总结及改进建议。
+-   **🌗 极简 UI/UX**: 支持深色/浅色模式切换，响应式设计，完美适配 PC 与移动端。
+-   **🌍 多语言支持**: 完整支持中英文一键切换。
+-   **💾 数据自主可控**: 数据持久化存储于本地（LocalStorage），并支持 JSON 格式的导出备份与导入。
 
-### Prerequisites
+## 🛠️ 技术栈
 
-1.  **Google Gemini API Key**: You need a valid API key from [Google AI Studio](https://aistudio.google.com/).
-2.  **Local Web Server**: Browsers block ES module imports from local file paths (`file://`). You need a simple HTTP server.
+-   **框架**: React 19 (TypeScript)
+-   **构建工具**: Vite 6
+-   **样式**: Tailwind CSS
+-   **图标**: Lucide React
+-   **图表**: Recharts
+-   **AI SDK**: @google/genai (Gemini API)
+-   **测试**: Vitest
 
-### Option 1: Using VS Code (Recommended)
+## 🚀 快速开始
 
-1.  Open the project folder in **VS Code**.
-2.  Install the **"Live Server"** extension (by Ritwick Dey).
-3.  Open `index.html`.
-4.  Right-click and select **"Open with Live Server"**.
-5.  **Important**: Open `services/geminiService.ts`. Since this is a no-build setup, `process.env` does not exist in the browser. You must manually replace:
-    ```typescript
-    // OLD
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    // NEW (Replace with your actual key string)
-    const ai = new GoogleGenAI({ apiKey: "YOUR_ACTUAL_GOOGLE_API_KEY" });
-    ```
+### 1. 克隆并安装依赖
+```bash
+npm install
+```
 
-### Option 2: Using Python
+### 2. 配置 API 密钥
+在项目根目录创建 `.env` 文件，用于启用 AI 分析功能：
+```env
+VITE_API_KEY=你的_GOOGLE_GEMINI_API_KEY
+```
 
-1.  Open your terminal/command prompt in the project directory.
-2.  Run:
-    ```bash
-    # Python 3
-    python -m http.server 8000
-    ```
-3.  Open `http://localhost:8000` in your browser.
-4.  (Remember to replace the API Key in `services/geminiService.ts` as mentioned above).
+### 3. 启动开发服务器
+```bash
+npm run dev
+```
+访问 `http://localhost:5173` 即可开始使用。
 
-### Option 3: Using Node.js `http-server`
+### 4. 运行测试
+```bash
+npm run test
+```
 
-1.  Run:
-    ```bash
-    npx http-server .
-    ```
-2.  Open the URL shown in the terminal.
+## 📂 文件结构说明
+
+-   `/components`: UI 核心组件（计时器、列表、统计、AI 界面、项目管理等）。
+-   `/services`: 逻辑服务层，包括 `geminiService`（AI 交互）和 `storageService`（本地存储）。
+-   `types.ts`: 全局 TypeScript 类型定义。
+-   `constants.ts`: 包含 UI 文字翻译、导航配置及颜色常量。
+-   `index.css`: Tailwind 基础指令及全局模式背景定义。
 
 ---
 
-## 📂 File Structure & Descriptions
-
-Here is a breakdown of the project files and their specific responsibilities:
-
-### Core Entry Points
-
-*   **`index.html`**
-    *   The main entry point of the application.
-    *   Contains the `<importmap>` which tells the browser where to download dependencies (React, Lucide, Google GenAI, etc.) from `esm.sh` (a CDN for ES modules).
-    *   Includes the Tailwind CSS CDN for styling.
-    *   Mounts the React app into the `<div id="root">`.
-
-*   **`index.tsx`**
-    *   The TypeScript entry point.
-    *   Finds the root DOM element and renders the main `<App />` component wrapped in `React.StrictMode`.
-
-*   **`App.tsx`**
-    *   The main application logic container.
-    *   **State Management**: Holds the state for tasks, the active timer, the current navigation tab, focus mode status, and background image preferences.
-    *   **Persistence**: Handles loading and saving data to `localStorage`.
-    *   **Routing**: Renders the sidebar and switches views between the Timer/List, Dashboard (Stats), AI Insights, and Fullscreen Focus mode.
-
-### Data & Configuration
-
-*   **`types.ts`**
-    *   Defines the TypeScript interfaces and Enums used throughout the app.
-    *   Key types: `Task`, `TaskStatus`, `TimeLog`, `Milestone`, `AIAnalysisResult`.
-
-*   **`constants.ts`**
-    *   Stores static configuration data.
-    *   Includes the App Name, Navigation Items configuration, and default Task Categories.
-
-*   **`metadata.json`**
-    *   Contains project metadata like name and description, and permissions request (e.g., for camera/mic if features are added later).
-
-### Services (Logic Layer)
-
-*   **`services/geminiService.ts`**
-    *   Handles interaction with the **Google Gemini API**.
-    *   Contains the logic to format task data into a text prompt.
-    *   Sends the prompt to Gemini to generate productivity summaries, suggestions, and scores in JSON format.
-    *   **Note**: Requires an API Key.
-
-*   **`services/storageService.ts`**
-    *   A utility wrapper around the browser's `localStorage`.
-    *   Handles safely saving and loading the task list JSON data to ensure data persists after a page refresh.
-
-### Components (UI Layer)
-
-*   **`components/TaskTimer.tsx`**
-    *   The active task controller.
-    *   Displays the elapsed time for the *currently running* task.
-    *   Provides controls to Pause, Resume, Complete, Add Milestones, and enter **Focus Mode**.
-
-*   **`components/TaskList.tsx`**
-    *   Displays the list of all tasks.
-    *   Allows filtering (All/Active/Done).
-    *   Handles creating new tasks.
-    *   **Timeline View**: Each task can be expanded to show a vertical timeline of milestones (creation, updates, custom markers). Allows adding and editing milestone branches.
-
-*   **`components/FullscreenFocus.tsx`**
-    *   An immersive, full-screen view for the active task.
-    *   Shows a large timer and task title.
-    *   Allows uploading a custom background image (stored locally).
-    *   Provides large Play/Pause/Exit controls.
-
-*   **`components/Stats.tsx`**
-    *   The Analytics dashboard.
-    *   Uses `recharts` to render visual graphs (Bar Chart and Pie Chart).
-    *   Calculates statistics like Total Time, Average Task Time, and Time Distribution by Category.
-
-*   **`components/AIInsights.tsx`**
-    *   The UI interface for the AI Coach.
-    *   Displays the "Analyze" button.
-    *   Renders the structured feedback (Score, Summary, Bullet points) received from the Gemini API.
-
-*   **`components/Button.tsx`**
-    *   A reusable generic Button component.
-    *   Handles visual variants (Primary, Secondary, Ghost, Danger) and loading states.
+## 🛡️ 数据隐私
+您的任务名称、描述和计时数据仅存储在您的浏览器本地。只有当您主动点击“AI 分析”时，脱敏后的任务摘要才会发送至 Google Gemini API 进行处理。详情请参阅 [AI 洞察指南](./AI_ANALYSIS_GUIDE.md)。

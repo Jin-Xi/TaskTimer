@@ -1,63 +1,49 @@
-# ChronoFlow AI Productivity Coach Guide
+# AI 生产力教练技术指南
 
-This document describes how the AI analysis feature works in ChronoFlow, including data structures, security, and API configuration.
+ChronoFlow 的 AI 分析功能利用 **Google Gemini 3 Flash** 模型为用户提供个性化的时间管理建议。本指南详细介绍了其工作原理和安全性。
 
-## 1. How it Works
+## 1. 核心原理
 
-The AI Productivity Coach uses the **Google Gemini API (gemini-3-flash-preview)** to process your task history and generate actionable advice.
+AI 生产力教练通过以下步骤生成报告：
 
-1. **Data Collection**: The app filters your task list for "active" tasks (those with recorded time or marked as completed).
-2. **Data Sanitization**: To protect privacy, only the task title, tags, and cumulative duration are extracted. Individual time logs (timestamps) are NOT sent.
-3. **Prompt Engineering**: The data is wrapped in a system prompt that instructs Gemini to act as a "Productivity Coach" and return a structured JSON response.
-4. **Analysis**: Gemini looks for patterns like:
-   - Context switching (many different tags).
-   - Time sinks (tasks with long durations but simple titles).
-   - Focus areas.
-5. **Reporting**: The app renders the JSON response into a visual report with a score, a summary, and bulleted suggestions.
+1.  **数据清洗**: 应用会扫描您的任务列表，提取所有已完成或有时间记录的任务。
+2.  **隐私脱敏**: 为了保护隐私，我们**不会**发送任务的具体操作日志（具体的起止时间戳）。我们仅发送任务标题、标签和累计耗时（分钟）。
+3.  **提示词工程 (Prompt Engineering)**: 任务摘要被嵌入到预设的角色提示词中，要求 Gemini 以“专业效率专家”的身份进行分析。
+4.  **结构化输出**: Gemini 被强制要求返回符合 JSON 模式的数据，确保 UI 能够稳定渲染分析报告。
 
-## 2. Input Data Structure
+## 2. 数据透明度
 
-The AI receives a JSON array formatted as follows:
+您可以在“AI 洞察”页面中开启“数据透明度”面板。发送给 AI 的数据结构示例如下：
 
 ```json
 [
   {
-    "title": "Project Meeting",
-    "tags": "Work, Team",
-    "durationMinutes": 60,
+    "title": "设计系统架构",
+    "tags": "工作, 架构",
+    "durationMinutes": 145,
     "status": "COMPLETED"
   },
   {
-    "title": "Learning React",
-    "tags": "Study, Code",
-    "durationMinutes": 120,
+    "title": "阅读《原子习惯》",
+    "tags": "学习",
+    "durationMinutes": 45,
     "status": "RUNNING"
   }
 ]
 ```
 
-## 3. Output Schema
+## 3. 生成的指标
 
-The AI is forced to return a valid JSON object with the following fields:
+AI 报告包含以下三个关键要素：
+-   **效率分数 (0-100)**: 根据任务完成度、专注时长和标签多样性计算的综合评分。
+-   **执行摘要**: 对您近期时间分配趋势的直观评价。
+-   **改进建议**: 针对性建议（例如：减少上下文切换、将大任务分解为小步骤等）。
 
-- `summary`: A concise overview of your current productivity state.
-- `suggestions`: An array of strings containing specific, actionable advice.
-- `productivityScore`: A numeric value between 0 and 100.
+## 4. API 安全与配置
 
-## 4. API Key Configuration
+-   **无泄露设计**: 我们的 UI 中**不提供** API Key 输入框。这防止了密钥被恶意脚本截获或被意外分享到公开截图。
+-   **环境变量**: API 密钥必须通过环境变量注入。在开发环境中，请使用 `.env` 文件中的 `VITE_API_KEY`；在生产环境中（如 Vercel/Netlify），请在管理后台设置对应的 Secret。
+-   **模型版本**: 目前使用 `gemini-3-flash-preview`，它在逻辑分析速度和 JSON 格式准确性之间达到了最佳平衡。
 
-### Security Architecture
-ChronoFlow adheres to strict security guidelines. **There is no input field for API Keys in the UI.** This is by design to prevent keys from being leaked or accidentally shared.
-
-### How to provide the key:
-The application expects the API key to be available in the environment via `process.env.API_KEY`.
-
-- **On Hosted Platforms**: Configure the `API_KEY` secret in your environment settings.
-- **Local Development**: If using a build tool like Vite, you would typically use a `.env` file (e.g., `VITE_API_KEY=your_key`).
-- **Production Injection**: The key is injected automatically by the runtime provider.
-
-## 5. Model Selection
-ChronoFlow uses `gemini-3-flash-preview` for this feature. It provides a great balance between:
-- **Speed**: Analysis is typically completed in 2-4 seconds.
-- **Context Window**: It can handle hundreds of task entries without truncating data.
-- **Reasoning**: It's specifically optimized for JSON extraction and structured reasoning tasks.
+## 5. 局限性说明
+AI 分析仅基于您记录的数据。为了获得最准确的建议，建议您养成“开启计时器即开始工作”的习惯，并为任务标注准确的标签。
