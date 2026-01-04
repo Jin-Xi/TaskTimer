@@ -23,16 +23,26 @@ export interface Category {
   color: string; // e.g., 'indigo', 'emerald', 'rose'
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: number;
+  color: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  tags: string[]; // Replaces single category
+  tags: string[];
   status: TaskStatus;
   totalTime: number; // In milliseconds
   createdAt: number;
   logs: TimeLog[];
   milestones: Milestone[];
+  projectId?: string; // Link to project
+  parentTaskId?: string; // Dependency: Only start if parent is COMPLETED
 }
 
 export interface AIAnalysisResult {

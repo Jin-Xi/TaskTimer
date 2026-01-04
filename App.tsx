@@ -1,20 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload } from 'lucide-react';
-import { Task, TaskStatus, Milestone, Category } from './types';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages } from 'lucide-react';
+import { Task, TaskStatus, Milestone, Category, Project } from './types';
 import { saveTasks, loadTasks, downloadTasksAsJson, validateImportedData, loadCategories, saveCategories } from './services/storageService';
 import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
 import { Stats } from './components/Stats';
 import { AIInsights } from './components/AIInsights';
+import { ProjectManager } from './components/ProjectManager';
 import { FullscreenFocus } from './components/FullscreenFocus';
-import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES } from './constants';
+import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
   const [isFocusMode, setIsFocusMode] = useState(false);
+  
+  // Language State
+  const [language, setLanguage] = useState<'en' | 'zh'>(() => {
+    return (localStorage.getItem('chrono_lang') as 'en' | 'zh') || 'zh';
+  });
+
+  const t = TRANSLATIONS[language];
+
   const [focusBgImage, setFocusBgImage] = useState<string | null>(() => {
     return localStorage.getItem('chrono_focus_bg') || null;
   });
@@ -41,6 +51,11 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
+  // Persist language
+  useEffect(() => {
+    localStorage.setItem('chrono_lang', language);
+  }, [language]);
+
   // Load data on mount
   useEffect(() => {
     const loadedTasks = loadTasks();
@@ -48,6 +63,9 @@ const App: React.FC = () => {
     
     const loadedCategories = loadCategories(DEFAULT_CATEGORIES);
     setCategories(loadedCategories);
+
+    const savedProjects = localStorage.getItem('chronoflow_projects');
+    if (savedProjects) setProjects(JSON.parse(savedProjects));
 
     const running = loadedTasks.find(t => t.status === TaskStatus.RUNNING);
     if (running) setActiveTaskId(running.id);
@@ -58,6 +76,11 @@ const App: React.FC = () => {
     if (tasks.length > 0) saveTasks(tasks);
   }, [tasks]);
 
+  // Save projects on change
+  useEffect(() => {
+    localStorage.setItem('chronoflow_projects', JSON.stringify(projects));
+  }, [projects]);
+
   // Save categories on change
   useEffect(() => {
     if (categories.length > 0) saveCategories(categories);
@@ -66,6 +89,7 @@ const App: React.FC = () => {
   const activeTask = tasks.find(t => t.id === activeTaskId) || null;
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
+  const toggleLanguage = () => setLanguage(language === 'en' ? 'zh' : 'en');
 
   const handleExportData = () => {
     downloadTasksAsJson(tasks);
@@ -90,14 +114,10 @@ const App: React.FC = () => {
             setTasks(validatedTasks);
             setActiveTaskId(null); 
             saveTasks(validatedTasks);
-            alert("Tasks imported successfully!");
           }
-        } else {
-          alert("Invalid file format. Please upload a valid ChronoFlow JSON backup.");
         }
       } catch (error) {
         console.error(error);
-        alert("Failed to parse file.");
       }
       if (fileImportRef.current) fileImportRef.current.value = '';
     };
@@ -121,15 +141,30 @@ const App: React.FC = () => {
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (categories.length <= 1) {
-      alert("You must have at least one category.");
-      return;
-    }
+    if (categories.length <= 1) return;
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
-  const handleAddTask = (title: string, description: string, tags: string[]) => {
-    // If no tags provided, try to use the first available category name, or default
+  // Project Management
+  const handleAddProject = (name: string, description: string, color: string) => {
+    const newProj: Project = {
+        id: crypto.randomUUID(),
+        name,
+        description,
+        color,
+        createdAt: Date.now()
+    };
+    setProjects(prev => [...prev, newProj]);
+  };
+
+  const handleDeleteProject = (id: string) => {
+      if (window.confirm(t.deleteProjectWarning)) {
+          setProjects(prev => prev.filter(p => p.id !== id));
+          setTasks(prev => prev.map(t => t.projectId === id ? { ...t, projectId: undefined, parentTaskId: undefined } : t));
+      }
+  };
+
+  const handleAddTask = (title: string, description: string, tags: string[], projectId?: string, parentTaskId?: string) => {
     const finalTags = tags.length > 0 ? tags : (categories.length > 0 ? [categories[0].name] : ['General']);
 
     const newTask: Task = {
@@ -141,7 +176,9 @@ const App: React.FC = () => {
       totalTime: 0,
       createdAt: Date.now(),
       logs: [],
-      milestones: []
+      milestones: [],
+      projectId,
+      parentTaskId
     };
     setTasks(prev => [newTask, ...prev]);
   };
@@ -186,6 +223,18 @@ const App: React.FC = () => {
   };
 
   const handleStartTask = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    // Check dependency
+    if (task.parentTaskId) {
+        const parent = tasks.find(t => t.id === task.parentTaskId);
+        if (parent && parent.status !== TaskStatus.COMPLETED) {
+            alert(language === 'zh' ? `请先完成：${parent.title}` : `Complete: ${parent.title} first`);
+            return;
+        }
+    }
+
     setTasks(prev => prev.map(t => {
       if (t.status === TaskStatus.RUNNING && t.id !== id) {
         const lastLog = t.logs[t.logs.length - 1];
@@ -299,76 +348,59 @@ const App: React.FC = () => {
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                {item.label}
+                {(t as any)[item.labelKey]}
               </button>
             );
           })}
         </nav>
 
         <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-white/50 dark:bg-slate-900/50">
-           <button
-             onClick={toggleDarkMode}
-             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-           >
-             {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-             {darkMode ? 'Light Mode' : 'Dark Mode'}
-           </button>
+           <div className="grid grid-cols-2 gap-2">
+             <button
+               onClick={toggleDarkMode}
+               className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider"
+             >
+               {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+               {darkMode ? t.lightMode : t.darkMode}
+             </button>
+
+             <button
+               onClick={toggleLanguage}
+               className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider"
+             >
+               <Languages className="w-3.5 h-3.5" />
+               {t.langName}
+             </button>
+           </div>
 
            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleExportData}
-                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-[10px] font-bold bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors uppercase tracking-wider"
                 title="Save backup file"
               >
                 <Download className="w-3.5 h-3.5" />
-                Export
+                {t.export}
               </button>
               <button
                 onClick={handleImportTrigger}
-                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors"
+                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-[10px] font-bold bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors uppercase tracking-wider"
                 title="Load backup file"
               >
                 <Upload className="w-3.5 h-3.5" />
-                Import
+                {t.import}
               </button>
            </div>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <div className="md:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between z-20">
-          <div className="flex items-center gap-2">
-            <TimerIcon className="w-6 h-6 text-indigo-600" />
-            <h1 className="font-bold text-slate-900 dark:text-white">{APP_NAME}</h1>
-          </div>
-          <div className="flex gap-1 items-center">
-            <button onClick={handleExportData} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
-                <Download className="w-5 h-5" />
-            </button>
-            <button onClick={handleImportTrigger} className="p-2 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">
-                <Upload className="w-5 h-5" />
-            </button>
-             <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-            <button onClick={toggleDarkMode} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            {NAV_ITEMS.map(item => (
-                <button 
-                    key={item.id} 
-                    onClick={() => setActiveTab(item.id)}
-                    className={`p-2 rounded-md ${activeTab === item.id ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}
-                >
-                    <item.icon className="w-5 h-5" />
-                </button>
-            ))}
-          </div>
-        </div>
-
         <div className="flex-1 overflow-hidden flex flex-col p-3 md:p-5 max-w-7xl mx-auto w-full gap-3 md:gap-4 z-0">
             {activeTab === 'tasks' && (
                 <div className="flex flex-col h-full gap-3 md:gap-4">
                     <div className="flex-shrink-0">
                          <TaskTimer 
+                            language={language}
                             activeTask={activeTask}
                             onStart={handleStartTask}
                             onPause={handlePauseTask}
@@ -379,7 +411,9 @@ const App: React.FC = () => {
                     </div>
                     <div className="flex-1 min-h-0">
                         <TaskList 
+                            language={language}
                             tasks={tasks} 
+                            projects={projects}
                             activeTaskId={activeTaskId}
                             onAdd={handleAddTask}
                             onDelete={handleDeleteTask}
@@ -394,9 +428,20 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            {activeTab === 'dashboard' && <Stats tasks={tasks} />}
+            {activeTab === 'projects' && (
+                <ProjectManager 
+                    language={language}
+                    projects={projects}
+                    tasks={tasks}
+                    onAddProject={handleAddProject}
+                    onDeleteProject={handleDeleteProject}
+                    onAddTask={handleAddTask}
+                />
+            )}
+
+            {activeTab === 'dashboard' && <Stats language={language} tasks={tasks} />}
             
-            {activeTab === 'ai-insights' && <AIInsights tasks={tasks} />}
+            {activeTab === 'ai-insights' && <AIInsights language={language} tasks={tasks} />}
         </div>
       </main>
     </div>

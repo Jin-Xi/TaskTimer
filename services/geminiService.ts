@@ -27,8 +27,9 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> 
   `;
 
   try {
+    // Fixed: Updated model name to gemini-3-flash-preview as per text task guidelines
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
