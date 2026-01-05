@@ -1,3 +1,4 @@
+
 import { ChartColumn, LayoutDashboard, ListTodo, Zap, GitBranchPlus } from 'lucide-react';
 import { Category } from './types';
 
@@ -62,7 +63,9 @@ export const TRANSLATIONS = {
     dataTransparency: "Data Transparency",
     dataSentToAI: "What data is sent to AI?",
     dataExplanation: "We only send task titles, tags, and durations. No personal information or full logs are uploaded.",
-    apiKeyRequired: "API Key required in environment (process.env.API_KEY)"
+    apiKeyRequired: "API Key required in environment (process.env.API_KEY)",
+    listView: "List View",
+    graphView: "Graph View"
   },
   zh: {
     tasks: "任务",
@@ -122,7 +125,9 @@ export const TRANSLATIONS = {
     dataTransparency: "数据透明度",
     dataSentToAI: "哪些数据会被发送给 AI？",
     dataExplanation: "我们仅发送任务标题、标签和耗时。不上传个人隐私或完整日志。",
-    apiKeyRequired: "需要环境中的 API Key (process.env.API_KEY)"
+    apiKeyRequired: "需要环境中的 API Key (process.env.API_KEY)",
+    listView: "列表视图",
+    graphView: "图表视图"
   }
 };
 

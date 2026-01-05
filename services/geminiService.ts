@@ -1,16 +1,19 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { Task, TaskStatus } from "../types";
+import { Task, TaskStatus, AIAnalysisResult } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Fix: Removed local process declaration to rely on the environment-provided process.env as per guidelines.
 
-export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> => {
+export const generateProductivityAnalysis = async (tasks: Task[]): Promise<AIAnalysisResult> => {
   const completedTasks = tasks.filter(t => t.status === TaskStatus.COMPLETED || t.totalTime > 0);
   
   if (completedTasks.length === 0) {
     throw new Error("No sufficient data to analyze.");
   }
 
-  // Prepare data for the model
+  // Fix: Initializing GoogleGenAI right before usage to ensure current API key access.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
   const taskSummary = completedTasks.map(t => ({
     title: t.title,
     tags: t.tags ? t.tags.join(', ') : 'None',
@@ -27,9 +30,8 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> 
   `;
 
   try {
-    // Fixed: Updated model name to gemini-3-flash-preview as per text task guidelines
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -43,13 +45,14 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<any> 
             },
             productivityScore: { type: Type.NUMBER },
           },
-          required: ["summary", "suggestions", "productivityScore"],
+          // Fix: Using propertyOrdering instead of required to match SDK example patterns for content generation.
+          propertyOrdering: ["summary", "suggestions", "productivityScore"],
         },
       },
     });
 
     if (response.text) {
-      return JSON.parse(response.text);
+      return JSON.parse(response.text.trim()) as AIAnalysisResult;
     }
     throw new Error("Empty response from AI");
   } catch (error) {

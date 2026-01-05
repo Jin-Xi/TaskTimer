@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from './types';
@@ -37,7 +38,7 @@ const App: React.FC = () => {
       if (stored !== null) return stored === 'true';
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    return false;
+    return true; // Default to dark for premium feel
   });
 
   // Apply Dark Mode class
@@ -184,8 +185,16 @@ const App: React.FC = () => {
   };
 
   const handleDeleteTask = (id: string) => {
+    // If deleted task was a parent, clear its children's dependency
+    setTasks(prev => prev
+      .filter(t => t.id !== id)
+      .map(t => t.parentTaskId === id ? { ...t, parentTaskId: undefined } : t)
+    );
     if (activeTaskId === id) setActiveTaskId(null);
-    setTasks(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleUpdateTask = (id: string, updates: Partial<Task>) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
   };
 
   const handleAddMilestone = (taskId: string, title: string, branch: string = 'main') => {
@@ -307,7 +316,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-transparent font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <input 
         type="file" 
         ref={fileImportRef}
@@ -326,8 +335,8 @@ const App: React.FC = () => {
         />
       )}
 
-      <aside className="w-64 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-r border-slate-200/60 dark:border-slate-800/60 hidden md:flex flex-col transition-colors duration-200 shadow-sm z-10">
-        <div className="p-5 flex items-center gap-3">
+      <aside className="w-64 bg-white dark:bg-slate-900/95 backdrop-blur-md border-r border-slate-200/60 dark:border-slate-800/80 hidden md:flex flex-col transition-colors duration-200 shadow-sm z-10">
+        <div className="p-6 flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
             <TimerIcon className="w-5 h-5" />
           </div>
@@ -341,9 +350,9 @@ const App: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   activeTab === item.id 
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' 
+                    ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shadow-sm' 
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -354,11 +363,11 @@ const App: React.FC = () => {
           })}
         </nav>
 
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-white/50 dark:bg-slate-900/50">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-3 bg-slate-50/50 dark:bg-slate-900/80">
            <div className="grid grid-cols-2 gap-2">
              <button
                onClick={toggleDarkMode}
-               className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider"
+               className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl text-[10px] font-bold bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 transition-all uppercase tracking-wider"
              >
                {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
                {darkMode ? t.lightMode : t.darkMode}
@@ -366,7 +375,7 @@ const App: React.FC = () => {
 
              <button
                onClick={toggleLanguage}
-               className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider"
+               className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl text-[10px] font-bold bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 transition-all uppercase tracking-wider"
              >
                <Languages className="w-3.5 h-3.5" />
                {t.langName}
@@ -376,7 +385,7 @@ const App: React.FC = () => {
            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleExportData}
-                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-[10px] font-bold bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors uppercase tracking-wider"
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-[10px] font-bold bg-white dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-all uppercase tracking-wider"
                 title="Save backup file"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -384,7 +393,7 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={handleImportTrigger}
-                className="flex flex-col items-center justify-center gap-1 p-1.5 rounded-lg text-[10px] font-bold bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-colors uppercase tracking-wider"
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-[10px] font-bold bg-white dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-all uppercase tracking-wider"
                 title="Load backup file"
               >
                 <Upload className="w-3.5 h-3.5" />
@@ -394,10 +403,10 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <div className="flex-1 overflow-hidden flex flex-col p-3 md:p-5 max-w-7xl mx-auto w-full gap-3 md:gap-4 z-0">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50 dark:bg-slate-950">
+        <div className="flex-1 overflow-hidden flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full gap-4 md:gap-6 z-0">
             {activeTab === 'tasks' && (
-                <div className="flex flex-col h-full gap-3 md:gap-4">
+                <div className="flex flex-col h-full gap-4 md:gap-6">
                     <div className="flex-shrink-0">
                          <TaskTimer 
                             language={language}
@@ -436,6 +445,8 @@ const App: React.FC = () => {
                     onAddProject={handleAddProject}
                     onDeleteProject={handleDeleteProject}
                     onAddTask={handleAddTask}
+                    onDeleteTask={handleDeleteTask}
+                    onUpdateTask={handleUpdateTask}
                 />
             )}
 
