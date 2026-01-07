@@ -42,7 +42,7 @@ export interface Task {
   logs: TimeLog[];
   milestones: Milestone[];
   projectId?: string; // Link to project
-  parentTaskId?: string; // Dependency: Only start if parent is COMPLETED
+  parentTaskIds: string[]; // Dependencies: Only start if ALL parents are COMPLETED
 }
 
 export interface AIAnalysisResult {

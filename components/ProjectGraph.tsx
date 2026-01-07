@@ -1,4 +1,3 @@
-
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { Task, TaskStatus } from '../types';
 import { Lock, CheckCircle2, Play, Circle } from 'lucide-react';
@@ -19,19 +18,22 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ tasks, color }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-  // Calculate levels (depth in dependency tree)
   const taskLevels = useMemo(() => {
     const levels: Record<string, number> = {};
-    const taskMap = new Map(tasks.map(t => [t.id, t]));
+    const taskMap = new Map<string, Task>(tasks.map(t => [t.id, t]));
 
     const getLevel = (id: string): number => {
       if (levels[id] !== undefined) return levels[id];
       const task = taskMap.get(id);
-      if (!task || !task.parentTaskId) {
+      
+      if (!task || !task.parentTaskIds || task.parentTaskIds.length === 0) {
         levels[id] = 0;
         return 0;
       }
-      const level = getLevel(task.parentTaskId) + 1;
+
+      // Level is max of parents' levels + 1
+      const parentLevels = task.parentTaskIds.map(pid => getLevel(pid));
+      const level = Math.max(...parentLevels) + 1;
       levels[id] = level;
       return level;
     };
@@ -40,9 +42,8 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ tasks, color }) => {
     return levels;
   }, [tasks]);
 
-  const maxLevel = Math.max(0, ...Object.values(taskLevels));
+  const maxLevel = Math.max(0, ...(Object.values(taskLevels) as number[]));
   
-  // Group tasks by level
   const levelsGroups = useMemo(() => {
     const groups: Record<number, Task[]> = {};
     tasks.forEach(task => {
@@ -71,7 +72,7 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ tasks, color }) => {
     const positions: Record<string, NodePosition> = {};
     const levelWidth = dimensions.width / (maxLevel + 1 || 1);
     
-    Object.entries(levelsGroups).forEach(([levelStr, group]) => {
+    (Object.entries(levelsGroups) as [string, Task[]][]).forEach(([levelStr, group]) => {
       const level = parseInt(levelStr);
       const levelX = levelWidth * level + levelWidth / 2;
       const verticalGap = dimensions.height / (group.length + 1);
@@ -89,20 +90,27 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ tasks, color }) => {
   }, [levelsGroups, dimensions, maxLevel]);
 
   const connections = useMemo(() => {
-    return tasks
-      .filter(t => t.parentTaskId && nodePositions[t.id] && nodePositions[t.parentTaskId])
-      .map(t => ({
-        id: `${t.parentTaskId}-${t.id}`,
-        from: nodePositions[t.parentTaskId!],
-        to: nodePositions[t.id]
-      }));
+    const results: { id: string, from: NodePosition, to: NodePosition }[] = [];
+    tasks.forEach(task => {
+        if (task.parentTaskIds && nodePositions[task.id]) {
+            task.parentTaskIds.forEach(pid => {
+                if (nodePositions[pid]) {
+                    results.push({
+                        id: `${pid}-${task.id}`,
+                        from: nodePositions[pid],
+                        to: nodePositions[task.id]
+                    });
+                }
+            });
+        }
+    });
+    return results;
   }, [tasks, nodePositions]);
 
   if (tasks.length === 0) return null;
 
   return (
     <div ref={containerRef} className="relative w-full h-80 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800">
-      {/* SVG for connections */}
       <svg className="absolute inset-0 z-0 pointer-events-none w-full h-full">
         <defs>
           <marker id={`arrow-${color}`} markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -135,10 +143,11 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ tasks, color }) => {
         })}
       </svg>
 
-      {/* Nodes */}
-      {Object.values(nodePositions).map(pos => {
+      {(Object.values(nodePositions) as NodePosition[]).map(pos => {
         const task = tasks.find(t => t.id === pos.id)!;
-        const isLocked = task.parentTaskId ? (tasks.find(pt => pt.id === task.parentTaskId)?.status !== TaskStatus.COMPLETED) : false;
+        const isLocked = task.parentTaskIds && task.parentTaskIds.length > 0 
+            ? task.parentTaskIds.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED)
+            : false;
         const isCompleted = task.status === TaskStatus.COMPLETED;
         const isRunning = task.status === TaskStatus.RUNNING;
 
@@ -175,10 +184,9 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ tasks, color }) => {
               </div>
             </div>
             
-            {/* Tooltip on hover */}
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block z-20 w-48 p-2 bg-slate-900 text-white text-[10px] rounded shadow-xl pointer-events-none">
                 {task.description || "No description"}
-                {isLocked && <div className="text-amber-400 mt-1">Waiting for parent task...</div>}
+                {isLocked && <div className="text-amber-400 mt-1">Waiting for parent tasks...</div>}
             </div>
           </div>
         );

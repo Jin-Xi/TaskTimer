@@ -15,11 +15,10 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
   const [isFocusMode, setIsFocusMode] = useState(false);
   
-  // Language State
   const [language, setLanguage] = useState<'en' | 'zh'>(() => {
     return (localStorage.getItem('chrono_lang') as 'en' | 'zh') || 'zh';
   });
@@ -31,17 +30,15 @@ const App: React.FC = () => {
   });
   const fileImportRef = useRef<HTMLInputElement>(null);
   
-  // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('chrono_dark_mode');
       if (stored !== null) return stored === 'true';
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    return true; // Default to dark for premium feel
+    return true;
   });
 
-  // Apply Dark Mode class
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -52,14 +49,15 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Persist language
   useEffect(() => {
     localStorage.setItem('chrono_lang', language);
   }, [language]);
 
-  // Load data on mount
   useEffect(() => {
-    const loadedTasks = loadTasks();
+    const loadedTasks = loadTasks().map(task => ({
+      ...task,
+      parentTaskIds: task.parentTaskIds || ((task as any).parentTaskId ? [(task as any).parentTaskId] : [])
+    }));
     setTasks(loadedTasks);
     
     const loadedCategories = loadCategories(DEFAULT_CATEGORIES);
@@ -67,27 +65,23 @@ const App: React.FC = () => {
 
     const savedProjects = localStorage.getItem('chronoflow_projects');
     if (savedProjects) setProjects(JSON.parse(savedProjects));
-
-    const running = loadedTasks.find(t => t.status === TaskStatus.RUNNING);
-    if (running) setActiveTaskId(running.id);
   }, []);
 
-  // Save tasks on change
   useEffect(() => {
     if (tasks.length > 0) saveTasks(tasks);
   }, [tasks]);
 
-  // Save projects on change
   useEffect(() => {
     localStorage.setItem('chronoflow_projects', JSON.stringify(projects));
   }, [projects]);
 
-  // Save categories on change
   useEffect(() => {
     if (categories.length > 0) saveCategories(categories);
   }, [categories]);
 
-  const activeTask = tasks.find(t => t.id === activeTaskId) || null;
+  // Derive running tasks for the timer dashboard
+  const runningTasks = tasks.filter(t => t.status === TaskStatus.RUNNING);
+  const activeFocusTask = tasks.find(t => t.id === focusTaskId) || null;
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
   const toggleLanguage = () => setLanguage(language === 'en' ? 'zh' : 'en');
@@ -112,9 +106,13 @@ const App: React.FC = () => {
         
         if (validatedTasks) {
           if (window.confirm(`Found ${validatedTasks.length} tasks in file. This will REPLACE your current tasks. Continue?`)) {
-            setTasks(validatedTasks);
-            setActiveTaskId(null); 
-            saveTasks(validatedTasks);
+            const mapped = validatedTasks.map(t => ({
+              ...t,
+              parentTaskIds: t.parentTaskIds || ((t as any).parentTaskId ? [(t as any).parentTaskId] : [])
+            }));
+            setTasks(mapped);
+            setFocusTaskId(null); 
+            saveTasks(mapped);
           }
         }
       } catch (error) {
@@ -134,7 +132,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Category Management
   const handleAddCategory = (name: string, color: string) => {
     if (!categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
       setCategories(prev => [...prev, { id: crypto.randomUUID(), name, color }]);
@@ -146,7 +143,6 @@ const App: React.FC = () => {
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
-  // Project Management
   const handleAddProject = (name: string, description: string, color: string) => {
     const newProj: Project = {
         id: crypto.randomUUID(),
@@ -161,11 +157,11 @@ const App: React.FC = () => {
   const handleDeleteProject = (id: string) => {
       if (window.confirm(t.deleteProjectWarning)) {
           setProjects(prev => prev.filter(p => p.id !== id));
-          setTasks(prev => prev.map(t => t.projectId === id ? { ...t, projectId: undefined, parentTaskId: undefined } : t));
+          setTasks(prev => prev.map(t => t.projectId === id ? { ...t, projectId: undefined, parentTaskIds: [] } : t));
       }
   };
 
-  const handleAddTask = (title: string, description: string, tags: string[], projectId?: string, parentTaskId?: string) => {
+  const handleAddTask = (title: string, description: string, tags: string[], projectId?: string, parentTaskIds: string[] = []) => {
     const finalTags = tags.length > 0 ? tags : (categories.length > 0 ? [categories[0].name] : ['General']);
 
     const newTask: Task = {
@@ -179,18 +175,20 @@ const App: React.FC = () => {
       logs: [],
       milestones: [],
       projectId,
-      parentTaskId
+      parentTaskIds
     };
     setTasks(prev => [newTask, ...prev]);
   };
 
   const handleDeleteTask = (id: string) => {
-    // If deleted task was a parent, clear its children's dependency
     setTasks(prev => prev
       .filter(t => t.id !== id)
-      .map(t => t.parentTaskId === id ? { ...t, parentTaskId: undefined } : t)
+      .map(t => ({
+        ...t,
+        parentTaskIds: (t.parentTaskIds || []).filter(pid => pid !== id)
+      }))
     );
-    if (activeTaskId === id) setActiveTaskId(null);
+    if (focusTaskId === id) setFocusTaskId(null);
   };
 
   const handleUpdateTask = (id: string, updates: Partial<Task>) => {
@@ -235,35 +233,25 @@ const App: React.FC = () => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
 
-    // Check dependency
-    if (task.parentTaskId) {
-        const parent = tasks.find(t => t.id === task.parentTaskId);
-        if (parent && parent.status !== TaskStatus.COMPLETED) {
-            alert(language === 'zh' ? `请先完成：${parent.title}` : `Complete: ${parent.title} first`);
+    // Check for running tasks limit
+    const currentRunningCount = tasks.filter(t => t.status === TaskStatus.RUNNING).length;
+    if (task.status !== TaskStatus.RUNNING && currentRunningCount >= 3) {
+      alert(t.taskLimitReached);
+      return;
+    }
+
+    if (task.parentTaskIds && task.parentTaskIds.length > 0) {
+        const unfinishedParents = tasks.filter(t => task.parentTaskIds.includes(t.id) && t.status !== TaskStatus.COMPLETED);
+        if (unfinishedParents.length > 0) {
+            const names = unfinishedParents.map(p => p.title).join(', ');
+            alert(language === 'zh' ? `请先完成前置任务：${names}` : `Complete these first: ${names}`);
             return;
         }
     }
 
+    setFocusTaskId(id);
     setTasks(prev => prev.map(t => {
-      if (t.status === TaskStatus.RUNNING && t.id !== id) {
-        const lastLog = t.logs[t.logs.length - 1];
-        const newLogs = [...t.logs];
-        if (lastLog && !lastLog.end) {
-            newLogs[newLogs.length - 1] = { ...lastLog, end: Date.now() };
-        }
-        return {
-          ...t,
-          status: TaskStatus.PAUSED,
-          totalTime: t.totalTime + (Date.now() - (lastLog?.start || Date.now())),
-          logs: newLogs
-        };
-      }
-      return t;
-    }));
-
-    setActiveTaskId(id);
-    setTasks(prev => prev.map(t => {
-      if (t.id === id) {
+      if (t.id === id && t.status !== TaskStatus.RUNNING) {
         return {
           ...t,
           status: TaskStatus.RUNNING,
@@ -312,7 +300,7 @@ const App: React.FC = () => {
     setTasks(prev => prev.map(t => 
       t.id === id ? { ...t, status: TaskStatus.COMPLETED } : t
     ));
-    if (activeTaskId === id) setActiveTaskId(null);
+    if (focusTaskId === id) setFocusTaskId(null);
   };
 
   return (
@@ -325,9 +313,10 @@ const App: React.FC = () => {
         onChange={handleFileImport}
       />
 
-      {isFocusMode && activeTask && (
+      {isFocusMode && activeFocusTask && (
         <FullscreenFocus 
-          activeTask={activeTask}
+          language={language}
+          activeTask={activeFocusTask}
           onToggleStatus={handleToggleTaskStatus}
           onExit={() => setIsFocusMode(false)}
           backgroundImage={focusBgImage}
@@ -410,12 +399,15 @@ const App: React.FC = () => {
                     <div className="flex-shrink-0">
                          <TaskTimer 
                             language={language}
-                            activeTask={activeTask}
+                            activeTasks={runningTasks}
                             onStart={handleStartTask}
                             onPause={handlePauseTask}
                             onComplete={handleCompleteTask}
                             onAddMilestone={handleAddMilestone}
-                            onEnterFocusMode={() => setIsFocusMode(true)}
+                            onEnterFocusMode={(taskId) => {
+                              setFocusTaskId(taskId);
+                              setIsFocusMode(true);
+                            }}
                         />
                     </div>
                     <div className="flex-1 min-h-0">
@@ -423,7 +415,7 @@ const App: React.FC = () => {
                             language={language}
                             tasks={tasks} 
                             projects={projects}
-                            activeTaskId={activeTaskId}
+                            activeTaskId={null} // activeTaskId is now multiple in practice
                             onAdd={handleAddTask}
                             onDelete={handleDeleteTask}
                             onSelect={handleStartTask}

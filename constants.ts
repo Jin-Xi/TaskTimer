@@ -15,8 +15,8 @@ export const TRANSLATIONS = {
     export: "Export",
     import: "Import",
     langName: "简体中文",
-    noActiveTask: "No active task",
-    selectTaskToStart: "Select a task from the list to start timing.",
+    noActiveTask: "No active tasks",
+    selectTaskToStart: "Select up to 3 tasks from the list to start timing simultaneously.",
     taskCreated: "Task Created",
     newMilestone: "New milestone...",
     add: "Add",
@@ -65,7 +65,8 @@ export const TRANSLATIONS = {
     dataExplanation: "We only send task titles, tags, and durations. No personal information or full logs are uploaded.",
     apiKeyRequired: "API Key required in environment (process.env.API_KEY)",
     listView: "List View",
-    graphView: "Graph View"
+    graphView: "Graph View",
+    taskLimitReached: "Maximum 3 tasks can be timed simultaneously. Please pause one before starting another."
   },
   zh: {
     tasks: "任务",
@@ -78,7 +79,7 @@ export const TRANSLATIONS = {
     import: "导入数据",
     langName: "English",
     noActiveTask: "暂无活动任务",
-    selectTaskToStart: "从列表中选择一个任务开始计时。",
+    selectTaskToStart: "从列表中选择任务开始计时（最多支持3个任务同时计时）。",
     taskCreated: "任务已创建",
     newMilestone: "新里程碑...",
     add: "添加",
@@ -127,7 +128,8 @@ export const TRANSLATIONS = {
     dataExplanation: "我们仅发送任务标题、标签和耗时。不上传个人隐私或完整日志。",
     apiKeyRequired: "需要环境中的 API Key (process.env.API_KEY)",
     listView: "列表视图",
-    graphView: "图表视图"
+    graphView: "图表视图",
+    taskLimitReached: "最多只能同时对3个任务进行计时。请先暂停一个任务后再开始新任务。"
   }
 };
 

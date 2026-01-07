@@ -9,7 +9,7 @@ interface TaskListProps {
   tasks: Task[];
   projects: Project[];
   activeTaskId: string | null;
-  onAdd: (title: string, description: string, tags: string[], projectId?: string, parentTaskId?: string) => void;
+  onAdd: (title: string, description: string, tags: string[], projectId?: string, parentTaskIds?: string[]) => void;
   onDelete: (id: string) => void;
   onSelect: (id: string) => void;
   onAddMilestone: (taskId: string, title: string, branch: string) => void;
@@ -102,7 +102,9 @@ export const TaskList: React.FC<TaskListProps> = ({
   const renderTask = (task: Task) => {
     const isExpanded = expandedTasks.has(task.id);
     const tags = task.tags || [];
-    const isLocked = task.parentTaskId ? (tasks.find(pt => pt.id === task.parentTaskId)?.status !== TaskStatus.COMPLETED) : false;
+    const isLocked = task.parentTaskIds && task.parentTaskIds.length > 0 
+        ? task.parentTaskIds.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED)
+        : false;
 
     return (
     <div 
@@ -142,7 +144,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <h4 className={`text-sm font-medium truncate ${task.status === TaskStatus.COMPLETED ? 'line-through text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
                     {task.title}
                 </h4>
-                {isLocked && <span className="text-[10px] text-slate-400 flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t.waitingForParent}</span>}
+                {isLocked && <span className="text-[10px] text-slate-400 flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded shrink-0">{t.waitingForParent}</span>}
             </div>
             <div className="flex items-center gap-2 mt-1">
               {tags.map(tag => (
@@ -167,7 +169,22 @@ export const TaskList: React.FC<TaskListProps> = ({
 
       {isExpanded && (
         <div className="px-4 pb-4 pt-1 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 rounded-b-lg">
-           {task.description && <div className="text-xs text-slate-500 mb-4 px-2 italic">{task.description}</div>}
+           {task.description && <div className="text-xs text-slate-500 mb-2 px-2 italic">{task.description}</div>}
+           {task.parentTaskIds && task.parentTaskIds.length > 0 && (
+             <div className="mb-3 px-2">
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t.dependsOn}</span>
+               <div className="flex flex-wrap gap-1">
+                 {task.parentTaskIds.map(pid => {
+                    const pt = tasks.find(t => t.id === pid);
+                    return (
+                      <span key={pid} className={`text-[9px] px-2 py-0.5 rounded-full border ${pt?.status === TaskStatus.COMPLETED ? 'bg-green-100 dark:bg-green-900/20 text-green-600 border-green-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200'}`}>
+                        {pt?.title || 'Unknown'}
+                      </span>
+                    );
+                 })}
+               </div>
+             </div>
+           )}
            <div className="relative pl-4 space-y-4 ml-2 border-l-2 border-slate-200 dark:border-slate-700">
               <div className="relative">
                  <div className="absolute -left-[21px] bg-slate-200 dark:bg-slate-700 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900"></div>

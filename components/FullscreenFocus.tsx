@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Play, Pause, X, Image as ImageIcon, Upload } from 'lucide-react';
+import { Play, Pause, X, Image as ImageIcon, Calendar, Clock } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { Button } from './Button';
 
 interface FullscreenFocusProps {
+  language: 'en' | 'zh';
   activeTask: Task | null;
   onToggleStatus: (taskId: string) => void;
   onExit: () => void;
@@ -12,6 +13,7 @@ interface FullscreenFocusProps {
 }
 
 export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({ 
+  language,
   activeTask, 
   onToggleStatus, 
   onExit, 
@@ -19,9 +21,11 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
   onSetBackgroundImage 
 }) => {
   const [elapsed, setElapsed] = useState(0);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Task timer interval
     let interval: any;
 
     if (activeTask && activeTask.status === TaskStatus.RUNNING) {
@@ -39,7 +43,15 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
       setElapsed(0);
     }
 
-    return () => clearInterval(interval);
+    // Real-world clock interval
+    const clockInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(clockInterval);
+    };
   }, [activeTask]);
 
   const formatTime = (ms: number) => {
@@ -63,6 +75,20 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
     }
   };
 
+  const formattedDate = currentTime.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', {
+    year: 'numeric',
+    month: language === 'zh' ? 'long' : 'short',
+    day: 'numeric',
+    weekday: language === 'zh' ? 'long' : 'short',
+  });
+
+  const formattedClock = currentTime.toLocaleTimeString(language === 'zh' ? 'zh-CN' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
   if (!activeTask) return null;
 
   return (
@@ -80,6 +106,18 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
       </div>
 
       <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm" />
+
+      {/* Top Left: Current Date & Time */}
+      <div className="absolute top-8 left-8 z-30 flex flex-col items-start gap-1 animate-in fade-in slide-in-from-left-4 duration-700">
+        <div className="flex items-center gap-2 px-4 py-2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
+          <Calendar className="w-4 h-4 text-indigo-400" />
+          <span className="text-sm font-semibold tracking-wide opacity-90">{formattedDate}</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl ml-2">
+          <Clock className="w-4 h-4 text-indigo-400" />
+          <span className="text-xl font-mono font-bold tracking-widest">{formattedClock}</span>
+        </div>
+      </div>
 
       <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-4xl px-6 text-center">
         
