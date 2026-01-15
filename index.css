@@ -1,8 +1,7 @@
 
-/* 
-   Note: @tailwind directives are removed as they are handled by the CDN script.
-   Standard CSS here will still be applied to the document.
-*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* 额外的点阵背景辅助类 */
 .bg-dots {
