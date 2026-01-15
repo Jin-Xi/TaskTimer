@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { Play, Pause, Square, Clock, Flag, Maximize2, ChevronRight } from 'lucide-react';
+import { Play, Pause, Square, Clock, Flag, Maximize2, CheckCircle2 } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { Button } from './Button';
 import { TRANSLATIONS } from '../constants';
+import { formatTime } from '../utils/timeUtils';
 
 interface SingleTimerProps {
   language: 'en' | 'zh';
@@ -26,66 +27,64 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
       const currentLog = task.logs[task.logs.length - 1];
       const startTime = currentLog ? currentLog.start : Date.now();
       setElapsed(task.totalTime + (Date.now() - startTime));
-      interval = setInterval(() => setElapsed(task.totalTime + (Date.now() - startTime)), 1000);
+      interval = setInterval(() => setElapsed(task.totalTime + (Date.now() - startTime)), 100);
     } else {
       setElapsed(task.totalTime);
     }
     return () => clearInterval(interval);
   }, [task]);
 
-  const formatTime = (ms: number) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-  };
+  const isRunning = task.status === TaskStatus.RUNNING;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-indigo-100 dark:border-slate-800 p-4 flex flex-col gap-3 relative overflow-hidden transition-all hover:shadow-md">
-      <div className="absolute top-0 left-0 w-full h-1 bg-slate-100 dark:bg-slate-800">
-        <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: task.status === TaskStatus.RUNNING ? '100%' : '0%' }} />
+    <div className={`group bg-white dark:bg-slate-900 rounded-2xl shadow-sm border ${isRunning ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-800'} p-5 flex flex-col gap-4 relative overflow-hidden transition-all hover:shadow-xl hover:-translate-y-0.5`}>
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800">
+        <div className={`h-full ${isRunning ? 'bg-indigo-500' : 'bg-slate-400'} transition-all duration-700`} style={{ width: isRunning ? '100%' : '0%' }} />
       </div>
       
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{task.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-black text-slate-900 dark:text-white truncate tracking-tight">{task.title}</h3>
+            {isRunning && <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>}
+          </div>
           {task.tags && task.tags.length > 0 && (
-             <div className="flex gap-1 mt-1">
-               <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium">
-                 {task.tags[0]}
-               </span>
+             <div className="flex flex-wrap gap-1 mt-1.5">
+               {task.tags.map(tag => (
+                 <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                   {tag}
+                 </span>
+               ))}
              </div>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <button onClick={onEnterFocusMode} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors">
-            <Maximize2 className="w-3.5 h-3.5" />
+          <button onClick={onEnterFocusMode} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+            <Maximize2 className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <div className="text-3xl font-mono font-bold text-slate-900 dark:text-white text-center tabular-nums py-1">
+      <div className={`text-4xl font-mono font-black text-center tabular-nums py-2 ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>
         {formatTime(elapsed)}
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-slate-50 dark:border-slate-800 pt-3">
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between gap-3 border-t border-slate-50 dark:border-slate-800 pt-4 mt-auto">
+        <div className="flex gap-2">
           <Button 
-            variant={task.status === TaskStatus.RUNNING ? "secondary" : "primary"} 
+            variant={isRunning ? "secondary" : "primary"} 
             size="sm" 
-            onClick={() => task.status === TaskStatus.RUNNING ? onPause(task.id) : onStart(task.id)} 
-            className="px-3"
+            onClick={() => isRunning ? onPause(task.id) : onStart(task.id)} 
+            className="w-12"
           >
-            {task.status === TaskStatus.RUNNING ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
+            {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onComplete(task.id)} className="text-slate-400 hover:text-red-500 px-2">
-            <Square className="w-3.5 h-3.5" />
+          <Button variant="ghost" size="sm" onClick={() => onComplete(task.id)} className="text-slate-400 hover:text-green-600 px-2" title="Mark as Complete">
+            <CheckCircle2 className="w-5 h-5" />
           </Button>
         </div>
-        <Button variant="ghost" size="sm" onClick={onAddMilestone} className="text-indigo-600 dark:text-indigo-400 px-2">
-          <Flag className="w-3.5 h-3.5" />
+        <Button variant="ghost" size="sm" onClick={onAddMilestone} className="text-slate-400 hover:text-indigo-600 px-2" title="Add Milestone">
+          <Flag className="w-4 h-4" />
         </Button>
       </div>
     </div>
@@ -94,7 +93,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
 
 interface TaskTimerProps {
   language: 'en' | 'zh';
-  activeTasks: Task[]; // Changed from activeTask to activeTasks
+  activeTasks: Task[];
   onStart: (taskId: string) => void;
   onPause: (taskId: string) => void;
   onComplete: (taskId: string) => void;
@@ -121,25 +120,25 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
 
   if (activeTasks.length === 0) {
     return (
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-center h-44 transition-all duration-200">
-        <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mb-4">
-          <Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-sm border-2 border-dashed border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center justify-center text-center min-h-[180px] transition-all duration-300">
+        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+          <Clock className="w-8 h-8 text-slate-300 dark:text-slate-600" />
         </div>
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">{t.noActiveTask}</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-xs mt-1 max-w-xs">{t.selectTaskToStart}</p>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t.noActiveTask}</h3>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1.5 max-w-sm leading-relaxed">{t.selectTaskToStart}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
-      <div className={`grid gap-4 ${
+    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className={`grid gap-5 ${
         activeTasks.length === 1 ? 'grid-cols-1' : 
         activeTasks.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 
         'grid-cols-1 md:grid-cols-3'
       }`}>
         {activeTasks.map(task => (
-          <div key={task.id} className="flex flex-col gap-2">
+          <div key={task.id} className="flex flex-col gap-3">
             <SingleTimer 
               language={language}
               task={task}
@@ -152,17 +151,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             {showMilestoneInput === task.id && (
               <form 
                 onSubmit={(e) => handleMilestoneSubmit(task.id, e)} 
-                className="flex gap-2 animate-in slide-in-from-top-2 bg-indigo-50 dark:bg-slate-800 p-2 rounded-lg border border-indigo-100 dark:border-slate-700"
+                className="flex gap-2 animate-in slide-in-from-top-2 bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl border border-indigo-100 dark:border-slate-700 shadow-sm"
               >
                 <input 
                   autoFocus 
                   placeholder={t.newMilestone} 
-                  className="w-full bg-transparent outline-none text-xs text-slate-800 dark:text-white" 
+                  className="w-full bg-transparent outline-none text-sm text-slate-800 dark:text-white font-medium" 
                   value={milestoneTitle} 
                   onChange={(e) => setMilestoneTitle(e.target.value)} 
                 />
-                <Button type="submit" size="sm" className="py-1 px-2 text-[10px]">{t.add}</Button>
-                <button type="button" onClick={() => setShowMilestoneInput(null)} className="text-[10px] text-slate-400 hover:text-slate-600">{t.cancel}</button>
+                <Button type="submit" size="sm" className="py-1.5 px-3 text-xs">{t.add}</Button>
+                <button type="button" onClick={() => setShowMilestoneInput(null)} className="text-xs font-bold text-slate-400 hover:text-slate-600 px-2 transition-colors uppercase">{t.cancel}</button>
               </form>
             )}
           </div>

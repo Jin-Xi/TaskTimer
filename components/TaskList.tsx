@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
-import { Play, CheckCircle2, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, Flag, GitBranch, Pencil, X, Check, Tags as TagsIcon, GripVertical, ListTodo, Lock, Folder } from 'lucide-react';
+import { Play, CheckCircle2, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, X, Tags as TagsIcon, ListTodo, Lock, Folder, Settings2 } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from '../types';
 import { Button } from './Button';
+import { Badge } from './Badge';
 import { TAG_COLORS, TRANSLATIONS } from '../constants';
 
 interface TaskListProps {
@@ -34,22 +36,47 @@ export const TaskList: React.FC<TaskListProps> = ({
   onDeleteCategory
 }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [isManagingCategories, setIsManagingCategories] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newDescription, setNewDescription] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('indigo');
+
   const t = TRANSLATIONS[language];
+
+  const openAddForm = () => {
+    setIsAdding(true);
+    setIsManagingCategories(false); 
+    if (selectedTags.length === 0 && categories.length > 0) {
+      setSelectedTags([categories[0].name]);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTitle.trim()) {
-      onAdd(newTitle.trim(), newDescription.trim(), selectedTags);
+      onAdd(newTitle.trim(), '', selectedTags);
       setNewTitle('');
-      setNewDescription('');
-      setSelectedTags([]);
       setIsAdding(false);
+    }
+  };
+
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newCatName.trim()) {
+      onAddCategory(newCatName.trim(), newCatColor);
+      setNewCatName('');
+    }
+  };
+
+  const toggleTag = (tagName: string) => {
+    if (selectedTags.includes(tagName)) {
+      setSelectedTags(selectedTags.filter(t => t !== tagName));
+    } else {
+      setSelectedTags([...selectedTags, tagName]);
     }
   };
 
@@ -78,10 +105,21 @@ export const TaskList: React.FC<TaskListProps> = ({
     return `${min}m`;
   };
 
-  const getTagStyle = (tagName: string) => {
+  const getTagColor = (tagName: string) => {
       const cat = categories.find(c => c.name === tagName);
-      const color = cat ? cat.color : 'slate';
-      return `bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 border-${color}-200 dark:border-${color}-800`;
+      return cat ? cat.color : 'slate';
+  };
+
+  // Color mapping for Tailwind classes to ensure they are parsed correctly
+  const tailwindColorMap: Record<string, string> = {
+    indigo: 'bg-indigo-500',
+    emerald: 'bg-emerald-500',
+    slate: 'bg-slate-500',
+    rose: 'bg-rose-500',
+    amber: 'bg-amber-500',
+    cyan: 'bg-cyan-500',
+    violet: 'bg-violet-500',
+    fuchsia: 'bg-fuchsia-500'
   };
 
   const groupedTasks: {[key: string]: Task[]} = {};
@@ -144,13 +182,17 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <h4 className={`text-sm font-medium truncate ${task.status === TaskStatus.COMPLETED ? 'line-through text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
                     {task.title}
                 </h4>
-                {isLocked && <span className="text-[10px] text-slate-400 flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded shrink-0">{t.waitingForParent}</span>}
+                {isLocked && (
+                  <Badge color="slate" className="gap-1">
+                     {t.waitingForParent}
+                  </Badge>
+                )}
             </div>
             <div className="flex items-center gap-2 mt-1">
               {tags.map(tag => (
-                  <span key={tag} className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${getTagStyle(tag)}`}>
+                  <Badge key={tag} color={getTagColor(tag)}>
                       {tag}
-                  </span>
+                  </Badge>
               ))}
               <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">{formatDuration(task.totalTime)}</span>
             </div>
@@ -176,10 +218,11 @@ export const TaskList: React.FC<TaskListProps> = ({
                <div className="flex flex-wrap gap-1">
                  {task.parentTaskIds.map(pid => {
                     const pt = tasks.find(t => t.id === pid);
+                    const statusColor = pt?.status === TaskStatus.COMPLETED ? 'green' : 'slate';
                     return (
-                      <span key={pid} className={`text-[9px] px-2 py-0.5 rounded-full border ${pt?.status === TaskStatus.COMPLETED ? 'bg-green-100 dark:bg-green-900/20 text-green-600 border-green-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200'}`}>
+                      <Badge key={pid} color={statusColor} className="text-[9px]">
                         {pt?.title || 'Unknown'}
-                      </span>
+                      </Badge>
                     );
                  })}
                </div>
@@ -208,19 +251,28 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full overflow-hidden transition-colors duration-200">
-      <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
-        <div className="flex items-center gap-3">
-             <h3 className="font-semibold text-slate-800 dark:text-slate-200">{t.taskExplorer}</h3>
-             <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5 ml-2">
+      <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="flex items-center justify-between sm:justify-start gap-3 flex-wrap">
+             <h3 className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{t.taskExplorer}</h3>
+             <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5">
                 <button onClick={() => setFilter('all')} className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}>{t.all}</button>
                 <button onClick={() => setFilter('active')} className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}>{t.active}</button>
                 <button onClick={() => setFilter('completed')} className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}>{t.done}</button>
              </div>
         </div>
         
-        <Button size="sm" onClick={() => setIsAdding(!isAdding)} variant="primary">
-          <Plus className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center justify-end gap-2">
+          <button 
+            onClick={() => { setIsManagingCategories(!isManagingCategories); setIsAdding(false); }} 
+            className={`p-1.5 transition-colors ${isManagingCategories ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg' : 'text-slate-400 hover:text-indigo-600'}`}
+            title={t.manageCategories}
+          >
+            <Settings2 className="w-5 h-5" />
+          </button>
+          <Button size="sm" onClick={openAddForm} variant="primary">
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {isAdding && (
@@ -233,6 +285,25 @@ export const TaskList: React.FC<TaskListProps> = ({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
           />
+          
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'zh' ? '选择分类' : 'Select Categories'}</span>
+            </div>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
+              {categories.map(cat => (
+                <Badge 
+                  key={cat.id} 
+                  color={cat.color} 
+                  onClick={() => toggleTag(cat.name)}
+                  className={`py-1 px-3 text-[11px] cursor-pointer ring-offset-2 dark:ring-offset-slate-900 transition-all ${selectedTags.includes(cat.name) ? 'ring-2 ring-indigo-500 shadow-md scale-105 opacity-100' : 'opacity-60 grayscale-[0.5]'}`}
+                >
+                  {cat.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setIsAdding(false)}>{t.cancel}</Button>
             <Button type="submit" size="sm">{t.add}</Button>
@@ -240,7 +311,79 @@ export const TaskList: React.FC<TaskListProps> = ({
         </form>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {/* Inline Category Management Panel */}
+      {isManagingCategories && (
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 animate-in slide-in-from-top-2 overflow-hidden flex flex-col max-h-[60vh]">
+          <div className="flex items-center justify-between mb-4 shrink-0">
+             <div className="flex items-center gap-2">
+                <TagsIcon className="w-4 h-4 text-indigo-500" />
+                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{t.manageCategories}</h4>
+             </div>
+             <button onClick={() => setIsManagingCategories(false)} className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
+             </button>
+          </div>
+
+          <div className="space-y-6 overflow-y-auto pr-1 custom-scrollbar">
+             {/* List of existing categories */}
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+               {categories.map(cat => (
+                 <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <Badge color={cat.color}>{cat.name}</Badge>
+                    <button 
+                      onClick={() => { if (confirm(t.deleteCategoryConfirm)) onDeleteCategory(cat.id); }} 
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                 </div>
+               ))}
+             </div>
+
+             {/* Add New Category form section */}
+             <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 px-1">{t.newCategory}</h5>
+                <form onSubmit={handleAddCategory} className="flex flex-col gap-4">
+                   <div className="space-y-3">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] text-slate-500 px-1">{t.categoryName}</label>
+                        <input 
+                          type="text" 
+                          required 
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" 
+                          value={newCatName}
+                          onChange={e => setNewCatName(e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] text-slate-500 px-1">{t.selectColor}</label>
+                        <div className="flex flex-wrap gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                           {TAG_COLORS.map(c => (
+                              <button 
+                                type="button" 
+                                key={c} 
+                                onClick={() => setNewCatColor(c)} 
+                                className={`w-6 h-6 rounded-full ${tailwindColorMap[c]} border-2 transition-all ${newCatColor === c ? 'border-white dark:border-slate-400 scale-125 ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`} 
+                                aria-label={`Select ${c} color`}
+                              />
+                           ))}
+                        </div>
+                      </div>
+                   </div>
+                   
+                   <div className="flex justify-end pt-2 pb-4">
+                      <Button type="submit" size="md" className="w-full sm:w-auto shadow-lg shadow-indigo-500/20">
+                        {t.add}
+                      </Button>
+                   </div>
+                </form>
+             </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
         {Object.entries(groupedTasks).map(([pid, pTasks]) => {
             const project = projects.find(p => p.id === pid);
             const total = pTasks.length;
@@ -249,19 +392,19 @@ export const TaskList: React.FC<TaskListProps> = ({
 
             return (
                 <div key={pid} className="space-y-3">
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-lg bg-${project?.color || 'indigo'}-100 dark:bg-${project?.color || 'indigo'}-900/30 flex items-center justify-center`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                            <div className={`shrink-0 w-8 h-8 rounded-lg bg-${project?.color || 'indigo'}-100 dark:bg-${project?.color || 'indigo'}-900/30 flex items-center justify-center`}>
                                 <Folder className={`w-4 h-4 text-${project?.color || 'indigo'}-600 dark:text-${project?.color || 'indigo'}-400`} />
                             </div>
-                            <div>
-                                <h4 className="font-bold text-slate-800 dark:text-slate-100">{project?.name || 'Unknown Project'}</h4>
-                                <p className="text-[10px] text-slate-500 uppercase tracking-wide">{completed} {language === 'zh' ? '之' : 'of'} {total} {t.stepsCompleted}</p>
+                            <div className="min-w-0">
+                                <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate">{project?.name || 'Unknown Project'}</h4>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wide truncate">{completed} {language === 'zh' ? '之' : 'of'} {total} {t.stepsCompleted}</p>
                             </div>
                         </div>
-                        <div className="text-right">
-                             <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{progress}%</span>
-                             <div className="w-32 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mt-1 overflow-hidden">
+                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2">
+                             <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">{progress}%</span>
+                             <div className="w-24 sm:w-32 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                 <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${progress}%` }} />
                              </div>
                         </div>
@@ -277,7 +420,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                         <ListTodo className="w-4 h-4 text-slate-500" />
                     </div>
-                    <h4 className="font-bold text-slate-600 dark:text-slate-400">{t.standaloneTasks}</h4>
+                    <h4 className="font-bold text-slate-600 dark:text-slate-400 uppercase text-xs tracking-wider">{t.standaloneTasks}</h4>
                 </div>
                 <div className="space-y-2">{standalone.map(renderTask)}</div>
             </div>
@@ -287,7 +430,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             <div className="h-full flex flex-col items-center justify-center text-center py-12">
                 <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4"><ListTodo className="w-8 h-8 text-slate-300" /></div>
                 <h3 className="text-slate-900 dark:text-white font-medium">{t.noTasksYet}</h3>
-                <p className="text-slate-500 text-sm mt-1">{t.createTaskHint}</p>
+                <p className="text-slate-500 text-sm mt-1 px-4">{t.createTaskHint}</p>
             </div>
         )}
       </div>

@@ -1,17 +1,19 @@
-
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Fix: Switched from 'vite' to 'vitest/config' and removed the problematic triple-slash reference 
-// to ensure the 'test' property is correctly typed without environment conflicts.
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
     environment: 'jsdom',
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+    },
   },
   build: {
     outDir: 'dist',
     sourcemap: true
   }
-});
+} as any);

@@ -16,6 +16,7 @@ export default {
       },
       backgroundImage: {
         'dot-pattern': "radial-gradient(#cbd5e1 1px, transparent 1px)",
+        'dot-pattern-dark': "radial-gradient(#1e293b 1px, transparent 1px)",
       }
     },
   },

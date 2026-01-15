@@ -2,9 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-
-// 在 AI Studio 预览环境中，通常不需要在这里显式 import CSS 
-// 样式由 index.html 中的 Tailwind CDN 处理
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

@@ -2,16 +2,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Task, TaskStatus, AIAnalysisResult } from "../types";
 
-// Fix: Removed local process declaration to rely on the environment-provided process.env as per guidelines.
-
 export const generateProductivityAnalysis = async (tasks: Task[]): Promise<AIAnalysisResult> => {
   const completedTasks = tasks.filter(t => t.status === TaskStatus.COMPLETED || t.totalTime > 0);
   
   if (completedTasks.length === 0) {
-    throw new Error("No sufficient data to analyze.");
+    throw new Error("No sufficient data to analyze. Please complete or track some tasks first.");
   }
 
-  // Fix: Initializing GoogleGenAI right before usage to ensure current API key access.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const taskSummary = completedTasks.map(t => ({
@@ -22,17 +19,22 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<AIAna
   }));
 
   const prompt = `
-    Analyze the following task history and provide productivity insights.
-    Data: ${JSON.stringify(taskSummary)}
+    Analyze the following task history and provide a high-level productivity coaching report.
+    Historical Task Data: ${JSON.stringify(taskSummary)}
     
-    Provide a summary of where time was spent, suggest improvements for time management based on the tags and durations, and give a productivity score (0-100).
-    Return JSON.
+    Requirements:
+    1. Summary: Provide a 2-3 sentence overview of the time allocation and general productivity trend.
+    2. Suggestions: Provide 3-5 actionable, high-impact improvements for better time management.
+    3. Score: A single number from 0-100 representing productivity health.
+
+    Context: The user is using a task timer app called ChronoFlow to track their workflow.
+    Language: Please match the professional tone and language of the provided task names (e.g., if tasks are in Chinese, provide insights in Chinese).
   `;
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -45,16 +47,16 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<AIAna
             },
             productivityScore: { type: Type.NUMBER },
           },
-          // Fix: Using propertyOrdering instead of required to match SDK example patterns for content generation.
           propertyOrdering: ["summary", "suggestions", "productivityScore"],
         },
       },
     });
 
-    if (response.text) {
-      return JSON.parse(response.text.trim()) as AIAnalysisResult;
+    const text = response.text;
+    if (text) {
+      return JSON.parse(text.trim()) as AIAnalysisResult;
     }
-    throw new Error("Empty response from AI");
+    throw new Error("Empty response from AI assistant.");
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
     throw error;
