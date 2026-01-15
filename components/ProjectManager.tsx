@@ -165,7 +165,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
       {/* Project Operation Modal - Mobile Optimized */}
       {activeProjectId && activeProject && (
-        <div className="absolute inset-0 z-[50] flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-[50] flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 w-full h-full sm:max-w-5xl sm:h-[90vh] sm:rounded-2xl shadow-2xl border-x sm:border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className={`h-1.5 flex-shrink-0 bg-${activeProject.color}-500`} />
@@ -308,7 +308,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
       {/* Forms & Modals */}
       {isCreatingProject && (
-          <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/40">
               <form onSubmit={handleProjectSubmit} className="bg-white dark:bg-slate-900 w-full max-w-md p-6 md:p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
                   <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-6">{t.createProject}</h3>
                   <div className="space-y-5">
@@ -338,7 +338,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
       )}
 
       {isAddingTaskToProject && (
-          <div className="absolute inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="absolute inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/40">
               <form onSubmit={handleTaskSubmit} className="bg-white dark:bg-slate-900 w-full max-w-md p-6 md:p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
                   <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{t.addStep}</h3>
@@ -398,7 +398,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
       )}
 
       {editingTask && (
-          <div className="absolute inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="absolute inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/40">
               <form onSubmit={handleUpdateTaskSubmit} className="bg-white dark:bg-slate-900 w-full max-w-md p-6 md:p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
                   <div className="flex items-center justify-between mb-6">
                       <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{language === 'zh' ? '编辑步骤' : 'Edit Step'}</h3>
