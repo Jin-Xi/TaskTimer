@@ -2,34 +2,34 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Task, TaskStatus, AIAnalysisResult, AIConfig } from "../types";
 
-const SYSTEM_INSTRUCTION = `
+const getSystemInstruction = (lang: 'en' | 'zh') => `
     You are a professional high-level productivity coach for the app "ChronoFlow".
     Analyze the provided task history and provide a high-level coaching report.
+    
+    CRITICAL: You MUST provide the output in ${lang === 'zh' ? 'Chinese (Simplified)' : 'English'}.
     
     Requirements:
     1. Summary: 2-3 sentence overview of time allocation and general productivity trend.
     2. Suggestions: 3-5 actionable, high-impact improvements for better time management.
     3. Score: A number from 0-100 representing productivity health.
-
-    Language: Match the professional tone and language of the provided task names.
 `;
 
-const getPrompt = (taskSummary: any[]) => `
+const getPrompt = (taskSummary: any[], lang: 'en' | 'zh') => `
     Historical Task Data: ${JSON.stringify(taskSummary)}
     
-    Provide the response in structured JSON format with:
+    Provide the response in structured JSON format in ${lang === 'zh' ? 'Chinese' : 'English'}:
     {
-      "summary": "string",
-      "suggestions": ["string", "string", ...],
+      "summary": "...",
+      "suggestions": ["...", "...", ...],
       "productivityScore": number
     }
 `;
 
-export const generateProductivityAnalysis = async (tasks: Task[], config?: AIConfig): Promise<AIAnalysisResult> => {
+export const generateProductivityAnalysis = async (tasks: Task[], config: AIConfig, language: 'en' | 'zh' = 'zh'): Promise<AIAnalysisResult> => {
   const completedTasks = tasks.filter(t => t.status === TaskStatus.COMPLETED || t.totalTime > 0);
   
   if (completedTasks.length === 0) {
-    throw new Error("No sufficient data to analyze. Please complete or track some tasks first.");
+    throw new Error(language === 'zh' ? "没有足够的数据。请先记录一些任务。" : "No sufficient data. Please track some tasks first.");
   }
 
   const taskSummary = completedTasks.map(t => ({
@@ -39,17 +39,19 @@ export const generateProductivityAnalysis = async (tasks: Task[], config?: AICon
     status: t.status
   }));
 
-  // Default to Gemini if no config or explicitly Gemini
-  if (!config || config.provider === 'gemini') {
-    const apiKey = config?.apiKey || process.env.API_KEY;
-    if (!apiKey) throw new Error("API Key not found for Gemini.");
+  const systemInstruction = getSystemInstruction(language);
+  const userPrompt = getPrompt(taskSummary, language);
+
+  if (config.provider === 'gemini') {
+    const apiKey = config.apiKey || process.env.API_KEY;
+    if (!apiKey) throw new Error("API Key not found.");
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: config?.model || 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: getPrompt(taskSummary) }] }],
+      model: config.model || 'gemini-3-flash-preview',
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
+        systemInstruction,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -69,7 +71,6 @@ export const generateProductivityAnalysis = async (tasks: Task[], config?: AICon
     return JSON.parse(response.text || '{}') as AIAnalysisResult;
   }
 
-  // Handle OpenAI-compatible providers (DeepSeek, OpenAI, etc.)
   const endpoint = config.baseUrl || 
     (config.provider === 'deepseek' ? 'https://api.deepseek.com/v1' : 'https://api.openai.com/v1');
   
@@ -82,8 +83,8 @@ export const generateProductivityAnalysis = async (tasks: Task[], config?: AICon
     body: JSON.stringify({
       model: config.model,
       messages: [
-        { role: 'system', content: SYSTEM_INSTRUCTION },
-        { role: 'user', content: getPrompt(taskSummary) }
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: userPrompt }
       ],
       response_format: { type: 'json_object' }
     })
@@ -91,7 +92,7 @@ export const generateProductivityAnalysis = async (tasks: Task[], config?: AICon
 
   if (!response.ok) {
     const err = await response.json();
-    throw new Error(err.error?.message || "Failed to fetch from AI provider");
+    throw new Error(err.error?.message || "AI failed");
   }
 
   const data = await response.json();

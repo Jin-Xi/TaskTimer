@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
-import { Play, Pause, Square, Clock, Flag, Maximize2, CheckCircle2 } from 'lucide-react';
-import { Task, TaskStatus } from '../types';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Play, Pause, Flag, Maximize2, CheckCircle2, Sparkles, Timer as TimerIcon, Pencil, Trash2, Check, X, ChevronRight } from 'lucide-react';
+import { Task, TaskStatus, Milestone } from '../types';
 import { Button } from './Button';
 import { TRANSLATIONS } from '../constants';
 import { formatTime } from '../utils/timeUtils';
@@ -9,17 +9,25 @@ import { formatTime } from '../utils/timeUtils';
 interface SingleTimerProps {
   language: 'en' | 'zh';
   task: Task;
+  isHero?: boolean;
   onPause: (taskId: string) => void;
   onStart: (taskId: string) => void;
   onComplete: (taskId: string) => void;
-  onAddMilestone: () => void;
+  onAddMilestone: (title: string) => void;
+  onEditMilestone: (taskId: string, milestoneId: string, title: string) => void;
+  onDeleteMilestone: (taskId: string, milestoneId: string) => void;
   onEnterFocusMode: () => void;
+  onDismiss?: (taskId: string) => void;
 }
 
 const SingleTimer: React.FC<SingleTimerProps> = ({ 
-  language, task, onPause, onStart, onComplete, onAddMilestone, onEnterFocusMode 
+  language, task, isHero, onPause, onStart, onComplete, onAddMilestone, onEditMilestone, onDeleteMilestone, onEnterFocusMode, onDismiss 
 }) => {
   const [elapsed, setElapsed] = useState(0);
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
+  const milestoneInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let interval: any;
@@ -35,57 +43,168 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
   }, [task]);
 
   const isRunning = task.status === TaskStatus.RUNNING;
+  const t = TRANSLATIONS[language];
+
+  const handleStartEdit = (m: Milestone) => {
+    setEditingMilestoneId(m.id);
+    setEditTitle(m.title);
+  };
+
+  const handleSaveEdit = (mId: string) => {
+    if (editTitle.trim()) {
+      onEditMilestone(task.id, mId, editTitle.trim());
+    }
+    setEditingMilestoneId(null);
+  };
+
+  const handleAddMilestone = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMilestoneTitle.trim()) {
+      onAddMilestone(newMilestoneTitle.trim());
+      setNewMilestoneTitle('');
+    }
+  };
+
+  const sortedMilestones = useMemo(() => {
+    return [...(task.milestones || [])].sort((a, b) => a.timestamp - b.timestamp);
+  }, [task.milestones]);
 
   return (
-    <div className={`group bg-white dark:bg-slate-900 rounded-2xl shadow-sm border ${isRunning ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-800'} p-5 flex flex-col gap-4 relative overflow-hidden transition-all hover:shadow-xl hover:-translate-y-0.5`}>
-      <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800">
-        <div className={`h-full ${isRunning ? 'bg-indigo-500' : 'bg-slate-400'} transition-all duration-700`} style={{ width: isRunning ? '100%' : '0%' }} />
-      </div>
+    <div className={`group relative transition-all duration-700 w-full max-w-4xl mx-auto flex flex-col ${
+      isHero 
+        ? 'bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 shadow-[0_20px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.4)] rounded-[3.5rem] md:rounded-[4.5rem] p-8 md:p-14' 
+        : 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-shadow'
+    }`}>
+      {isRunning && (
+        <div className="absolute inset-0 bg-indigo-500/[0.01] dark:bg-indigo-400/[0.01] animate-pulse-gentle pointer-events-none rounded-[inherit]" />
+      )}
+
+      {/* Dismiss Button */}
+      {isHero && onDismiss && (
+        <button 
+          onClick={() => onDismiss(task.id)}
+          className="absolute top-8 right-8 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-90 z-20"
+          title={language === 'zh' ? '最小化计时器' : 'Minimize timer'}
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
       
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-black text-slate-900 dark:text-white truncate tracking-tight">{task.title}</h3>
-            {isRunning && <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>}
+      {/* 1. Complete Button at the very top */}
+      <div className="flex justify-center mb-8">
+        <button 
+          onClick={() => onComplete(task.id)}
+          className="flex items-center gap-2 px-6 py-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-full hover:bg-emerald-600 hover:text-white transition-all transform hover:scale-105 active:scale-95 group/complete border border-emerald-100 dark:border-emerald-900/50"
+        >
+          <CheckCircle2 className="w-5 h-5 group-hover/complete:scale-110 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{language === 'zh' ? '点击完成任务' : 'Complete Task'}</span>
+        </button>
+      </div>
+
+      <div className="relative z-10 w-full flex flex-col items-center">
+        {/* 2. Header and Focus Mode */}
+        <div className="w-full flex items-center justify-between mb-2 pr-12">
+          <div className="flex items-center gap-3 min-w-0">
+             <div className={`shrink-0 w-2.5 h-2.5 rounded-full ${isRunning ? 'bg-indigo-500 animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-300 dark:bg-slate-700'}`} />
+             <h3 className={`${isHero ? 'text-lg md:text-2xl' : 'text-base md:text-lg'} font-black text-slate-800 dark:text-slate-200 truncate tracking-tight`}>
+               {task.title}
+             </h3>
           </div>
-          {task.tags && task.tags.length > 0 && (
-             <div className="flex flex-wrap gap-1 mt-1.5">
-               {task.tags.map(tag => (
-                 <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                   {tag}
-                 </span>
-               ))}
-             </div>
-          )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={onEnterFocusMode} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
-            <Maximize2 className="w-4 h-4" />
+          <button 
+            onClick={onEnterFocusMode} 
+            className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-90"
+          >
+            <Maximize2 className="w-5 h-5" />
           </button>
         </div>
-      </div>
 
-      <div className={`text-4xl font-mono font-black text-center tabular-nums py-2 ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>
-        {formatTime(elapsed)}
-      </div>
-
-      <div className="flex items-center justify-between gap-3 border-t border-slate-50 dark:border-slate-800 pt-4 mt-auto">
-        <div className="flex gap-2">
-          <Button 
-            variant={isRunning ? "secondary" : "primary"} 
-            size="sm" 
-            onClick={() => isRunning ? onPause(task.id) : onStart(task.id)} 
-            className="w-12"
-          >
-            {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => onComplete(task.id)} className="text-slate-400 hover:text-green-600 px-2" title="Mark as Complete">
-            <CheckCircle2 className="w-5 h-5" />
-          </Button>
+        {/* 3. Main Time Display */}
+        <div className={`${isHero ? 'text-6xl sm:text-8xl md:text-[10rem] my-8' : 'text-4xl sm:text-5xl md:text-6xl my-6'} font-mono font-black text-center tabular-nums tracking-tighter leading-none ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-200 dark:text-slate-800'}`}>
+          {formatTime(elapsed)}
         </div>
-        <Button variant="ghost" size="sm" onClick={onAddMilestone} className="text-slate-400 hover:text-indigo-600 px-2" title="Add Milestone">
-          <Flag className="w-4 h-4" />
-        </Button>
+
+        {/* 4. Combined Inline Milestone Input (Centered) */}
+        {isHero && (
+          <form 
+            onSubmit={handleAddMilestone}
+            className="w-full max-w-xl mx-auto mb-10 group/mile"
+          >
+            <div className="relative flex items-center bg-slate-50 dark:bg-slate-800/40 rounded-full border border-slate-100 dark:border-slate-800/50 focus-within:border-indigo-500/50 focus-within:ring-8 focus-within:ring-indigo-500/5 transition-all px-6 py-4">
+              <Flag className="w-5 h-5 text-indigo-400 mr-4 shrink-0" />
+              <input 
+                ref={milestoneInputRef}
+                className="flex-1 bg-transparent border-none outline-none text-sm font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-300 placeholder:font-medium"
+                placeholder={language === 'zh' ? '记录这一刻的进展...' : 'Record progress at this moment...'}
+                value={newMilestoneTitle}
+                onChange={(e) => setNewMilestoneTitle(e.target.value)}
+              />
+              <button 
+                type="submit"
+                disabled={!newMilestoneTitle.trim()}
+                className={`ml-2 p-2 rounded-xl transition-all ${newMilestoneTitle.trim() ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-300 opacity-0'}`}
+              >
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* 5. Linear Milestone List */}
+        {isHero && sortedMilestones.length > 0 && (
+          <div className="w-full max-w-2xl mx-auto space-y-4 max-h-64 overflow-y-auto custom-scrollbar px-4 mb-10 py-2 border-t border-slate-50 dark:border-slate-800/50 pt-8">
+            {sortedMilestones.map((m, idx) => (
+              <div key={m.id} className="relative flex items-center gap-4 group/m animate-in fade-in slide-in-from-bottom-2">
+                <div className="flex flex-col items-center">
+                  <div className={`w-2.5 h-2.5 rounded-full bg-indigo-500 z-10`} />
+                  {idx < sortedMilestones.length - 1 && (
+                    <div className="w-0.5 h-12 bg-indigo-100 dark:bg-indigo-900/40 absolute top-2.5 left-[4.5px]" />
+                  )}
+                </div>
+                
+                <div className="flex-1 flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all group-hover/m:border-indigo-100">
+                  <div className="flex-1 min-w-0">
+                    {editingMilestoneId === m.id ? (
+                      <input 
+                        autoFocus
+                        className="bg-transparent border-b border-indigo-500 outline-none text-sm font-bold text-slate-700 dark:text-slate-200 w-full"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(m.id)}
+                        onBlur={() => setEditingMilestoneId(null)}
+                      />
+                    ) : (
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate block">{m.title}</span>
+                    )}
+                  </div>
+                  
+                  <div className="shrink-0 flex items-center gap-4">
+                    <span className="text-[10px] font-mono font-black text-indigo-500/60 bg-indigo-50/50 dark:bg-indigo-900/20 px-2 py-1 rounded-lg">
+                       {m.taskTime ? formatTime(m.taskTime) : '--:--:--'}
+                    </span>
+                    <div className="flex items-center gap-1 opacity-0 group-hover/m:opacity-100 transition-opacity">
+                        <button onClick={() => handleStartEdit(m)} className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => onDeleteMilestone(task.id, m.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 6. Combined Start/Pause Button at the bottom */}
+        <div className="flex justify-center mt-4">
+          <button 
+            onClick={() => isRunning ? onPause(task.id) : onStart(task.id)} 
+            className={`flex items-center justify-center transition-all ${isHero ? 'w-24 h-24 sm:w-28 sm:h-28 rounded-[2.5rem]' : 'w-16 h-16 rounded-3xl'} ${isRunning ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/30 hover:bg-indigo-700 active:scale-95'}`}
+          >
+            {isRunning ? (
+              <Pause className="w-10 h-10 md:w-12 md:h-12" />
+            ) : (
+              <Play className="w-10 h-10 md:w-12 md:h-12 fill-current ml-1" />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -97,76 +216,101 @@ interface TaskTimerProps {
   onStart: (taskId: string) => void;
   onPause: (taskId: string) => void;
   onComplete: (taskId: string) => void;
-  onAddMilestone: (taskId: string, title: string, branch: string) => void;
+  onAddTask?: (title: string, description: string, tags: string[]) => void;
+  onAddMilestone: (taskId: string, title: string, branch: string, parentMilestoneId: string | null, taskTime: number) => void;
+  onEditMilestone: (taskId: string, milestoneId: string, updates: Partial<Milestone>) => void;
+  onDeleteMilestone: (taskId: string, milestoneId: string) => void;
   onEnterFocusMode?: (taskId: string) => void;
+  onDismiss?: (taskId: string) => void;
+  suggestedTasks?: string[];
 }
 
 export const TaskTimer: React.FC<TaskTimerProps> = ({ 
-  language, activeTasks, onStart, onPause, onComplete, onAddMilestone, onEnterFocusMode 
+  language, activeTasks, onStart, onPause, onComplete, onAddTask, onAddMilestone, onEditMilestone, onDeleteMilestone, onEnterFocusMode, onDismiss, suggestedTasks = [] 
 }) => {
-  const [showMilestoneInput, setShowMilestoneInput] = useState<string | null>(null);
-  const [milestoneTitle, setMilestoneTitle] = useState('');
-  
   const t = TRANSLATIONS[language];
 
-  const handleMilestoneSubmit = (taskId: string, e: React.FormEvent) => {
-    e.preventDefault();
-    if (milestoneTitle.trim()) {
-      onAddMilestone(taskId, milestoneTitle.trim(), 'main');
-      setMilestoneTitle('');
-      setShowMilestoneInput(null);
+  const handleAddMilestoneClick = (taskId: string, title: string) => {
+    const task = activeTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const lastMilestoneId = task.milestones.length > 0 ? task.milestones[task.milestones.length - 1].id : null;
+
+    let currentTaskTime = task.totalTime;
+    if (task.status === TaskStatus.RUNNING) {
+      const lastLog = task.logs[task.logs.length - 1];
+      if (lastLog) {
+        currentTaskTime += (Date.now() - lastLog.start);
+      }
+    }
+
+    onAddMilestone(taskId, title, 'main', lastMilestoneId, currentTaskTime);
+  };
+
+  const handleAddSuggestedTask = (title: string) => {
+    if (onAddTask) {
+      onAddTask(title, '', language === 'zh' ? ['快速任务'] : ['Quick Task']);
     }
   };
 
   if (activeTasks.length === 0) {
     return (
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-sm border-2 border-dashed border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center justify-center text-center min-h-[180px] transition-all duration-300">
-        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-          <Clock className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+      <div className="flex flex-col items-center justify-center text-center animate-in fade-in duration-1000 w-full px-4 overflow-hidden py-10 md:py-20">
+        <div className="relative mb-10 md:mb-16 shrink-0">
+            <div className="w-20 h-20 md:w-28 md:h-28 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full flex items-center justify-center shadow-inner">
+                <TimerIcon className="w-8 h-8 md:w-12 md:h-12 text-indigo-600 dark:text-indigo-500 drop-shadow-sm" />
+            </div>
+            <div className="absolute inset-0 rounded-full border border-indigo-500/20 animate-ping opacity-20 scale-150" />
         </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t.noActiveTask}</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1.5 max-w-sm leading-relaxed">{t.selectTaskToStart}</p>
+        
+        <h3 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tight leading-tight">
+          {t.noActiveTask}
+        </h3>
+        <p className="text-slate-400 dark:text-slate-500 text-base sm:text-lg md:text-2xl font-medium max-w-xl mx-auto leading-relaxed mb-12 md:mb-20 opacity-80">
+          {t.selectTaskToStart}
+        </p>
+
+        {suggestedTasks.length > 0 && (
+          <div className="w-full max-w-2xl space-y-6 md:space-y-10">
+            <div className="flex items-center gap-4 justify-center">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-400">{t.suggestedTasks}</span>
+              <Sparkles className="w-5 h-5 text-amber-500" />
+            </div>
+            <div className="flex flex-wrap justify-center gap-3 md:gap-5">
+               {suggestedTasks.map((title, i) => (
+                 <button 
+                  key={i} 
+                  onClick={() => handleAddSuggestedTask(title)}
+                  className="px-5 py-2.5 sm:px-8 sm:py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-xs sm:text-sm md:text-base font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm"
+                 >
+                   {title}
+                 </button>
+               ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  const currentTask = activeTasks[0]; // Always handle only one due to app logic
+
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className={`grid gap-5 ${
-        activeTasks.length === 1 ? 'grid-cols-1' : 
-        activeTasks.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 
-        'grid-cols-1 md:grid-cols-3'
-      }`}>
-        {activeTasks.map(task => (
-          <div key={task.id} className="flex flex-col gap-3">
-            <SingleTimer 
-              language={language}
-              task={task}
-              onPause={onPause}
-              onStart={onStart}
-              onComplete={onComplete}
-              onAddMilestone={() => setShowMilestoneInput(task.id)}
-              onEnterFocusMode={() => onEnterFocusMode?.(task.id)}
-            />
-            {showMilestoneInput === task.id && (
-              <form 
-                onSubmit={(e) => handleMilestoneSubmit(task.id, e)} 
-                className="flex gap-2 animate-in slide-in-from-top-2 bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl border border-indigo-100 dark:border-slate-700 shadow-sm"
-              >
-                <input 
-                  autoFocus 
-                  placeholder={t.newMilestone} 
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 dark:text-white font-medium" 
-                  value={milestoneTitle} 
-                  onChange={(e) => setMilestoneTitle(e.target.value)} 
-                />
-                <Button type="submit" size="sm" className="py-1.5 px-3 text-xs">{t.add}</Button>
-                <button type="button" onClick={() => setShowMilestoneInput(null)} className="text-xs font-bold text-slate-400 hover:text-slate-600 px-2 transition-colors uppercase">{t.cancel}</button>
-              </form>
-            )}
-          </div>
-        ))}
-      </div>
+    <div className="w-full space-y-10 animate-in fade-in slide-in-from-top-4 duration-700 px-2 sm:px-4 max-w-5xl mx-auto">
+      <SingleTimer 
+        language={language}
+        task={currentTask}
+        isHero={true}
+        onPause={onPause}
+        onStart={onStart}
+        onComplete={onComplete}
+        onAddMilestone={(title) => handleAddMilestoneClick(currentTask.id, title)}
+        onEditMilestone={(taskId, milestoneId, title) => onEditMilestone(taskId, milestoneId, { title })}
+        onDeleteMilestone={onDeleteMilestone}
+        onEnterFocusMode={() => onEnterFocusMode?.(currentTask.id)}
+        onDismiss={onDismiss}
+      />
     </div>
   );
 };

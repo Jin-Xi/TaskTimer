@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Play, CheckCircle2, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, X, Tags as TagsIcon, ListTodo, Lock, Folder, Settings2 } from 'lucide-react';
+import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, Palette, PlusCircle, Settings2, Hash } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
-import { TAG_COLORS, TRANSLATIONS } from '../constants';
+import { TRANSLATIONS, TAG_COLORS } from '../constants';
 
 interface TaskListProps {
   language: 'en' | 'zh';
@@ -14,6 +14,7 @@ interface TaskListProps {
   onAdd: (title: string, description: string, tags: string[], projectId?: string, parentTaskIds?: string[]) => void;
   onDelete: (id: string) => void;
   onSelect: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Task>) => void;
   onAddMilestone: (taskId: string, title: string, branch: string) => void;
   onEditMilestone: (taskId: string, milestoneId: string, updates: Partial<Milestone>) => void;
   categories: Category[];
@@ -29,73 +30,36 @@ export const TaskList: React.FC<TaskListProps> = ({
   onAdd, 
   onDelete, 
   onSelect, 
-  onAddMilestone, 
+  onUpdate,
+  onAddMilestone,
   onEditMilestone,
   categories,
   onAddCategory,
   onDeleteCategory
 }) => {
-  const [isAdding, setIsAdding] = useState(false);
-  const [isManagingCategories, setIsManagingCategories] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [taskToTag, setTaskToTag] = useState<string | null>(null);
+  const [customTagInput, setCustomTagInput] = useState('');
   
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatColor, setNewCatColor] = useState('indigo');
-
   const t = TRANSLATIONS[language];
 
-  const openAddForm = () => {
-    setIsAdding(true);
-    setIsManagingCategories(false); 
-    if (selectedTags.length === 0 && categories.length > 0) {
-      setSelectedTags([categories[0].name]);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitTask = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (newTitle.trim()) {
-      onAdd(newTitle.trim(), '', selectedTags);
+      onAdd(newTitle.trim(), '', []);
       setNewTitle('');
-      setIsAdding(false);
+      setIsFocused(false);
     }
   };
 
-  const handleAddCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newCatName.trim()) {
-      onAddCategory(newCatName.trim(), newCatColor);
-      setNewCatName('');
-    }
-  };
-
-  const toggleTag = (tagName: string) => {
-    if (selectedTags.includes(tagName)) {
-      setSelectedTags(selectedTags.filter(t => t !== tagName));
-    } else {
-      setSelectedTags([...selectedTags, tagName]);
-    }
-  };
-
-  const toggleExpand = (taskId: string) => {
-    const newSet = new Set(expandedTasks);
-    if (newSet.has(taskId)) {
-      newSet.delete(taskId);
-    } else {
-      newSet.add(taskId);
-    }
-    setExpandedTasks(newSet);
-  };
-
-  const getBranchColor = (branch: string) => {
-      if (!branch || branch === 'main') return 'bg-indigo-500 border-white dark:border-slate-800';
-      const colors = ['bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-violet-500'];
-      let hash = 0;
-      for (let i = 0; i < branch.length; i++) hash = branch.charCodeAt(i) + ((hash << 5) - hash);
-      return colors[Math.abs(hash) % colors.length] + ' border-white dark:border-slate-800';
+  const toggleTaskTag = (task: Task, tagName: string) => {
+    const currentTags = task.tags || [];
+    const newTags = currentTags.includes(tagName)
+      ? currentTags.filter(t => t !== tagName)
+      : [...currentTags, tagName];
+    onUpdate(task.id, { tags: newTags });
   };
 
   const formatDuration = (ms: number) => {
@@ -110,16 +74,99 @@ export const TaskList: React.FC<TaskListProps> = ({
       return cat ? cat.color : 'slate';
   };
 
-  // Color mapping for Tailwind classes to ensure they are parsed correctly
-  const tailwindColorMap: Record<string, string> = {
-    indigo: 'bg-indigo-500',
-    emerald: 'bg-emerald-500',
-    slate: 'bg-slate-500',
-    rose: 'bg-rose-500',
-    amber: 'bg-amber-500',
-    cyan: 'bg-cyan-500',
-    violet: 'bg-violet-500',
-    fuchsia: 'bg-fuchsia-500'
+  const activeTaskForTagging = tasks.find(t => t.id === taskToTag);
+
+  const renderTask = (task: Task, isProjectChild: boolean = false, projectColor: string = 'indigo') => {
+    const isRunning = task.status === TaskStatus.RUNNING;
+    const isCompleted = task.status === TaskStatus.COMPLETED;
+
+    return (
+      <div 
+        key={task.id}
+        className={`group relative transition-all duration-300 mb-4 rounded-[1.75rem] border ${
+          isRunning 
+            ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50 ring-4 ring-indigo-500/5' 
+            : 'bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-100 dark:border-slate-800 shadow-sm'
+        } ${isCompleted ? 'opacity-70' : ''}`}
+      >
+        <div className="flex items-stretch min-h-[80px]">
+          {isProjectChild && (
+            <div className={`w-1.5 rounded-l-[1.75rem] bg-${projectColor}-500 shrink-0 opacity-80`} />
+          )}
+          
+          <div className="flex-1 flex items-center gap-4 p-5 overflow-hidden">
+            <button
+              onClick={() => onSelect(task.id)}
+              className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center transition-all shadow-sm ${
+                isRunning 
+                  ? 'bg-indigo-600 text-white animate-pulse'
+                  : isCompleted 
+                    ? 'bg-emerald-100 text-emerald-500 hover:bg-emerald-200' 
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              {isCompleted ? (
+                <RotateCcw className="w-4 h-4" />
+              ) : isRunning ? (
+                <Pause className="w-4 h-4 fill-current" />
+              ) : (
+                <Play className="w-4 h-4 fill-current ml-1" />
+              )}
+            </button>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-4 mb-1">
+                <h4 className={`text-sm md:text-base font-bold truncate ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
+                  {task.title}
+                </h4>
+                <span className="text-[10px] md:text-xs text-slate-400 font-black shrink-0 tabular-nums bg-slate-50 dark:bg-slate-800/80 px-2 py-0.5 rounded-lg">
+                  {formatDuration(task.totalTime)}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 flex-wrap relative">
+                {(task.tags || []).map(tag => (
+                  <Badge 
+                    key={tag} 
+                    color={getTagColor(tag)} 
+                    className="text-[9px] py-0.5 px-2 uppercase tracking-wider font-black whitespace-nowrap cursor-pointer hover:line-through"
+                    onClick={() => toggleTaskTag(task, tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+                
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTaskToTag(taskToTag === task.id ? null : task.id);
+                  }}
+                  className={`p-1 transition-all hover:scale-110 ${taskToTag === task.id ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-500'}`}
+                >
+                  <PlusCircle className="w-4 h-4" />
+                </button>
+                
+                {task.milestones?.length > 0 && (
+                  <div className="flex items-center gap-1 text-indigo-400 dark:text-indigo-500 text-[10px] font-black uppercase tracking-wider ml-1 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-lg">
+                    <Flag className="w-3 h-3" />
+                    <span>{task.milestones.length}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+               <button 
+                 onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} 
+                 className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+               >
+                  <Trash2 className="w-4 h-4" />
+               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const groupedTasks: {[key: string]: Task[]} = {};
@@ -137,300 +184,137 @@ export const TaskList: React.FC<TaskListProps> = ({
       }
   });
 
-  const renderTask = (task: Task) => {
-    const isExpanded = expandedTasks.has(task.id);
-    const tags = task.tags || [];
-    const isLocked = task.parentTaskIds && task.parentTaskIds.length > 0 
-        ? task.parentTaskIds.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED)
-        : false;
+  return (
+    <div className="space-y-6 flex flex-col h-full animate-in fade-in duration-500 max-w-full relative">
+      <div className="flex items-center justify-between shrink-0 px-1">
+        <h2 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.5em]">{t.taskExplorer}</h2>
+      </div>
 
-    return (
-    <div 
-      key={task.id}
-      className={`rounded-lg border transition-all ${
-        activeTaskId === task.id 
-          ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900 shadow-sm' 
-          : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-      } ${task.status === TaskStatus.COMPLETED ? 'opacity-80' : ''} ${isLocked ? 'opacity-60' : ''}`}
-    >
-      <div className="flex items-center justify-between p-3 group">
-        <div className="flex items-center gap-3 overflow-hidden flex-1">
-          <button
-            onClick={() => !isLocked && onSelect(task.id)}
-            disabled={isLocked}
-            className={`group/btn flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-              isLocked 
-                ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                : activeTaskId === task.id 
-                  ? 'bg-indigo-600 text-white' 
-                  : task.status === TaskStatus.COMPLETED
-                    ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-indigo-600 hover:text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            {isLocked ? <Lock className="w-3.5 h-3.5" /> : task.status === TaskStatus.COMPLETED ? (
-              <><CheckCircle2 className="w-5 h-5 block group-hover/btn:hidden" /><RotateCcw className="w-4 h-4 hidden group-hover/btn:block" /></>
-            ) : activeTaskId === task.id ? (
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            ) : (
-              <Play className="w-4 h-4 ml-0.5" />
-            )}
-          </button>
-          
-          <div className="min-w-0 flex-1 cursor-pointer" onClick={() => toggleExpand(task.id)}>
-            <div className="flex items-center gap-2">
-                <h4 className={`text-sm font-medium truncate ${task.status === TaskStatus.COMPLETED ? 'line-through text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
-                    {task.title}
-                </h4>
-                {isLocked && (
-                  <Badge color="slate" className="gap-1">
-                     {t.waitingForParent}
-                  </Badge>
-                )}
+      {/* Relocated Tag Assignment Panel: Anchored at the top of the list area */}
+      {activeTaskForTagging && (
+        <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-[2rem] p-5 shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[60]">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <div className="flex flex-col">
+              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{language === 'zh' ? '正在给任务添加标签' : 'Assigning Tags To'}</p>
+              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{activeTaskForTagging.title}</h5>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              {tags.map(tag => (
-                  <Badge key={tag} color={getTagColor(tag)}>
-                      {tag}
-                  </Badge>
-              ))}
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">{formatDuration(task.totalTime)}</span>
+            <button 
+              onClick={() => { setTaskToTag(null); setCustomTagInput(''); }}
+              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mb-5 p-1">
+             {categories.map(cat => (
+               <button
+                 key={cat.id}
+                 onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
+                 className={`px-3 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center gap-2 ${activeTaskForTagging.tags.includes(cat.name) ? `bg-${cat.color}-100 border-${cat.color}-500 text-${cat.color}-700` : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-indigo-300'}`}
+               >
+                 <div className={`w-2 h-2 rounded-full bg-${cat.color}-500`} />
+                 {cat.name}
+               </button>
+             ))}
+          </div>
+
+          <div className="pt-4 border-t border-slate-50 dark:border-slate-700/50">
+            <div className="relative group/input">
+              <input 
+                autoFocus
+                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all pr-12"
+                placeholder={language === 'zh' ? '输入新标签并按回车...' : 'Type new tag and hit Enter...'}
+                value={customTagInput}
+                onChange={(e) => setCustomTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const name = customTagInput.trim();
+                    if (name) {
+                      const existing = categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+                      if (!existing) {
+                        onAddCategory(name, TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)]);
+                      }
+                      if (!activeTaskForTagging.tags.includes(name)) {
+                        toggleTaskTag(activeTaskForTagging, name);
+                      }
+                      setCustomTagInput('');
+                    }
+                  }
+                }}
+              />
+              <button 
+                onClick={() => {
+                  const name = customTagInput.trim();
+                  if (name) {
+                    const existing = categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+                    if (!existing) onAddCategory(name, TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)]);
+                    toggleTaskTag(activeTaskForTagging, name);
+                    setCustomTagInput('');
+                  }
+                }}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${customTagInput.trim() ? 'bg-indigo-600 text-white' : 'text-slate-300 opacity-0'}`}
+              >
+                <Check className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-1">
-          <button onClick={() => toggleExpand(task.id)} className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          <button onClick={() => onDelete(task.id)} className="p-1.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="px-4 pb-4 pt-1 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 rounded-b-lg">
-           {task.description && <div className="text-xs text-slate-500 mb-2 px-2 italic">{task.description}</div>}
-           {task.parentTaskIds && task.parentTaskIds.length > 0 && (
-             <div className="mb-3 px-2">
-               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t.dependsOn}</span>
-               <div className="flex flex-wrap gap-1">
-                 {task.parentTaskIds.map(pid => {
-                    const pt = tasks.find(t => t.id === pid);
-                    const statusColor = pt?.status === TaskStatus.COMPLETED ? 'green' : 'slate';
-                    return (
-                      <Badge key={pid} color={statusColor} className="text-[9px]">
-                        {pt?.title || 'Unknown'}
-                      </Badge>
-                    );
-                 })}
-               </div>
-             </div>
-           )}
-           <div className="relative pl-4 space-y-4 ml-2 border-l-2 border-slate-200 dark:border-slate-700">
-              <div className="relative">
-                 <div className="absolute -left-[21px] bg-slate-200 dark:bg-slate-700 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900"></div>
-                 <div className="text-xs text-slate-500 dark:text-slate-400">{t.taskCreated} • {new Date(task.createdAt).toLocaleString()}</div>
-              </div>
-              {task.milestones.map(m => (
-                  <div key={m.id} className="relative group/milestone transition-all">
-                    <div className={`absolute -left-[21px] w-3 h-3 rounded-full border-2 shadow-sm z-10 ${getBranchColor(m.branch)}`}></div>
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-1.5 shadow-sm inline-block min-w-[120px]">
-                        <div className="text-sm text-slate-800 dark:text-slate-200 font-medium">{m.title}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">{m.branch} • {new Date(m.timestamp).toLocaleTimeString()}</div>
-                    </div>
-                  </div>
-              ))}
-           </div>
-        </div>
       )}
-    </div>
-    );
-  };
 
-  return (
-    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full overflow-hidden transition-colors duration-200">
-      <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/30">
-        <div className="flex items-center justify-between sm:justify-start gap-3 flex-wrap">
-             <h3 className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{t.taskExplorer}</h3>
-             <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5">
-                <button onClick={() => setFilter('all')} className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}>{t.all}</button>
-                <button onClick={() => setFilter('active')} className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}>{t.active}</button>
-                <button onClick={() => setFilter('completed')} className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}>{t.done}</button>
-             </div>
-        </div>
-        
-        <div className="flex items-center justify-end gap-2">
-          <button 
-            onClick={() => { setIsManagingCategories(!isManagingCategories); setIsAdding(false); }} 
-            className={`p-1.5 transition-colors ${isManagingCategories ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg' : 'text-slate-400 hover:text-indigo-600'}`}
-            title={t.manageCategories}
-          >
-            <Settings2 className="w-5 h-5" />
-          </button>
-          <Button size="sm" onClick={openAddForm} variant="primary">
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {isAdding && (
-        <form onSubmit={handleSubmit} className="p-4 bg-indigo-50/50 dark:bg-slate-800/30 border-b border-indigo-100 dark:border-slate-700 animate-in slide-in-from-top-2">
+      <div className={`relative transition-all duration-300 bg-white dark:bg-slate-900 rounded-[2rem] border-2 ${isFocused ? 'border-indigo-400 shadow-[0_10px_30px_rgba(99,102,241,0.1)] ring-4 ring-indigo-500/5' : 'border-slate-100 dark:border-slate-800'}`}>
+        <div className="flex items-center p-3">
+          <div className="pl-4 pr-2"><Sparkles className="w-4 h-4 text-indigo-400/50" /></div>
           <input
-            autoFocus
             type="text"
             placeholder={t.quickAdd}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all mb-3"
+            className="flex-1 bg-transparent border-none py-3 outline-none text-sm font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
             value={newTitle}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmitTask()}
           />
-          
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{language === 'zh' ? '选择分类' : 'Select Categories'}</span>
-            </div>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
-              {categories.map(cat => (
-                <Badge 
-                  key={cat.id} 
-                  color={cat.color} 
-                  onClick={() => toggleTag(cat.name)}
-                  className={`py-1 px-3 text-[11px] cursor-pointer ring-offset-2 dark:ring-offset-slate-900 transition-all ${selectedTags.includes(cat.name) ? 'ring-2 ring-indigo-500 shadow-md scale-105 opacity-100' : 'opacity-60 grayscale-[0.5]'}`}
-                >
-                  {cat.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setIsAdding(false)}>{t.cancel}</Button>
-            <Button type="submit" size="sm">{t.add}</Button>
-          </div>
-        </form>
-      )}
-
-      {/* Inline Category Management Panel */}
-      {isManagingCategories && (
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 animate-in slide-in-from-top-2 overflow-hidden flex flex-col max-h-[60vh]">
-          <div className="flex items-center justify-between mb-4 shrink-0">
-             <div className="flex items-center gap-2">
-                <TagsIcon className="w-4 h-4 text-indigo-500" />
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{t.manageCategories}</h4>
-             </div>
-             <button onClick={() => setIsManagingCategories(false)} className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-5 h-5" />
-             </button>
-          </div>
-
-          <div className="space-y-6 overflow-y-auto pr-1 custom-scrollbar">
-             {/* List of existing categories */}
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-               {categories.map(cat => (
-                 <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
-                    <Badge color={cat.color}>{cat.name}</Badge>
-                    <button 
-                      onClick={() => { if (confirm(t.deleteCategoryConfirm)) onDeleteCategory(cat.id); }} 
-                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                 </div>
-               ))}
-             </div>
-
-             {/* Add New Category form section */}
-             <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 px-1">{t.newCategory}</h5>
-                <form onSubmit={handleAddCategory} className="flex flex-col gap-4">
-                   <div className="space-y-3">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-slate-500 px-1">{t.categoryName}</label>
-                        <input 
-                          type="text" 
-                          required 
-                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" 
-                          value={newCatName}
-                          onChange={e => setNewCatName(e.target.value)}
-                        />
-                      </div>
-                      
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-slate-500 px-1">{t.selectColor}</label>
-                        <div className="flex flex-wrap gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                           {TAG_COLORS.map(c => (
-                              <button 
-                                type="button" 
-                                key={c} 
-                                onClick={() => setNewCatColor(c)} 
-                                className={`w-6 h-6 rounded-full ${tailwindColorMap[c]} border-2 transition-all ${newCatColor === c ? 'border-white dark:border-slate-400 scale-125 ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`} 
-                                aria-label={`Select ${c} color`}
-                              />
-                           ))}
-                        </div>
-                      </div>
-                   </div>
-                   
-                   <div className="flex justify-end pt-2 pb-4">
-                      <Button type="submit" size="md" className="w-full sm:w-auto shadow-lg shadow-indigo-500/20">
-                        {t.add}
-                      </Button>
-                   </div>
-                </form>
-             </div>
-          </div>
+          <button onClick={() => handleSubmitTask()} className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-90 transition-all">
+            <Plus className="w-6 h-6" />
+          </button>
         </div>
-      )}
+      </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+      <div className="flex bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-1.5 self-start shrink-0 border border-slate-100 dark:border-slate-800">
+          <button onClick={() => setFilter('all')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.all}</button>
+          <button onClick={() => setFilter('active')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.active}</button>
+          <button onClick={() => setFilter('completed')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.done}</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-20 space-y-12 no-scrollbar">
         {Object.entries(groupedTasks).map(([pid, pTasks]) => {
             const project = projects.find(p => p.id === pid);
             const total = pTasks.length;
-            const completed = pTasks.filter(task => task.status === TaskStatus.COMPLETED).length;
-            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const done = pTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
+            const progress = total > 0 ? Math.round((done / total) * 100) : 0;
 
             return (
-                <div key={pid} className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 overflow-hidden">
-                            <div className={`shrink-0 w-8 h-8 rounded-lg bg-${project?.color || 'indigo'}-100 dark:bg-${project?.color || 'indigo'}-900/30 flex items-center justify-center`}>
-                                <Folder className={`w-4 h-4 text-${project?.color || 'indigo'}-600 dark:text-${project?.color || 'indigo'}-400`} />
-                            </div>
-                            <div className="min-w-0">
-                                <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate">{project?.name || 'Unknown Project'}</h4>
-                                <p className="text-[10px] text-slate-500 uppercase tracking-wide truncate">{completed} {language === 'zh' ? '之' : 'of'} {total} {t.stepsCompleted}</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2">
-                             <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">{progress}%</span>
-                             <div className="w-24 sm:w-32 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${progress}%` }} />
-                             </div>
-                        </div>
+                <div key={pid} className="space-y-6">
+                    <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-1.5 h-5 rounded-full bg-${project?.color || 'indigo'}-500 shadow-sm shadow-${project?.color || 'indigo'}-500/30`} />
+                        <h4 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest text-xs">{project?.name || 'Project'}</h4>
+                      </div>
+                      <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-lg">{progress}%</span>
                     </div>
-                    <div className="space-y-2">{pTasks.map(renderTask)}</div>
+                    <div className="space-y-1">{pTasks.map(task => renderTask(task, true, project?.color || 'indigo'))}</div>
                 </div>
             )
         })}
 
         {standalone.length > 0 && (
-            <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-1 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                        <ListTodo className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <h4 className="font-bold text-slate-600 dark:text-slate-400 uppercase text-xs tracking-wider">{t.standaloneTasks}</h4>
+            <div className="space-y-6">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="w-1.5 h-5 rounded-full bg-slate-200 dark:bg-slate-700" />
+                  <h4 className="font-black text-slate-400 uppercase tracking-widest text-xs">{t.standaloneTasks}</h4>
                 </div>
-                <div className="space-y-2">{standalone.map(renderTask)}</div>
-            </div>
-        )}
-
-        {tasks.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4"><ListTodo className="w-8 h-8 text-slate-300" /></div>
-                <h3 className="text-slate-900 dark:text-white font-medium">{t.noTasksYet}</h3>
-                <p className="text-slate-500 text-sm mt-1 px-4">{t.createTaskHint}</p>
+                <div className="space-y-1">{standalone.map(task => renderTask(task, false))}</div>
             </div>
         )}
       </div>

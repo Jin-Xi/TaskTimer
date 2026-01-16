@@ -16,6 +16,8 @@ export interface Milestone {
   title: string;
   timestamp: number;
   branch: string;
+  parentMilestoneId?: string | null;
+  taskTime?: number; // Total task time elapsed at the moment this milestone was created
 }
 
 export interface Category {
