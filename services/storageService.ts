@@ -1,12 +1,79 @@
 
 import { io, Socket } from "socket.io-client";
-import { Task, Category, Project } from "../types";
+import { Task, Category, Project, TaskStatus } from "../types";
 
 const SERVER_URL = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001`;
 const STORAGE_KEYS = {
   TASKS: 'chrono_tasks_v2',
   CATEGORIES: 'chrono_categories_v2',
   PROJECTS: 'chrono_projects_v2'
+};
+
+const minsAgo = (m: number) => Date.now() - (m * 60 * 1000);
+
+const DEMO_DATA = {
+  tasks: [
+    {
+      id: 'task-demo-standalone',
+      title: '深度阅读：生产力手册',
+      description: '分析 ChronoFlow 的核心交互逻辑。',
+      tags: ['Creative', 'Study'],
+      status: TaskStatus.COMPLETED,
+      totalTime: 2700000,
+      createdAt: minsAgo(120),
+      logs: [{ start: minsAgo(105), end: minsAgo(60) }],
+      milestones: [
+        { id: 'm-s1', title: '完成前三章阅读', timestamp: minsAgo(90), branch: 'main' },
+        { id: 'm-s2', title: '整理核心笔记', timestamp: minsAgo(65), branch: 'refine' }
+      ],
+      parentTaskIds: []
+    },
+    {
+      id: 'task-p1',
+      title: '需求分析与原型设计',
+      tags: ['Work'],
+      status: TaskStatus.COMPLETED,
+      totalTime: 3600000,
+      createdAt: minsAgo(500),
+      logs: [{ start: minsAgo(480), end: minsAgo(420) }],
+      milestones: [{ id: 'm-p1', title: '导出原型图', timestamp: minsAgo(425), branch: 'main' }],
+      projectId: 'project-demo-1',
+      parentTaskIds: []
+    },
+    {
+      id: 'task-p2',
+      title: '核心计时逻辑开发',
+      tags: ['Work'],
+      status: TaskStatus.COMPLETED,
+      totalTime: 7200000,
+      createdAt: minsAgo(400),
+      logs: [{ start: minsAgo(380), end: minsAgo(260) }],
+      milestones: [{ id: 'm-p2', title: 'Socket.IO 联调成功', timestamp: minsAgo(280), branch: 'main' }],
+      projectId: 'project-demo-1',
+      parentTaskIds: ['task-p1']
+    },
+    {
+      id: 'task-p3',
+      title: 'UI/UX 验收与部署',
+      tags: ['Creative'],
+      status: TaskStatus.IDLE,
+      totalTime: 0,
+      createdAt: minsAgo(200),
+      logs: [],
+      milestones: [],
+      projectId: 'project-demo-1',
+      parentTaskIds: ['task-p2']
+    }
+  ] as Task[],
+  projects: [
+    {
+      id: 'project-demo-1',
+      name: 'ChronoFlow 2.0 升级计划',
+      description: '包含核心引擎重构与 AI 教练集成。',
+      createdAt: minsAgo(600),
+      color: 'violet'
+    }
+  ] as Project[]
 };
 
 let socket: Socket;
@@ -16,7 +83,7 @@ export const initSocket = () => {
         socket = io(SERVER_URL, {
             reconnectionDelayMax: 10000,
             transports: ['websocket', 'polling'],
-            autoConnect: false // Don't block UI if server is down
+            autoConnect: false
         });
         
         socket.on('connect', () => console.log('Connected to sync server'));
@@ -24,21 +91,25 @@ export const initSocket = () => {
     return socket;
 };
 
-// --- Local Helpers ---
 const getLocal = <T>(key: string, fallback: T): T => {
   const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : fallback;
+  if (!data) return fallback;
+  return JSON.parse(data);
 };
 
 const saveLocal = (key: string, data: any) => {
   localStorage.setItem(key, JSON.stringify(data));
 };
 
-// --- Real-time Subscriptions (with Local Fallback) ---
-
 export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
+  // Use demo data if local storage is empty
   const localTasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
-  callback(localTasks);
+  if (localTasks.length === 0) {
+    callback(DEMO_DATA.tasks);
+    saveLocal(STORAGE_KEYS.TASKS, DEMO_DATA.tasks);
+  } else {
+    callback(localTasks);
+  }
 
   const s = initSocket();
   if (!s) return () => {};
@@ -83,7 +154,12 @@ export const subscribeToCategories = (callback: (categories: Category[]) => void
 
 export const subscribeToProjects = (callback: (projects: Project[]) => void) => {
   const localProjs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
-  callback(localProjs);
+  if (localProjs.length === 0) {
+    callback(DEMO_DATA.projects);
+    saveLocal(STORAGE_KEYS.PROJECTS, DEMO_DATA.projects);
+  } else {
+    callback(localProjs);
+  }
 
   const s = initSocket();
   if (!s) return () => {};
@@ -102,8 +178,6 @@ export const subscribeToProjects = (callback: (projects: Project[]) => void) => 
 
   return () => { s.off('sync_projects'); };
 };
-
-// --- CRUD Operations ---
 
 export const addTask = async (task: Task) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
@@ -175,9 +249,6 @@ export const deleteProject = async (projectId: string) => {
   return updated;
 };
 
-/**
- * Triggers a download of the provided tasks array as a JSON file.
- */
 export const downloadTasksAsJson = (tasks: Task[]) => {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
   const downloadAnchorNode = document.createElement('a');

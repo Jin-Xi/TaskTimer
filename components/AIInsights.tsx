@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, BrainCircuit, Info, Eye, EyeOff, ShieldCheck, Settings, X, Save, Database, Server } from 'lucide-react';
+import { Sparkles, BrainCircuit, Info, Eye, EyeOff, ShieldCheck, Settings, X, Save, Database, Server, Cpu } from 'lucide-react';
 import { Task, TaskStatus, AIConfig, AIProvider } from '../types';
 import { Button } from './Button';
 import { generateProductivityAnalysis } from '../services/aiService';
@@ -18,14 +18,14 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
   const [showDataPreview, setShowDataPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // AI Configuration State
+  // AI Configuration State - Preset with SiliconFlow as default
   const [aiConfig, setAiConfig] = useState<AIConfig>(() => {
     const saved = localStorage.getItem('chrono_ai_config');
     return saved ? JSON.parse(saved) : {
-      provider: 'gemini',
-      apiKey: '',
-      model: 'gemini-3-flash-preview',
-      baseUrl: ''
+      provider: 'custom',
+      apiKey: 'sk-kxgaebbvdsnauqfvzbjqlivtapysmvsfpknbgrejcjsngxyu',
+      model: 'deepseek-ai/DeepSeek-V3',
+      baseUrl: 'https://api.siliconflow.cn/v1'
     };
   });
 
@@ -47,8 +47,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
     setLoading(true);
     setError(null);
     try {
-      // Use config if API Key is provided, otherwise falls back to service default
-      const data = await generateProductivityAnalysis(tasks, aiConfig.apiKey ? aiConfig : undefined);
+      const data = await generateProductivityAnalysis(tasks, aiConfig);
       setResult(data);
     } catch (err: any) {
       setError(err.message || (language === 'zh' ? "分析失败" : "Analysis failed"));
@@ -58,10 +57,10 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
   };
 
   const providers: { id: AIProvider; label: string; desc: string; icon: any }[] = [
+    { id: 'custom', label: 'SiliconFlow', desc: '高性能推理平台', icon: Cpu },
     { id: 'gemini', label: 'Google Gemini', desc: t.geminiDesc, icon: Sparkles },
-    { id: 'deepseek', label: 'DeepSeek', desc: t.deepseekDesc, icon: Database },
+    { id: 'deepseek', label: 'DeepSeek Official', desc: t.deepseekDesc, icon: Database },
     { id: 'openai', label: 'OpenAI', desc: 'GPT-4o, GPT-3.5-Turbo', icon: Server },
-    { id: 'custom', label: 'Custom Endpoint', desc: 'Any OpenAI-compatible API', icon: Server },
   ];
 
   return (
@@ -69,16 +68,24 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
       <div className="flex justify-end mb-4">
         <button 
           onClick={() => setShowSettings(true)}
-          className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-indigo-600 transition-all shadow-sm"
+          className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-indigo-600 transition-all shadow-sm flex items-center gap-2 text-xs font-bold"
         >
-          <Settings className="w-5 h-5" />
+          <Settings className="w-4 h-4" />
+          {t.aiSettings}
         </button>
       </div>
 
       <div className="text-center mb-10">
-        <Sparkles className="w-12 h-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
+        <div className="relative inline-block">
+          <Sparkles className="w-12 h-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse"></div>
+        </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.aiCoach}</h2>
         <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-lg mx-auto">{t.aiCoachDesc}</p>
+        <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
+           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+           <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Active: {aiConfig.model}</span>
+        </div>
       </div>
 
       {!result && !loading && (
@@ -120,7 +127,10 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
       {loading && (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-bold text-xl animate-pulse">{t.geminiThinking}</p>
+          <p className="text-slate-600 dark:text-slate-400 font-bold text-xl animate-pulse">
+            {language === 'zh' ? 'AI 正在审计您的工作流...' : t.geminiThinking}
+          </p>
+          <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-widest font-bold">Calling {aiConfig.baseUrl}</p>
         </div>
       )}
 
@@ -128,6 +138,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
         <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-6 rounded-xl text-center mb-6 border border-red-200 dark:border-red-800 max-w-lg mx-auto">
           <Info className="w-8 h-8 mx-auto mb-3" />
           <p className="font-bold">{error}</p>
+          <Button variant="ghost" size="sm" className="mt-4" onClick={() => setShowSettings(true)}>检查 API 配置</Button>
         </div>
       )}
 
@@ -137,7 +148,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
             <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6">
               <div>
                 <h3 className="text-2xl font-bold">{t.report}</h3>
-                <p className="opacity-80 mt-1 text-sm">Analyzed by {aiConfig.apiKey ? aiConfig.model : 'ChronoFlow Engine'}</p>
+                <p className="opacity-80 mt-1 text-xs">Engineered by SiliconFlow • {aiConfig.model}</p>
               </div>
               <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20">
                 <div className="text-right">
@@ -163,11 +174,11 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
                 </h4>
                 <div className="grid grid-cols-1 gap-3">
                   {result.suggestions.map((s, i) => (
-                    <div key={i} className="flex items-start gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <div key={i} className="flex items-start gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-indigo-200 transition-all">
                       <div className="min-w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-black">
                         {i + 1}
                       </div>
-                      <span className="text-slate-700 dark:text-slate-300 pt-1 leading-relaxed">{s}</span>
+                      <span className="text-slate-700 dark:text-slate-300 pt-1 leading-relaxed text-sm font-medium">{s}</span>
                     </div>
                   ))}
                 </div>
@@ -209,11 +220,18 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
                       } else if (p.id === 'openai') {
                         updates.model = 'gpt-4o';
                         updates.baseUrl = 'https://api.openai.com/v1';
+                      } else if (p.id === 'custom') {
+                        updates.model = 'deepseek-ai/DeepSeek-V3';
+                        updates.baseUrl = 'https://api.siliconflow.cn/v1';
+                        updates.apiKey = 'sk-kxgaebbvdsnauqfvzbjqlivtapysmvsfpknbgrejcjsngxyu';
                       }
                       setAiConfig(prev => ({ ...prev, ...updates }));
                     }}
                     className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all text-center ${aiConfig.provider === p.id ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-600' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 grayscale hover:grayscale-0'}`}
                   >
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 mb-1">
+                       <p.icon className="w-5 h-5" />
+                    </div>
                     <p className="text-xs font-bold">{p.label}</p>
                   </button>
                 ))}
@@ -225,34 +243,32 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
                   <input 
                     type="password"
                     placeholder="sk-..."
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-mono"
                     value={aiConfig.apiKey}
                     onChange={(e) => setAiConfig({...aiConfig, apiKey: e.target.value})}
                   />
-                  {!aiConfig.apiKey && <p className="text-[10px] text-slate-400 mt-1">{t.useDefault}</p>}
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t.modelName}</label>
                   <input 
                     type="text"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-mono"
                     value={aiConfig.model}
                     onChange={(e) => setAiConfig({...aiConfig, model: e.target.value})}
                   />
                 </div>
 
-                {(aiConfig.provider === 'custom' || aiConfig.provider === 'deepseek') && (
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t.endpoint}</label>
-                    <input 
-                      type="text"
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-mono"
-                      value={aiConfig.baseUrl}
-                      onChange={(e) => setAiConfig({...aiConfig, baseUrl: e.target.value})}
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t.endpoint}</label>
+                  <input 
+                    type="text"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-mono"
+                    value={aiConfig.baseUrl}
+                    onChange={(e) => setAiConfig({...aiConfig, baseUrl: e.target.value})}
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1 italic">Example: https://api.siliconflow.cn/v1</p>
+                </div>
               </div>
             </div>
 
