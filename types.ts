@@ -1,3 +1,4 @@
+
 export enum TaskStatus {
   IDLE = 'IDLE',
   RUNNING = 'RUNNING',
@@ -14,13 +15,13 @@ export interface Milestone {
   id: string;
   title: string;
   timestamp: number;
-  branch: string; // e.g., 'main', 'feature', 'bugfix'
+  branch: string;
 }
 
 export interface Category {
   id: string;
   name: string;
-  color: string; // e.g., 'indigo', 'emerald', 'rose'
+  color: string;
 }
 
 export interface Project {
@@ -37,16 +38,25 @@ export interface Task {
   description?: string;
   tags: string[];
   status: TaskStatus;
-  totalTime: number; // In milliseconds
+  totalTime: number;
   createdAt: number;
   logs: TimeLog[];
   milestones: Milestone[];
-  projectId?: string; // Link to project
-  parentTaskIds: string[]; // Dependencies: Only start if ALL parents are COMPLETED
+  projectId?: string;
+  parentTaskIds: string[];
 }
 
 export interface AIAnalysisResult {
   summary: string;
   suggestions: string[];
   productivityScore: number;
+}
+
+export type AIProvider = 'gemini' | 'deepseek' | 'openai' | 'custom';
+
+export interface AIConfig {
+  provider: AIProvider;
+  apiKey: string;
+  model: string;
+  baseUrl?: string;
 }
