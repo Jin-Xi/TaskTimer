@@ -4,6 +4,7 @@ export enum TaskStatus {
   RUNNING = 'RUNNING',
   PAUSED = 'PAUSED',
   COMPLETED = 'COMPLETED',
+  BREAK = 'BREAK',
 }
 
 export interface TimeLog {

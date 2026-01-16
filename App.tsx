@@ -70,10 +70,10 @@ const App: React.FC = () => {
     return () => { unsubTasks(); unsubCats(); unsubProjs(); };
   }, []);
 
-  // Show the task identified by focusTaskId if it's currently RUNNING or PAUSED.
-  // This ensures that pausing a task doesn't hide the card, only Dismiss does.
+  // Show the task identified by focusTaskId if it's currently RUNNING, PAUSED or BREAK.
+  // This ensures that pausing or being on break doesn't hide the card, only Dismiss does.
   const activeTimers = tasks
-    .filter(t => t.id === focusTaskId && (t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED))
+    .filter(t => t.id === focusTaskId && (t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED || t.status === TaskStatus.BREAK))
     .slice(0, 1);
 
   const activeFocusTask = tasks.find(t => t.id === focusTaskId) || null;
@@ -109,20 +109,44 @@ const App: React.FC = () => {
 
   const handlePauseTask = async (id: string) => {
     const task = tasks.find(t => t.id === id);
-    if (task && task.status === TaskStatus.RUNNING) {
+    if (task && (task.status === TaskStatus.RUNNING || task.status === TaskStatus.BREAK)) {
         const lastLogIdx = task.logs.length - 1;
         const now = Date.now();
         const newLogs = [...task.logs];
+        const logDuration = now - task.logs[lastLogIdx].start;
         newLogs[lastLogIdx] = { ...task.logs[lastLogIdx], end: now };
+        
+        // Only add duration to totalTime if it was work time (RUNNING)
+        const updatedTotalTime = task.status === TaskStatus.RUNNING 
+          ? task.totalTime + logDuration 
+          : task.totalTime;
+
         const updated = await updateTask(id, {
             status: TaskStatus.PAUSED,
-            totalTime: task.totalTime + (now - task.logs[lastLogIdx].start),
+            totalTime: updatedTotalTime,
             logs: newLogs
         });
         setTasks(updated);
         return updated;
     }
     return tasks;
+  };
+
+  const handleStartBreak = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task || task.status === TaskStatus.BREAK) return;
+
+    // If currently running, pause it first to commit the logs
+    if (task.status === TaskStatus.RUNNING) {
+      await handlePauseTask(id);
+    }
+
+    // Start a new log entry for the break session
+    const updated = await updateTask(id, {
+        status: TaskStatus.BREAK,
+        logs: [...task.logs, { start: Date.now(), end: null }]
+    });
+    setTasks(updated);
   };
 
   const handleDismissFocus = async (id: string) => {
@@ -144,7 +168,7 @@ const App: React.FC = () => {
     }
 
     // Auto-pause any currently running task (ensuring only one at a time)
-    const runningTask = tasks.find(t => t.status === TaskStatus.RUNNING);
+    const runningTask = tasks.find(t => t.status === TaskStatus.RUNNING || t.status === TaskStatus.BREAK);
     if (runningTask && runningTask.id !== id) {
       await handlePauseTask(runningTask.id);
     }
@@ -315,6 +339,7 @@ const App: React.FC = () => {
                     activeTasks={activeTimers} 
                     onStart={handleStartTask} 
                     onPause={handlePauseTask} 
+                    onBreak={handleStartBreak}
                     onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }} 
                     onAddTask={handleAddTask}
                     onAddMilestone={handleAddMilestoneWithDependency}

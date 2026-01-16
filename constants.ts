@@ -84,7 +84,12 @@ export const TRANSLATIONS = {
     newCategory: "New Tag",
     selectColor: "Color",
     deleteCategoryConfirm: "Delete this tag?",
-    suggestedTasks: "Suggestions"
+    suggestedTasks: "Suggestions",
+    onBreak: "Rest Time",
+    startBreak: "Start Break",
+    endBreak: "Resume Work",
+    pomodoroTip: "Great work! Time for a 5-min break?",
+    sessionProgress: "Current Session"
   },
   zh: {
     aiSettings: "AI 配置",
@@ -165,7 +170,12 @@ export const TRANSLATIONS = {
     newCategory: "新标签",
     selectColor: "颜色",
     deleteCategoryConfirm: "确定删除标签吗？",
-    suggestedTasks: "推荐任务"
+    suggestedTasks: "推荐任务",
+    onBreak: "休息一下",
+    startBreak: "开始休息",
+    endBreak: "继续工作",
+    pomodoroTip: "太棒了！休息 5 分钟补充一下精力？",
+    sessionProgress: "当前环节"
   }
 };
 
