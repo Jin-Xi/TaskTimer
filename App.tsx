@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from './types';
@@ -305,9 +304,9 @@ const App: React.FC = () => {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay - REMOVED background mask and backdrop-blur as requested */}
       <aside className={`fixed inset-0 z-[60] lg:hidden transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-md" onClick={() => setIsMobileMenuOpen(false)} />
+        <div className="absolute inset-0 bg-transparent" onClick={() => setIsMobileMenuOpen(false)} />
         <div className="absolute top-0 bottom-0 left-0 w-[280px] bg-white dark:bg-slate-900 shadow-2xl">
           <SidebarContent />
         </div>
@@ -315,8 +314,8 @@ const App: React.FC = () => {
 
       {/* COLUMN 2: MIDDLE Dynamic Content (Vertically and Horizontally Centered) */}
       <main className="flex-1 relative animate-in fade-in duration-500 flex flex-col min-h-screen overflow-y-auto custom-scrollbar">
-        {/* Mobile Header (Fixed Top) */}
-        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 z-30">
+        {/* Mobile Header (Fixed Top) - REMOVED backdrop-blur-md and mask for cleaner look */}
+        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-30">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white"><TimerIcon className="w-4 h-4" /></div>
             <h1 className="font-black text-lg tracking-tight uppercase">{APP_NAME}</h1>
