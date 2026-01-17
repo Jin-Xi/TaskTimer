@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from './types';
@@ -11,6 +12,7 @@ import {
   addCategory, 
   deleteCategory, 
   addProject, 
+  updateProject,
   deleteProject,
 } from './services/storageService';
 import { TaskTimer } from './components/TaskTimer';
@@ -349,7 +351,30 @@ const App: React.FC = () => {
                     suggestedTasks={getSuggestedTasks()}
                   />
                 )}
-                {activeTab === 'projects' && <ProjectManager language={language} projects={projects} tasks={tasks} onAddProject={async (n, d, c) => { const updated = await addProject({id: generateUUID(), name: n, description: d, color: c, createdAt: Date.now()}); setProjects(updated); }} onDeleteProject={async (id) => { const updated = await deleteProject(id); setProjects(updated); }} onAddTask={handleAddTask} onDeleteTask={handleDeleteTask} onUpdateTask={handleUpdateTask} categories={categories} />}
+                {activeTab === 'projects' && (
+                  <ProjectManager 
+                    language={language} 
+                    projects={projects} 
+                    tasks={tasks} 
+                    onAddProject={async (data) => { 
+                      const updated = await addProject({
+                        ...data,
+                        id: generateUUID(), 
+                        createdAt: Date.now()
+                      } as Project); 
+                      setProjects(updated); 
+                    }} 
+                    onUpdateProject={async (id, data) => {
+                      const updated = await updateProject(id, data);
+                      setProjects(updated);
+                    }}
+                    onDeleteProject={async (id) => { const updated = await deleteProject(id); setProjects(updated); }} 
+                    onAddTask={handleAddTask} 
+                    onDeleteTask={handleDeleteTask} 
+                    onUpdateTask={handleUpdateTask} 
+                    categories={categories} 
+                  />
+                )}
                 {activeTab === 'dashboard' && <Stats language={language} tasks={tasks} />}
                 {activeTab === 'ai-insights' && <AIInsights language={language} tasks={tasks} />}
               </div>

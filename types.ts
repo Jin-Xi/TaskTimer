@@ -27,12 +27,22 @@ export interface Category {
   color: string;
 }
 
+export type DayOfWeek = 'Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
+
+export interface ProjectSchedule {
+  type: 'daily' | 'weekly';
+  days?: DayOfWeek[];
+}
+
 export interface Project {
   id: string;
   name: string;
   description?: string;
   createdAt: number;
   color: string;
+  startDate?: string;
+  endDate?: string;
+  schedule?: ProjectSchedule;
 }
 
 export interface Task {

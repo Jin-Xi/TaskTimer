@@ -239,6 +239,16 @@ export const addProject = async (project: Project) => {
   return updated;
 };
 
+export const updateProject = async (projectId: string, updates: Partial<Project>) => {
+  const projs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
+  const updated = projs.map(p => p.id === projectId ? { ...p, ...updates } : p);
+  saveLocal(STORAGE_KEYS.PROJECTS, updated);
+
+  const s = initSocket();
+  if (s?.connected) s.emit('updateData', { type: 'projects', action: 'update', data: { id: projectId, ...updates } });
+  return updated;
+};
+
 export const deleteProject = async (projectId: string) => {
   const projs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
   const updated = projs.filter(p => p.id !== projectId);

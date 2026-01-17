@@ -42,14 +42,12 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
   const systemInstruction = getSystemInstruction(language);
   const userPrompt = getPrompt(taskSummary, language);
 
+  // Fix: Strictly use process.env.API_KEY for Gemini as per guidelines
   if (config.provider === 'gemini') {
-    const apiKey = config.apiKey || process.env.API_KEY;
-    if (!apiKey) throw new Error("API Key not found.");
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: config.model || 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      contents: userPrompt,
       config: {
         systemInstruction,
         responseMimeType: "application/json",

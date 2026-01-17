@@ -89,7 +89,17 @@ export const TRANSLATIONS = {
     startBreak: "Start Break",
     endBreak: "Resume Work",
     pomodoroTip: "Great work! Time for a 5-min break?",
-    sessionProgress: "Current Session"
+    sessionProgress: "Current Session",
+    startDate: "Start Date",
+    endDate: "End Date",
+    schedule: "Schedule",
+    frequency: "Frequency",
+    everyDay: "Every Day",
+    specificDays: "Specific Days",
+    exportProject: "Export JSON",
+    days: {
+      Sun: "Sun", Mon: "Mon", Tue: "Tue", Wed: "Wed", Thu: "Thu", Fri: "Fri", Sat: "Sat"
+    }
   },
   zh: {
     aiSettings: "AI 配置",
@@ -175,7 +185,17 @@ export const TRANSLATIONS = {
     startBreak: "开始休息",
     endBreak: "继续工作",
     pomodoroTip: "太棒了！休息 5 分钟补充一下精力？",
-    sessionProgress: "当前环节"
+    sessionProgress: "当前环节",
+    startDate: "开始时间",
+    endDate: "结束时间",
+    schedule: "计划日程",
+    frequency: "频率",
+    everyDay: "每天",
+    specificDays: "指定星期",
+    exportProject: "导出 JSON",
+    days: {
+      Sun: "日", Mon: "一", Tue: "二", Wed: "三", Thu: "四", Fri: "五", Sat: "六"
+    }
   }
 };
 

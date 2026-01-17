@@ -34,7 +34,7 @@ export const generateProductivityAnalysis = async (tasks: Task[]): Promise<AIAna
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: prompt, // Simplified to string prompt as per guidelines
       config: {
         responseMimeType: "application/json",
         responseSchema: {

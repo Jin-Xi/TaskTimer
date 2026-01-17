@@ -212,7 +212,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
                     onClick={() => {
                       const up: any = { provider: p.id };
                       if (p.id === 'deepseek') { up.model = 'deepseek-chat'; up.baseUrl = 'https://api.deepseek.com/v1'; }
-                      else if (p.id === 'gemini') { up.model = 'gemini-3-flash-preview'; up.baseUrl = ''; }
+                      else if (p.id === 'gemini') { up.model = 'gemini-3-flash-preview'; up.baseUrl = ''; up.apiKey = ''; }
                       else if (p.id === 'openai') { up.model = 'gpt-4o'; up.baseUrl = 'https://api.openai.com/v1'; }
                       else if (p.id === 'custom') { up.model = 'deepseek-ai/DeepSeek-V3'; up.baseUrl = 'https://api.siliconflow.cn/v1'; }
                       setAiConfig(prev => ({ ...prev, ...up }));
@@ -226,10 +226,13 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
               </div>
 
               <div className="space-y-4 pt-2">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] ml-2">{t.apiKey}</label>
-                  <input type="password" placeholder="sk-..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-mono text-xs shadow-inner transition-all" value={aiConfig.apiKey} onChange={e => setAiConfig({...aiConfig, apiKey: e.target.value})} />
-                </div>
+                {/* Fix: Hide API key field for Gemini to comply with coding guidelines */}
+                {aiConfig.provider !== 'gemini' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] ml-2">{t.apiKey}</label>
+                    <input type="password" placeholder="sk-..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-mono text-xs shadow-inner transition-all" value={aiConfig.apiKey} onChange={e => setAiConfig({...aiConfig, apiKey: e.target.value})} />
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] ml-2">{t.modelName}</label>
                   <input type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-mono text-xs shadow-inner transition-all" value={aiConfig.model} onChange={e => setAiConfig({...aiConfig, model: e.target.value})} />

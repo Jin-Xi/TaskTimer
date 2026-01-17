@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, Palette, PlusCircle, Settings2, Hash } from 'lucide-react';
+import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, Palette, PlusCircle, Settings2, Hash } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
@@ -21,6 +21,58 @@ interface TaskListProps {
   onAddCategory: (name: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
 }
+
+interface CollapsibleGroupProps { 
+  title: string; 
+  color: string; 
+  count: number; 
+  progress?: number; 
+  children: React.ReactNode; 
+  defaultOpen?: boolean 
+}
+
+const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({ 
+  title, 
+  color, 
+  count, 
+  progress, 
+  children, 
+  defaultOpen = true 
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="space-y-3">
+      <div 
+        className="flex items-center justify-between px-2 cursor-pointer select-none group py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="flex items-center gap-3">
+           <div className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''} text-slate-400 group-hover:text-indigo-500`}>
+             <ChevronRight className="w-4 h-4" />
+           </div>
+           <div className={`w-1.5 h-4 rounded-full bg-${color}-500 shadow-sm shadow-${color}-500/30`} />
+           <h4 className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest text-xs">{title}</h4>
+           <span className="text-[10px] font-bold text-slate-400 ml-2 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{count}</span>
+        </div>
+        {progress !== undefined && (
+           <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+             <div className="w-12 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div style={{ width: `${progress}%` }} className={`h-full bg-${color}-500 rounded-full`} />
+             </div>
+             <span className={`text-[9px] font-black text-${color}-500 w-6 text-right`}>{progress}%</span>
+           </div>
+        )}
+      </div>
+      
+      {isOpen && (
+        <div className="space-y-1 animate-in slide-in-from-top-1 fade-in duration-200">
+           {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const TaskList: React.FC<TaskListProps> = ({ 
   language,
@@ -287,35 +339,35 @@ export const TaskList: React.FC<TaskListProps> = ({
           <button onClick={() => setFilter('completed')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.done}</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-20 space-y-12 no-scrollbar">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-20 space-y-8 no-scrollbar">
         {Object.entries(groupedTasks).map(([pid, pTasks]) => {
             const project = projects.find(p => p.id === pid);
             const total = pTasks.length;
             const done = pTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
             const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+            const color = project?.color || 'indigo';
 
             return (
-                <div key={pid} className="space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-1.5 h-5 rounded-full bg-${project?.color || 'indigo'}-500 shadow-sm shadow-${project?.color || 'indigo'}-500/30`} />
-                        <h4 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest text-xs">{project?.name || 'Project'}</h4>
-                      </div>
-                      <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-lg">{progress}%</span>
-                    </div>
-                    <div className="space-y-1">{pTasks.map(task => renderTask(task, true, project?.color || 'indigo'))}</div>
-                </div>
+                <CollapsibleGroup
+                  key={pid}
+                  title={project?.name || 'Project'}
+                  color={color}
+                  count={total}
+                  progress={progress}
+                >
+                    {pTasks.map(task => renderTask(task, true, color))}
+                </CollapsibleGroup>
             )
         })}
 
         {standalone.length > 0 && (
-            <div className="space-y-6">
-                <div className="flex items-center gap-3 px-2">
-                  <div className="w-1.5 h-5 rounded-full bg-slate-200 dark:bg-slate-700" />
-                  <h4 className="font-black text-slate-400 uppercase tracking-widest text-xs">{t.standaloneTasks}</h4>
-                </div>
-                <div className="space-y-1">{standalone.map(task => renderTask(task, false))}</div>
-            </div>
+            <CollapsibleGroup
+                title={t.standaloneTasks}
+                color="slate"
+                count={standalone.length}
+            >
+                {standalone.map(task => renderTask(task, false))}
+            </CollapsibleGroup>
         )}
       </div>
     </div>
