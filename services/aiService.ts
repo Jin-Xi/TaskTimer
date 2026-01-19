@@ -42,11 +42,11 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
   const systemInstruction = getSystemInstruction(language);
   const userPrompt = getPrompt(taskSummary, language);
 
-  // Fix: Strictly use process.env.API_KEY for Gemini as per guidelines
+  // Fix: Strictly use process.env.API_KEY, select 'gemini-3-pro-preview' for complex text tasks, and access output via .text property.
   if (config.provider === 'gemini') {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: config.model || 'gemini-3-flash-preview',
+      model: config.model || 'gemini-3-pro-preview',
       contents: userPrompt,
       config: {
         systemInstruction,
@@ -61,12 +61,16 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
             },
             productivityScore: { type: Type.NUMBER },
           },
-          required: ["summary", "suggestions", "productivityScore"]
+          propertyOrdering: ["summary", "suggestions", "productivityScore"],
         },
       },
     });
 
-    return JSON.parse(response.text || '{}') as AIAnalysisResult;
+    const text = response.text;
+    if (!text) {
+      throw new Error("Empty response from Gemini.");
+    }
+    return JSON.parse(text) as AIAnalysisResult;
   }
 
   const endpoint = config.baseUrl || 

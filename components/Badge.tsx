@@ -37,7 +37,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span 
       className={`
-        inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border transition-all select-none
+        inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold border transition-all select-none
         ${selectedStyles} ${cursorStyles} ${className}
       `}
       onClick={onClick}

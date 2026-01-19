@@ -42,31 +42,31 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div 
-        className="flex items-center justify-between px-2 cursor-pointer select-none group py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors"
+        className="flex items-center justify-between px-3 cursor-pointer select-none group py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
            <div className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''} text-slate-400 group-hover:text-indigo-500`}>
-             <ChevronRight className="w-4 h-4" />
+             <ChevronRight className="w-5 h-5" />
            </div>
-           <div className={`w-1.5 h-4 rounded-full bg-${color}-500 shadow-sm shadow-${color}-500/30`} />
-           <h4 className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest text-xs">{title}</h4>
-           <span className="text-[10px] font-bold text-slate-400 ml-2 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{count}</span>
+           <div className={`w-2 h-5 rounded-full bg-${color}-500 shadow-sm shadow-${color}-500/30`} />
+           <h4 className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-[0.2em] text-sm">{title}</h4>
+           <span className="text-xs font-bold text-slate-400 ml-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">{count}</span>
         </div>
         {progress !== undefined && (
-           <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-             <div className="w-12 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+           <div className="flex items-center gap-3 opacity-50 group-hover:opacity-100 transition-opacity">
+             <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div style={{ width: `${progress}%` }} className={`h-full bg-${color}-500 rounded-full`} />
              </div>
-             <span className={`text-[9px] font-black text-${color}-500 w-6 text-right`}>{progress}%</span>
+             <span className={`text-[10px] font-black text-${color}-500 w-8 text-right`}>{progress}%</span>
            </div>
         )}
       </div>
       
       {isOpen && (
-        <div className="space-y-1 animate-in slide-in-from-top-1 fade-in duration-200">
+        <div className="space-y-2 animate-in slide-in-from-top-1 fade-in duration-200">
            {children}
         </div>
       )}
@@ -135,21 +135,21 @@ export const TaskList: React.FC<TaskListProps> = ({
     return (
       <div 
         key={task.id}
-        className={`group relative transition-all duration-300 mb-4 rounded-[1.75rem] border ${
+        className={`group relative transition-all duration-300 mb-5 rounded-[2rem] border-2 ${
           isRunning 
             ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50 ring-4 ring-indigo-500/5' 
             : 'bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-100 dark:border-slate-800 shadow-sm'
         } ${isCompleted ? 'opacity-70' : ''}`}
       >
-        <div className="flex items-stretch min-h-[80px]">
+        <div className="flex items-stretch min-h-[90px]">
           {isProjectChild && (
-            <div className={`w-1.5 rounded-l-[1.75rem] bg-${projectColor}-500 shrink-0 opacity-80`} />
+            <div className={`w-2 rounded-l-[1.75rem] bg-${projectColor}-500 shrink-0 opacity-80`} />
           )}
           
-          <div className="flex-1 flex items-center gap-4 p-5 overflow-hidden">
+          <div className="flex-1 flex items-center gap-5 p-6 overflow-hidden">
             <button
               onClick={() => onSelect(task.id)}
-              className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center transition-all shadow-sm ${
+              className={`shrink-0 w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all shadow-sm ${
                 isRunning 
                   ? 'bg-indigo-600 text-white animate-pulse'
                   : isCompleted 
@@ -158,30 +158,33 @@ export const TaskList: React.FC<TaskListProps> = ({
               }`}
             >
               {isCompleted ? (
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-5 h-5" />
               ) : isRunning ? (
-                <Pause className="w-4 h-4 fill-current" />
+                <Pause className="w-5 h-5 fill-current" />
               ) : (
-                <Play className="w-4 h-4 fill-current ml-1" />
+                <Play className="w-5 h-5 fill-current ml-1" />
               )}
             </button>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-4 mb-1">
-                <h4 className={`text-sm md:text-base font-bold truncate ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
+              <div className="flex items-center justify-between gap-5 mb-2">
+                <h4 className={`text-base md:text-lg font-bold truncate ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
                   {task.title}
                 </h4>
-                <span className="text-[10px] md:text-xs text-slate-400 font-black shrink-0 tabular-nums bg-slate-50 dark:bg-slate-800/80 px-2 py-0.5 rounded-lg">
+                <span className="text-xs md:text-sm text-slate-400 font-black shrink-0 tabular-nums bg-slate-50 dark:bg-slate-800/80 px-3 py-1 rounded-xl">
                   {formatDuration(task.totalTime)}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2 flex-wrap relative">
+              <div className="flex items-center gap-3 flex-wrap relative">
+                {task.tags && task.tags.length > 0 && (
+                  <TagIcon className="w-3.5 h-3.5 text-slate-300" />
+                )}
                 {(task.tags || []).map(tag => (
                   <Badge 
                     key={tag} 
                     color={getTagColor(tag)} 
-                    className="text-[9px] py-0.5 px-2 uppercase tracking-wider font-black whitespace-nowrap cursor-pointer hover:line-through"
+                    className="text-[10px] py-1 px-3 uppercase tracking-wider font-black whitespace-nowrap cursor-pointer hover:scale-105"
                     onClick={() => toggleTaskTag(task, tag)}
                   >
                     {tag}
@@ -193,26 +196,26 @@ export const TaskList: React.FC<TaskListProps> = ({
                     e.stopPropagation();
                     setTaskToTag(taskToTag === task.id ? null : task.id);
                   }}
-                  className={`p-1 transition-all hover:scale-110 ${taskToTag === task.id ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-500'}`}
+                  className={`p-1.5 transition-all hover:scale-110 ${taskToTag === task.id ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-500'}`}
                 >
-                  <PlusCircle className="w-4 h-4" />
+                  <PlusCircle className="w-5 h-5" />
                 </button>
                 
                 {task.milestones?.length > 0 && (
-                  <div className="flex items-center gap-1 text-indigo-400 dark:text-indigo-500 text-[10px] font-black uppercase tracking-wider ml-1 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-lg">
-                    <Flag className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5 text-indigo-400 dark:text-indigo-500 text-[11px] font-black uppercase tracking-wider ml-1 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-xl">
+                    <Flag className="w-3.5 h-3.5" />
                     <span>{task.milestones.length}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                <button 
                  onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} 
-                 className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                 className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all"
                >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-5 h-5" />
                </button>
             </div>
           </div>
@@ -237,45 +240,44 @@ export const TaskList: React.FC<TaskListProps> = ({
   });
 
   return (
-    <div className="space-y-6 flex flex-col h-full animate-in fade-in duration-500 max-w-full relative">
-      <div className="flex items-center justify-between shrink-0 px-1">
-        <h2 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.5em]">{t.taskExplorer}</h2>
+    <div className="space-y-8 flex flex-col h-full animate-in fade-in duration-500 max-w-full relative">
+      <div className="flex items-center justify-between shrink-0 px-2">
+        <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.5em]">{t.taskExplorer}</h2>
       </div>
 
-      {/* Relocated Tag Assignment Panel: Anchored at the top of the list area */}
       {activeTaskForTagging && (
-        <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-[2rem] p-5 shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[60]">
-          <div className="flex items-center justify-between mb-4 px-1">
+        <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-[2.5rem] p-7 shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[60]">
+          <div className="flex items-center justify-between mb-6 px-1">
             <div className="flex flex-col">
-              <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{language === 'zh' ? '正在给任务添加标签' : 'Assigning Tags To'}</p>
-              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{activeTaskForTagging.title}</h5>
+              <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-1">{language === 'zh' ? '正在给任务添加标签' : 'Assigning Tags To'}</p>
+              <h5 className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate max-w-[280px]">{activeTaskForTagging.title}</h5>
             </div>
             <button 
               onClick={() => { setTaskToTag(null); setCustomTagInput(''); }}
-              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+              className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
           
-          <div className="flex flex-wrap gap-2 mb-5 p-1">
+          <div className="flex flex-wrap gap-3 mb-6 p-1">
              {categories.map(cat => (
                <button
                  key={cat.id}
                  onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
-                 className={`px-3 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center gap-2 ${activeTaskForTagging.tags.includes(cat.name) ? `bg-${cat.color}-100 border-${cat.color}-500 text-${cat.color}-700` : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-indigo-300'}`}
+                 className={`px-4 py-3 rounded-2xl border-2 text-xs font-black uppercase transition-all flex items-center gap-3 ${activeTaskForTagging.tags.includes(cat.name) ? `bg-${cat.color}-100 border-${cat.color}-500 text-${cat.color}-700 shadow-md` : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-indigo-300'}`}
                >
-                 <div className={`w-2 h-2 rounded-full bg-${cat.color}-500`} />
+                 <div className={`w-2.5 h-2.5 rounded-full bg-${cat.color}-500`} />
                  {cat.name}
                </button>
              ))}
           </div>
 
-          <div className="pt-4 border-t border-slate-50 dark:border-slate-700/50">
+          <div className="pt-6 border-t border-slate-50 dark:border-slate-700/50">
             <div className="relative group/input">
               <input 
                 autoFocus
-                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all pr-12"
+                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all pr-14"
                 placeholder={language === 'zh' ? '输入新标签并按回车...' : 'Type new tag and hit Enter...'}
                 value={customTagInput}
                 onChange={(e) => setCustomTagInput(e.target.value)}
@@ -305,41 +307,41 @@ export const TaskList: React.FC<TaskListProps> = ({
                     setCustomTagInput('');
                   }
                 }}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${customTagInput.trim() ? 'bg-indigo-600 text-white' : 'text-slate-300 opacity-0'}`}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all ${customTagInput.trim() ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-300 opacity-0'}`}
               >
-                <Check className="w-4 h-4" />
+                <Check className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className={`relative transition-all duration-300 bg-white dark:bg-slate-900 rounded-[2rem] border-2 ${isFocused ? 'border-indigo-400 shadow-[0_10px_30px_rgba(99,102,241,0.1)] ring-4 ring-indigo-500/5' : 'border-slate-100 dark:border-slate-800'}`}>
-        <div className="flex items-center p-3">
-          <div className="pl-4 pr-2"><Sparkles className="w-4 h-4 text-indigo-400/50" /></div>
+      <div className={`relative transition-all duration-300 bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 ${isFocused ? 'border-indigo-400 shadow-[0_15px_40px_rgba(99,102,241,0.12)] ring-8 ring-indigo-500/5' : 'border-slate-100 dark:border-slate-800 shadow-sm'}`}>
+        <div className="flex items-center p-4">
+          <div className="pl-5 pr-3"><Sparkles className="w-5 h-5 text-indigo-400/50" /></div>
           <input
             type="text"
             placeholder={t.quickAdd}
-            className="flex-1 bg-transparent border-none py-3 outline-none text-sm font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+            className="flex-1 bg-transparent border-none py-4 outline-none text-base font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
             value={newTitle}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmitTask()}
           />
-          <button onClick={() => handleSubmitTask()} className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-90 transition-all">
-            <Plus className="w-6 h-6" />
+          <button onClick={() => handleSubmitTask()} className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-90 transition-all ml-2">
+            <Plus className="w-7 h-7" />
           </button>
         </div>
       </div>
 
-      <div className="flex bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-1.5 self-start shrink-0 border border-slate-100 dark:border-slate-800">
-          <button onClick={() => setFilter('all')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.all}</button>
-          <button onClick={() => setFilter('active')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.active}</button>
-          <button onClick={() => setFilter('completed')} className={`text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.done}</button>
+      <div className="flex bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-2 self-start shrink-0 border border-slate-100 dark:border-slate-800">
+          <button onClick={() => setFilter('all')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.all}</button>
+          <button onClick={() => setFilter('active')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.active}</button>
+          <button onClick={() => setFilter('completed')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.done}</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-20 space-y-8 no-scrollbar">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-3 pb-24 space-y-10 no-scrollbar">
         {Object.entries(groupedTasks).map(([pid, pTasks]) => {
             const project = projects.find(p => p.id === pid);
             const total = pTasks.length;

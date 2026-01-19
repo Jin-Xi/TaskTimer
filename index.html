@@ -53,52 +53,77 @@
         background-image: radial-gradient(#1e293b 1px, transparent 1px);
       }
 
+      /* 强化滚动条可见性 - 满足“一直显示”视觉需求 */
       ::-webkit-scrollbar {
-        width: 6px;
+        width: 10px;
+        height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: transparent;
+        background: rgba(0,0,0,0.05);
+        border-radius: 5px;
+      }
+      .dark ::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.03);
       }
       ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: #94a3b8; /* Slate 400 */
         border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #1e293b;
+        background: #475569; /* Slate 600 */
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: #6366f1; /* Indigo 500 */
       }
 
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 5px;
+      .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #6366f1 rgba(0,0,0,0.05);
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #6366f1;
-        border-radius: 10px;
+      
+      /* 强制在 PC 上始终显示滚动条轨道 */
+      @media (min-width: 1024px) {
+        .force-scrollbar {
+          overflow-y: scroll !important;
+          overflow-x: scroll !important;
+        }
+      }
+
+      .animate-pulse-gentle {
+        animation: pulse-gentle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse-gentle {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
       }
     </style>
     <script type="importmap">
-    {
-      "imports": {
-        "socket.io-client": "https://esm.sh/socket.io-client@^4.8.3",
-        "express": "https://esm.sh/express@^5.2.1",
-        "http": "https://esm.sh/http@^0.0.1-security",
-        "socket.io": "https://esm.sh/socket.io@^4.8.3",
-        "fs": "https://esm.sh/fs@^0.0.1-security",
-        "path": "https://esm.sh/path@^0.12.7",
-        "cors": "https://esm.sh/cors@^2.8.5",
-        "url": "https://esm.sh/url@^0.11.4",
-        "react/": "https://esm.sh/react@^19.2.3/",
-        "react": "https://esm.sh/react@^19.2.3",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-        "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-        "recharts": "https://esm.sh/recharts@^3.6.0",
-        "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-        "vitest": "https://esm.sh/vitest@^4.0.17",
-        "vitest/": "https://esm.sh/vitest@^4.0.17/",
-        "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-        "vite": "https://esm.sh/vite@^7.3.1"
-      }
-    }
-    </script>
+{
+  "imports": {
+    "socket.io-client": "https://esm.sh/socket.io-client@^4.8.3",
+    "express": "https://esm.sh/express@^5.2.1",
+    "http": "https://esm.sh/http@^0.0.1-security",
+    "socket.io": "https://esm.sh/socket.io@^4.8.3",
+    "fs": "https://esm.sh/fs@^0.0.1-security",
+    "path": "https://esm.sh/path@^0.12.7",
+    "cors": "https://esm.sh/cors@^2.8.5",
+    "url": "https://esm.sh/url@^0.11.4",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "vitest": "https://esm.sh/vitest@^4.0.17",
+    "vitest/": "https://esm.sh/vitest@^4.0.17/",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "child_process": "https://esm.sh/child_process@^1.0.2"
+  }
+}
+</script>
   </head>
   <body>
     <div id="root"></div>

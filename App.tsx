@@ -248,12 +248,12 @@ const App: React.FC = () => {
   );
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full py-10 px-6">
-      <div className="flex items-center gap-4 px-2 shrink-0">
-        <div className="w-10 h-10 bg-indigo-600 rounded-[1rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
-          <TimerIcon className="w-5 h-5" />
+    <div className="flex flex-col h-full py-8 md:py-10 px-6">
+      <div className="flex items-center gap-4 px-2 shrink-0 mb-4">
+        <div className="w-12 h-12 bg-indigo-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
+          <TimerIcon className="w-6 h-6" />
         </div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{APP_NAME}</h1>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{APP_NAME}</h1>
       </div>
 
       <nav className="flex-1 flex flex-col justify-center space-y-4 my-8">
@@ -267,57 +267,67 @@ const App: React.FC = () => {
                 setActiveTab(item.id);
                 setIsMobileMenuOpen(false);
               }} 
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black transition-all group ${isActive ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/30' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`w-full flex items-center gap-5 px-6 py-5 rounded-2xl text-sm font-black transition-all group ${isActive ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/30 scale-[1.02]' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'}`}
             >
-              <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500'}`} />
+              <Icon className={`w-6 h-6 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500'}`} />
               <span className="uppercase tracking-widest">{(t as any)[item.labelKey]}</span>
             </button>
           );
         })}
       </nav>
 
-      <div className="pt-8 flex gap-3 shrink-0">
-           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
-             {darkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-500" />}
-             <span className="text-[8px] font-black uppercase tracking-widest">{darkMode ? t.lightMode : t.darkMode}</span>
+      <div className="pt-8 flex gap-4 shrink-0">
+           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
+             {darkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
+             <span className="text-xs font-black uppercase tracking-widest">{darkMode ? t.lightMode : t.darkMode}</span>
            </button>
-           <button onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
-             <Languages className="w-4 h-4 text-indigo-500" />
-             <span className="text-[8px] font-black uppercase tracking-widest">{t.langName}</span>
+           <button onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
+             <Languages className="w-5 h-5 text-indigo-500" />
+             <span className="text-xs font-black uppercase tracking-widest">{t.langName}</span>
            </button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-[#fcfdfe] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden">
-      <aside className="w-[280px] bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0">
+    <div className="flex h-screen bg-[#fcfdfe] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative">
+      {/* PC Sidebar */}
+      <aside className="w-[300px] bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0">
         <SidebarContent />
       </aside>
 
-      <aside className={`fixed inset-0 z-[60] lg:hidden transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="absolute inset-0 bg-transparent" onClick={() => setIsMobileMenuOpen(false)} />
-        <div className="absolute top-0 bottom-0 left-0 w-[280px] bg-white dark:bg-slate-900 shadow-2xl">
-          <SidebarContent />
-        </div>
+      {/* Mobile Sidebar Overlay */}
+      <div 
+        className={`fixed inset-0 z-[60] lg:hidden bg-slate-950/40 backdrop-blur-sm transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+      <aside className={`fixed top-0 bottom-0 left-0 z-[70] lg:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <button 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 md:hidden"
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
+        <SidebarContent />
       </aside>
 
-      <main className="flex-1 relative animate-in fade-in duration-500 flex flex-col min-h-screen overflow-y-auto custom-scrollbar">
-        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-30">
+      {/* Main Container */}
+      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0">
+        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white"><TimerIcon className="w-4 h-4" /></div>
-            <h1 className="font-black text-lg tracking-tight uppercase">{APP_NAME}</h1>
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><TimerIcon className="w-5 h-5" /></div>
+            <h1 className="font-black text-xl tracking-tight uppercase">{APP_NAME}</h1>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl">
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all active:scale-95">
             <Menu className="w-6 h-6" />
           </button>
         </header>
 
-        <div className="flex-grow flex flex-col items-center">
-          <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex flex-col">
-            <section className="flex-grow flex flex-col justify-center items-center py-10 min-h-full">
-              <div className="w-full flex flex-col items-center justify-center">
-                {activeTab === 'tasks' && (
+        <div className="flex-1 flex flex-col min-h-0 relative">
+          <section className="flex-1 flex flex-col overflow-hidden">
+            {activeTab === 'tasks' && (
+              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-6 md:px-10">
+                <div className="w-full max-w-4xl py-10 md:py-16">
                   <TaskTimer 
                     language={language} 
                     activeTasks={activeTimers} 
@@ -332,50 +342,63 @@ const App: React.FC = () => {
                     onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }} 
                     onDismiss={handleDismissFocus}
                     suggestedTasks={getSuggestedTasks()}
+                    categories={categories}
                   />
-                )}
-                {activeTab === 'projects' && (
-                  <ProjectManager 
-                    language={language} 
-                    projects={projects} 
-                    tasks={tasks} 
-                    onAddProject={async (data) => { 
-                      const updated = await addProject({
-                        ...data,
-                        id: generateUUID(), 
-                        createdAt: Date.now()
-                      } as Project); 
-                      setProjects(updated); 
-                    }} 
-                    onUpdateProject={async (id, data) => {
-                      const updated = await updateProject(id, data);
-                      setProjects(updated);
-                    }}
-                    onDeleteProject={async (id) => { const updated = await deleteProject(id); setProjects(updated); }} 
-                    onAddTask={handleAddTask} 
-                    onDeleteTask={handleDeleteTask} 
-                    onUpdateTask={handleUpdateTask} 
-                    categories={categories} 
-                  />
-                )}
-                {activeTab === 'dashboard' && <Stats language={language} tasks={tasks} />}
-                {activeTab === 'ai-insights' && <AIInsights language={language} tasks={tasks} />}
-              </div>
-
-              <div className="xl:hidden w-full mt-20 md:mt-24 pt-12 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-8">
-                   <div className="w-1 h-5 rounded-full bg-indigo-500" />
-                   <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
                 </div>
-                <SharedTaskList />
               </div>
-            </section>
+            )}
+            {activeTab === 'projects' && (
+              <div className="flex-1 px-6 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
+                <ProjectManager 
+                  language={language} 
+                  projects={projects} 
+                  tasks={tasks} 
+                  onAddProject={async (data) => { 
+                    const updated = await addProject({
+                      ...data,
+                      id: generateUUID(), 
+                      createdAt: Date.now()
+                    } as Project); 
+                    setProjects(updated); 
+                  }} 
+                  onUpdateProject={async (id, data) => {
+                    const updated = await updateProject(id, data);
+                    setProjects(updated);
+                  }}
+                  onDeleteProject={async (id) => { const updated = await deleteProject(id); setProjects(updated); }} 
+                  onAddTask={handleAddTask} 
+                  onDeleteTask={handleDeleteTask} 
+                  onUpdateTask={handleUpdateTask} 
+                  categories={categories} 
+                />
+              </div>
+            )}
+            {activeTab === 'dashboard' && (
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
+                <Stats language={language} tasks={tasks} />
+              </div>
+            )}
+            {activeTab === 'ai-insights' && (
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
+                <AIInsights language={language} tasks={tasks} />
+              </div>
+            )}
+          </section>
+
+          {/* Mobile bottom task list */}
+          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-10 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md max-h-[45vh] shrink-0">
+            <div className="flex items-center gap-3 mb-8">
+               <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
+               <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
+            </div>
+            <SharedTaskList />
           </div>
         </div>
       </main>
 
-      <aside className="w-[30%] min-w-[420px] bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-10">
+      {/* PC Right Side Task List */}
+      <aside className="w-[30%] min-w-[460px] bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-12 py-12 force-scrollbar">
             <SharedTaskList />
         </div>
       </aside>
