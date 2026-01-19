@@ -42,7 +42,7 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div 
         className="flex items-center justify-between px-3 cursor-pointer select-none group py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors"
         onClick={() => setIsOpen(!isOpen)}
@@ -66,7 +66,7 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
       </div>
       
       {isOpen && (
-        <div className="space-y-2 animate-in slide-in-from-top-1 fade-in duration-200">
+        <div className="space-y-3 animate-in slide-in-from-top-1 fade-in duration-200">
            {children}
         </div>
       )}
@@ -135,7 +135,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     return (
       <div 
         key={task.id}
-        className={`group relative transition-all duration-300 mb-5 rounded-[2rem] border-2 ${
+        className={`group relative transition-all duration-300 rounded-[2rem] border-2 overflow-hidden ${
           isRunning 
             ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50 ring-4 ring-indigo-500/5' 
             : 'bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-100 dark:border-slate-800 shadow-sm'
@@ -143,7 +143,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       >
         <div className="flex items-stretch min-h-[90px]">
           {isProjectChild && (
-            <div className={`w-2 rounded-l-[1.75rem] bg-${projectColor}-500 shrink-0 opacity-80`} />
+            <div className={`w-2 bg-${projectColor}-500 shrink-0 opacity-80`} />
           )}
           
           <div className="flex-1 flex items-center gap-5 p-6 overflow-hidden">

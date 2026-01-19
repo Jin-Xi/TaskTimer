@@ -14,6 +14,7 @@ import {
   addProject, 
   updateProject,
   deleteProject,
+  deleteTasksByProjectId,
 } from './services/storageService';
 import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
@@ -208,6 +209,22 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteProject = async (id: string) => {
+    // Delete all tasks in the project first
+    const updatedTasks = await deleteTasksByProjectId(id);
+    setTasks(updatedTasks);
+
+    // Delete the project
+    const updatedProjects = await deleteProject(id);
+    setProjects(updatedProjects);
+    
+    // Clear focus if the focused task was in the deleted project
+    if (activeFocusTask && activeFocusTask.projectId === id) {
+      setIsFocusMode(false);
+      setFocusTaskId(null);
+    }
+  };
+
   const getSuggestedTasks = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 11) {
@@ -365,7 +382,7 @@ const App: React.FC = () => {
                     const updated = await updateProject(id, data);
                     setProjects(updated);
                   }}
-                  onDeleteProject={async (id) => { const updated = await deleteProject(id); setProjects(updated); }} 
+                  onDeleteProject={handleDeleteProject}
                   onAddTask={handleAddTask} 
                   onDeleteTask={handleDeleteTask} 
                   onUpdateTask={handleUpdateTask} 

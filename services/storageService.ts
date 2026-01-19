@@ -209,6 +209,16 @@ export const deleteTask = async (taskId: string) => {
   return updated;
 };
 
+export const deleteTasksByProjectId = async (projectId: string) => {
+  const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
+  const updated = tasks.filter(t => t.projectId !== projectId);
+  saveLocal(STORAGE_KEYS.TASKS, updated);
+
+  const s = initSocket();
+  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'set', data: updated });
+  return updated;
+};
+
 export const addCategory = async (category: Category) => {
   const cats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, []);
   const updated = [...cats, category];

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, ChevronRight, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download } from 'lucide-react';
 import { Project, Task, TaskStatus, Category, DayOfWeek } from '../types';
@@ -209,10 +210,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const handleSubmit = () => {
     if (view === 'create') {
       onAddProject(formData as any);
+      setView('list');
     } else {
       onUpdateProject((formData as any).id, formData);
+      setView('detail');
     }
-    setView('list');
   };
 
   const projectTasks = useMemo(() => selectedProjectId ? tasks.filter(tk => tk.projectId === selectedProjectId) : [], [tasks, selectedProjectId]);
@@ -280,20 +282,20 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           </div>
         </div>
         {!isLast ? (
-          <div className="flex items-center justify-center px-10 shrink-0">
+          <div className="flex items-center justify-center px-2 shrink-0">
              <div className="relative flex items-center">
-                <div className={`w-10 h-1.5 bg-gradient-to-r from-${projectColor}-500/20 to-${projectColor}-500/80 rounded-full`} />
-                <div className={`relative z-10 w-10 h-10 rounded-[1.25rem] bg-${projectColor}-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800 mx-[-20px]`}>
-                  <ChevronRight className="w-6 h-6 text-white" />
+                <div className={`w-8 h-1.5 bg-gradient-to-r from-${projectColor}-500/20 to-${projectColor}-500/80 rounded-full`} />
+                <div className={`relative z-10 w-8 h-8 rounded-[1rem] bg-${projectColor}-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800 mx-[-16px]`}>
+                  <ChevronRight className="w-5 h-5 text-white" />
                 </div>
-                <div className={`w-10 h-1.5 bg-gradient-to-l from-${projectColor}-500/20 to-${projectColor}-500/80 rounded-full`} />
+                <div className={`w-8 h-1.5 bg-gradient-to-l from-${projectColor}-500/20 to-${projectColor}-500/80 rounded-full`} />
              </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center px-10 shrink-0">
+          <div className="flex items-center justify-center px-2 shrink-0">
             <button 
               onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [task.id] }); setIsAddingTaskToProject(task.id); }} 
-              className={`w-10 h-10 rounded-[1.25rem] bg-white dark:bg-slate-900 border-2 border-dashed border-${projectColor}-300 hover:border-${projectColor}-500 flex items-center justify-center shadow-sm hover:scale-110 transition-all group/add-btn mx-[-20px]`}
+              className={`w-8 h-8 rounded-[1rem] bg-white dark:bg-slate-900 border-2 border-dashed border-${projectColor}-300 hover:border-${projectColor}-500 flex items-center justify-center shadow-sm hover:scale-110 transition-all group/add-btn`}
             >
               <Plus className={`w-5 h-5 text-${projectColor}-400 group-hover/add-btn:text-${projectColor}-600`} />
             </button>
@@ -339,7 +341,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         data={formData} 
         onChange={(f: any, v: any) => setFormData(prev => f === 'toggleDay' ? { ...prev, schedule: { ...prev.schedule, days: (prev.schedule?.days || []).includes(v) ? prev.schedule.days.filter((d:any) => d !== v) : [...(prev.schedule?.days || []), v], type: 'weekly' } } : f === 'scheduleType' ? { ...prev, schedule: { ...prev.schedule, type: v } } : { ...prev, [f]: v })}
         onSubmit={handleSubmit} 
-        onCancel={() => setView('list')} 
+        onCancel={() => view === 'create' ? setView('list') : setView('detail')} 
         t={t} 
         DAYS_OF_WEEK={DAYS_OF_WEEK} 
         TAG_COLORS={TAG_COLORS} 
@@ -370,6 +372,19 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </Button>
             <Button onClick={() => handleExportProject(selectedProject)} className="rounded-2xl"><Download className="w-4 h-4 mr-2" />{t.exportProject}</Button>
             <Button onClick={() => handleEditProject(selectedProject)} className="rounded-2xl"><Pencil className="w-4 h-4 mr-2" />{t.projectName}</Button>
+            <Button 
+                variant="danger" 
+                onClick={() => {
+                  if (window.confirm(t.deleteProjectWarning)) {
+                    onDeleteProject(selectedProject.id);
+                    setView('list');
+                  }
+                }} 
+                className="rounded-2xl"
+            >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t.deleteProject}
+            </Button>
           </div>
         </div>
 
@@ -414,14 +429,16 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                        </div>
                      ))
                    )}
-                   <div className="px-6 mt-10">
-                      <button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }} className="w-[300px] min-h-[220px] rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 flex flex-col items-center justify-center gap-6 transition-all group bg-white/50 dark:bg-slate-900/50">
-                        <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 group-hover:scale-110 flex items-center justify-center transition-all shadow-sm">
-                          <Plus className="w-8 h-8 text-slate-300 group-hover:text-indigo-500" />
-                        </div>
-                        <span className="text-sm font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-500 transition-all">{language === 'zh' ? '添加新工作流' : 'New Stream'}</span>
-                      </button>
-                   </div>
+                   {projectTracks.length < 5 && (
+                     <div className="px-6 mt-10">
+                        <button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }} className="w-[300px] min-h-[220px] rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 flex flex-col items-center justify-center gap-6 transition-all group bg-white/50 dark:bg-slate-900/50">
+                          <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 group-hover:scale-110 flex items-center justify-center transition-all shadow-sm">
+                            <Plus className="w-8 h-8 text-slate-300 group-hover:text-indigo-500" />
+                          </div>
+                          <span className="text-sm font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-500 transition-all">{language === 'zh' ? '添加新工作流' : 'New Stream'}</span>
+                        </button>
+                     </div>
+                   )}
                 </div>
              </div>
            )}
@@ -526,13 +543,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   onClick={() => handleOpenDetail(project.id)}
                   className="group flex flex-col md:flex-row items-stretch gap-8 p-8 md:p-10 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-slate-50 dark:border-slate-800/50 hover:border-indigo-500/40 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)] transition-all cursor-pointer relative overflow-hidden"
                 >
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); if(confirm(t.deleteProjectWarning)) onDeleteProject(project.id); }}
-                    className="absolute top-6 right-6 p-3 text-slate-200 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-all active:scale-90 z-10"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-
                   <div className="relative w-28 h-28 md:w-32 md:h-32 shrink-0 mx-auto md:mx-0">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r={radius} className="stroke-slate-100 dark:stroke-slate-800 fill-none" strokeWidth="8" />
