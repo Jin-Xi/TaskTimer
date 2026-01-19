@@ -53,7 +53,7 @@ const ProjectForm = ({
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
-         <div className="max-w-4xl mx-auto space-y-10">
+         <div className="w-full space-y-10">
             <div className="space-y-6">
                <div>
                   <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">{t.projectName}</label>
@@ -489,7 +489,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-full gap-4 animate-in fade-in duration-500 relative max-w-6xl mx-auto overflow-hidden">
+    <div className="flex flex-col w-full h-full gap-4 animate-in fade-in duration-500 relative overflow-hidden">
       {isCreatingProject ? (
         <ProjectForm 
             mode="create"
@@ -517,7 +517,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         />
       )
       : activeProjectId ? (
-        <div className="flex flex-col h-full animate-in fade-in duration-500 w-full overflow-hidden px-2">
+        <div className="flex flex-col h-full animate-in fade-in duration-500 w-full overflow-hidden">
            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-4 w-full bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm shrink-0">
               <div className="flex items-center gap-6">
                 <button 
@@ -531,7 +531,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
                         <Badge color={projectColor} className="text-[8px] font-black uppercase tracking-widest">{activeProject?.color}</Badge>
-                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em] opacity-70 truncate max-w-sm">{activeProject?.description}</p>
+                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em] opacity-70 truncate max-w-full">{activeProject?.description}</p>
                     </div>
                     {(activeProject?.startDate || activeProject?.schedule) && (
                         <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold mt-1">
@@ -631,7 +631,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         </div>
       ) 
       : (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden w-full">
           <div className="flex items-center justify-between px-4 mb-8 shrink-0">
             <div>
               <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t.projectPlanner}</h2>
@@ -727,7 +727,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                       </div>
                       <button 
                         onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"
+                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>

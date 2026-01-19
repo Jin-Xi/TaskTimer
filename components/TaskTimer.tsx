@@ -84,7 +84,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
     return [...(task.milestones || [])].sort((a, b) => a.timestamp - b.timestamp);
   }, [task.milestones]);
 
-  // Pomodoro visualization
   const sessionProgress = isBreak 
     ? Math.min(100, (sessionElapsed / POMODORO_BREAK_MS) * 100)
     : Math.min(100, (sessionElapsed / POMODORO_WORK_MS) * 100);
@@ -92,7 +91,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
   const showBreakPrompt = isRunning && sessionElapsed >= POMODORO_WORK_MS;
 
   return (
-    <div className={`group relative transition-all duration-700 w-full max-w-4xl mx-auto flex flex-col ${
+    <div className={`group relative transition-all duration-700 w-full flex flex-col ${
       isHero 
         ? 'bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 shadow-[0_20px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.4)] rounded-[3.5rem] md:rounded-[4.5rem] p-8 md:p-14' 
         : 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-shadow'
@@ -101,7 +100,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
         <div className={`absolute inset-0 ${isBreak ? 'bg-amber-500/[0.02]' : 'bg-indigo-500/[0.01]'} animate-pulse-gentle pointer-events-none rounded-[inherit]`} />
       )}
 
-      {/* Dismiss Button */}
       {isHero && onDismiss && (
         <button 
           onClick={() => onDismiss(task.id)}
@@ -112,7 +110,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
         </button>
       )}
       
-      {/* 1. Status Badge & Complete Button */}
       <div className="flex justify-center items-center gap-4 mb-8">
         {isBreak && (
           <div className="flex items-center gap-2 px-6 py-3 bg-amber-50 dark:bg-amber-950/30 text-amber-600 rounded-full border border-amber-100 dark:border-amber-900/50 animate-bounce">
@@ -130,7 +127,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
       </div>
 
       <div className="relative z-10 w-full flex flex-col items-center">
-        {/* 2. Header and Focus Mode */}
         <div className="w-full flex items-center justify-between mb-2 pr-12">
           <div className="flex items-center gap-3 min-w-0">
              <div className={`shrink-0 w-2.5 h-2.5 rounded-full ${isBreak ? 'bg-amber-500 animate-pulse' : isRunning ? 'bg-indigo-500 animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-300 dark:bg-slate-700'}`} />
@@ -146,12 +142,10 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
           </button>
         </div>
 
-        {/* 3. Main Time Display */}
         <div className={`${isHero ? 'text-6xl sm:text-8xl md:text-[10rem] my-8' : 'text-4xl sm:text-5xl md:text-6xl my-6'} font-mono font-black text-center tabular-nums tracking-tighter leading-none ${isBreak ? 'text-amber-500' : isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-200 dark:text-slate-800'}`}>
           {formatTime(isBreak ? (POMODORO_BREAK_MS - sessionElapsed) : elapsed)}
         </div>
 
-        {/* Pomodoro Session Tracker */}
         {isHero && (isRunning || isBreak) && (
           <div className="w-full max-w-md mx-auto mb-10 space-y-3">
              <div className="flex items-center justify-between px-2">
@@ -167,7 +161,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
           </div>
         )}
 
-        {/* Break Tip */}
         {isHero && showBreakPrompt && (
           <div className="w-full max-w-md mx-auto mb-8 animate-in slide-in-from-top-4">
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-6 rounded-3xl flex items-center justify-between">
@@ -185,7 +178,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
           </div>
         )}
 
-        {/* 4. Combined Inline Milestone Input (Centered) */}
         {isHero && !isBreak && (
           <form 
             onSubmit={handleAddMilestone}
@@ -211,7 +203,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
           </form>
         )}
 
-        {/* 5. Linear Milestone List */}
         {isHero && sortedMilestones.length > 0 && !isBreak && (
           <div className="w-full max-w-2xl mx-auto space-y-4 max-h-64 overflow-y-auto custom-scrollbar px-4 mb-10 py-2 border-t border-slate-50 dark:border-slate-800/50 pt-8">
             {sortedMilestones.map((m, idx) => (
@@ -254,7 +245,6 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
           </div>
         )}
 
-        {/* 6. Combined Start/Pause/EndBreak Button at the bottom */}
         <div className="flex justify-center mt-4">
           <button 
             onClick={() => isBreak ? onStart(task.id) : isRunning ? onPause(task.id) : onStart(task.id)} 
@@ -360,10 +350,10 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     );
   }
 
-  const currentTask = activeTasks[0]; // Always handle only one due to app logic
+  const currentTask = activeTasks[0];
 
   return (
-    <div className="w-full space-y-10 animate-in fade-in slide-in-from-top-4 duration-700 px-2 sm:px-4 max-w-5xl mx-auto">
+    <div className="w-full space-y-10 animate-in fade-in slide-in-from-top-4 duration-700 px-2 sm:px-4 mx-auto">
       <SingleTimer 
         language={language}
         task={currentTask}

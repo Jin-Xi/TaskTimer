@@ -57,7 +57,6 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
 
   return (
     <div className="relative w-full h-full flex flex-col animate-in fade-in duration-500 overflow-hidden items-center">
-      {/* Top Level Config Button */}
       <div className="absolute top-0 right-0 z-10 px-4">
         <button 
           onClick={() => setShowSettings(true)}
@@ -86,7 +85,6 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
             {t.analyzeWorkflow}
           </Button>
 
-          {/* Privacy Disclaimer Card */}
           <div className="w-full max-w-xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm">
              <button 
                onClick={() => setShowDataPreview(!showDataPreview)}
@@ -132,8 +130,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
 
       {result && (
         <div className="w-full flex-1 overflow-y-auto custom-scrollbar p-4 space-y-10 animate-in slide-in-from-bottom-8 duration-700 pb-20 flex flex-col items-center">
-          <div className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.08)] dark:shadow-[0_30px_100px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 overflow-hidden">
-            {/* Report Header */}
+          <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.08)] dark:shadow-[0_30px_100px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-slate-800 overflow-hidden">
             <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 md:p-12 text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" />
               <div className="relative z-10 text-center md:text-left">
@@ -146,7 +143,6 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
               </div>
             </div>
             
-            {/* Report Body */}
             <div className="p-8 md:p-12 space-y-12">
               <section>
                 <div className="flex items-center gap-3 mb-6">
@@ -177,7 +173,6 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
               </section>
             </div>
             
-            {/* Footer Action */}
             <div className="bg-slate-50/50 dark:bg-slate-800/20 p-8 border-t border-slate-100 dark:border-slate-800 flex justify-center">
               <button 
                 onClick={handleAnalyze} 
@@ -195,7 +190,6 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
         </div>
       )}
 
-      {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 duration-500">
@@ -226,7 +220,6 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
               </div>
 
               <div className="space-y-4 pt-2">
-                {/* Fix: Hide API key field for Gemini to comply with coding guidelines */}
                 {aiConfig.provider !== 'gemini' && (
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] ml-2">{t.apiKey}</label>

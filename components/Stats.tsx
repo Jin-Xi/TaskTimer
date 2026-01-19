@@ -16,7 +16,6 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
   const now = Date.now();
   const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-  // 1. Data for weekly distribution
   const weeklyDurationData = completedTasks
     .map(task => {
       const weeklyMinutes = task.logs.reduce((acc, log) => {
@@ -36,7 +35,6 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
     .sort((a, b) => b.duration - a.duration)
     .slice(0, 8);
 
-  // 2. Data for total individual tasks duration
   const totalDurationData = completedTasks
     .map(task => ({
       name: task.title,
@@ -45,7 +43,6 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
     .sort((a, b) => b.duration - a.duration)
     .slice(0, 8);
 
-  // 3. Data for category breakdown
   const categoryData = completedTasks.reduce((acc, task) => {
     const minutes = Math.round(task.totalTime / 1000 / 60);
     const tags = task.tags && task.tags.length > 0 ? task.tags : ['Uncategorized'];
@@ -62,7 +59,7 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
 
   if (tasks.length === 0) {
     return (
-      <div className="w-full max-w-4xl mx-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3.5rem] p-20 text-center shadow-sm flex flex-col items-center">
+      <div className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3.5rem] p-20 text-center shadow-sm flex flex-col items-center">
         <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
           <span className="text-3xl text-slate-300">📊</span>
         </div>
@@ -74,10 +71,9 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-700 px-2">
+    <div className="w-full animate-in fade-in duration-700 px-2">
       <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 shadow-[0_10px_40px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.3)] rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 flex flex-col gap-6">
         
-        {/* Compact Header */}
         <div className="flex items-end justify-between border-b border-slate-50 dark:border-slate-800 pb-4">
            <div>
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -99,7 +95,6 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
            </div>
         </div>
 
-        {/* 1. Summary Mini Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
             <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-1">{t.avgTaskTime}</p>
@@ -121,9 +116,7 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
           </div>
         </div>
 
-        {/* 2. Dual Distribution Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Weekly Dist */}
           <div className="bg-slate-50/30 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-1 h-4 bg-indigo-500 rounded-full" />
@@ -153,7 +146,6 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
             </div>
           </div>
 
-          {/* Total Dist */}
           <div className="bg-slate-50/30 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-1 h-4 bg-emerald-500 rounded-full" />
@@ -184,7 +176,6 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
           </div>
         </div>
 
-        {/* 3. Bottom Breakdown Row */}
         <div className="bg-slate-50/30 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
            <div className="flex items-center gap-2 mb-6">
               <div className="w-1 h-4 bg-rose-500 rounded-full" />

@@ -71,8 +71,6 @@ const App: React.FC = () => {
     return () => { unsubTasks(); unsubCats(); unsubProjs(); };
   }, []);
 
-  // Show the task identified by focusTaskId if it's currently RUNNING, PAUSED or BREAK.
-  // This ensures that pausing or being on break doesn't hide the card, only Dismiss does.
   const activeTimers = tasks
     .filter(t => t.id === focusTaskId && (t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED || t.status === TaskStatus.BREAK))
     .slice(0, 1);
@@ -117,7 +115,6 @@ const App: React.FC = () => {
         const logDuration = now - task.logs[lastLogIdx].start;
         newLogs[lastLogIdx] = { ...task.logs[lastLogIdx], end: now };
         
-        // Only add duration to totalTime if it was work time (RUNNING)
         const updatedTotalTime = task.status === TaskStatus.RUNNING 
           ? task.totalTime + logDuration 
           : task.totalTime;
@@ -137,12 +134,10 @@ const App: React.FC = () => {
     const task = tasks.find(t => t.id === id);
     if (!task || task.status === TaskStatus.BREAK) return;
 
-    // If currently running, pause it first to commit the logs
     if (task.status === TaskStatus.RUNNING) {
       await handlePauseTask(id);
     }
 
-    // Start a new log entry for the break session
     const updated = await updateTask(id, {
         status: TaskStatus.BREAK,
         logs: [...task.logs, { start: Date.now(), end: null }]
@@ -159,7 +154,6 @@ const App: React.FC = () => {
     const task = tasks.find(t => t.id === id);
     if (!task || task.status === TaskStatus.RUNNING) return;
 
-    // Check prerequisites
     if (task.parentTaskIds?.length > 0) {
       const unfinished = tasks.filter(t => task.parentTaskIds.includes(t.id) && t.status !== TaskStatus.COMPLETED);
       if (unfinished.length > 0) {
@@ -168,7 +162,6 @@ const App: React.FC = () => {
       }
     }
 
-    // Auto-pause any currently running task (ensuring only one at a time)
     const runningTask = tasks.find(t => t.status === TaskStatus.RUNNING || t.status === TaskStatus.BREAK);
     if (runningTask && runningTask.id !== id) {
       await handlePauseTask(runningTask.id);
@@ -256,7 +249,6 @@ const App: React.FC = () => {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full py-10 px-6">
-      {/* Logo Top */}
       <div className="flex items-center gap-4 px-2 shrink-0">
         <div className="w-10 h-10 bg-indigo-600 rounded-[1rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
           <TimerIcon className="w-5 h-5" />
@@ -264,7 +256,6 @@ const App: React.FC = () => {
         <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{APP_NAME}</h1>
       </div>
 
-      {/* Centered Navigation Tabs */}
       <nav className="flex-1 flex flex-col justify-center space-y-4 my-8">
         {NAV_ITEMS.map(item => {
           const Icon = item.icon;
@@ -285,7 +276,6 @@ const App: React.FC = () => {
         })}
       </nav>
 
-      {/* Bottom Actions */}
       <div className="pt-8 flex gap-3 shrink-0">
            <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
              {darkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-500" />}
@@ -301,12 +291,10 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#fcfdfe] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden">
-      {/* COLUMN 1: LEFT NAV */}
       <aside className="w-[280px] bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0">
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar Overlay - REMOVED background mask and backdrop-blur as requested */}
       <aside className={`fixed inset-0 z-[60] lg:hidden transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="absolute inset-0 bg-transparent" onClick={() => setIsMobileMenuOpen(false)} />
         <div className="absolute top-0 bottom-0 left-0 w-[280px] bg-white dark:bg-slate-900 shadow-2xl">
@@ -314,9 +302,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* COLUMN 2: MIDDLE Dynamic Content (Vertically and Horizontally Centered) */}
       <main className="flex-1 relative animate-in fade-in duration-500 flex flex-col min-h-screen overflow-y-auto custom-scrollbar">
-        {/* Mobile Header (Fixed Top) - REMOVED backdrop-blur-md and mask for cleaner look */}
         <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-30">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white"><TimerIcon className="w-4 h-4" /></div>
@@ -327,13 +313,10 @@ const App: React.FC = () => {
           </button>
         </header>
 
-        {/* Content Centering Area */}
         <div className="flex-grow flex flex-col items-center">
-          <div className="w-full h-full max-w-5xl px-4 sm:px-6 lg:px-12 flex flex-col">
-            
-            {/* Main Area: Perfect Centering with Vertical Padding for Breathability */}
+          <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex flex-col">
             <section className="flex-grow flex flex-col justify-center items-center py-10 min-h-full">
-              <div className="w-full flex flex-col items-center justify-center max-w-full">
+              <div className="w-full flex flex-col items-center justify-center">
                 {activeTab === 'tasks' && (
                   <TaskTimer 
                     language={language} 
@@ -379,7 +362,6 @@ const App: React.FC = () => {
                 {activeTab === 'ai-insights' && <AIInsights language={language} tasks={tasks} />}
               </div>
 
-              {/* Task List (Stacked only for screens smaller than xl, with clear separation) */}
               <div className="xl:hidden w-full mt-20 md:mt-24 pt-12 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-8">
                    <div className="w-1 h-5 rounded-full bg-indigo-500" />
@@ -392,7 +374,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* COLUMN 3: RIGHT TASK LIST (Always-on Sidebar for xl screens) - 30% width */}
       <aside className="w-[30%] min-w-[420px] bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0">
         <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-10">
             <SharedTaskList />
