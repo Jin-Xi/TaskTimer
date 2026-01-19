@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, FolderPlus, Trash2, ChevronRight, ChevronLeft, List, Pencil, X, Check, ArrowLeft, Info, Layers, Flag, Tag as TagIcon, PlusCircle, Target, Rocket, Activity, Zap, GitBranchPlus, Calendar, Clock, Download } from 'lucide-react';
 import { Project, Task, TaskStatus, Category, DayOfWeek, ProjectSchedule } from '../types';
 import { TAG_COLORS, TRANSLATIONS, DEFAULT_CATEGORIES } from '../constants';
@@ -19,22 +19,174 @@ interface ProjectManagerProps {
   categories?: Category[]; 
 }
 
+const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+const ProjectForm = ({ 
+  mode, 
+  title, 
+  data, 
+  onChange, 
+  onSubmit, 
+  onCancel, 
+  t, 
+  DAYS_OF_WEEK, 
+  TAG_COLORS 
+}: any) => {
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+      <div className="flex items-center justify-between px-6 md:px-10 py-6 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-10">
+         <div className="flex items-center gap-6">
+            <button type="button" onClick={onCancel} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-all active:scale-95 shadow-sm border border-slate-200 dark:border-slate-700">
+               <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">{title}</h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{mode === 'create' ? t.projectPlanner : data.name}</p>
+            </div>
+         </div>
+         <Button onClick={onSubmit} className="rounded-2xl px-8 py-3.5 shadow-xl shadow-indigo-500/20 font-black text-sm uppercase tracking-wider">
+            {mode === 'create' ? t.createProject : 'Save Changes'}
+         </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
+         <div className="max-w-4xl mx-auto space-y-10">
+            <div className="space-y-6">
+               <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">{t.projectName}</label>
+                  <input 
+                    autoFocus 
+                    required 
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-3xl p-5 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 font-black text-xl shadow-inner transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600" 
+                    value={data.name} 
+                    onChange={(e) => onChange('name', e.target.value)} 
+                    placeholder="e.g. Q4 Marketing Campaign"
+                  />
+               </div>
+               <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">{t.description}</label>
+                  <textarea 
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-3xl p-5 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 font-medium text-base h-40 resize-none shadow-inner transition-all leading-relaxed placeholder:text-slate-300 dark:placeholder:text-slate-600" 
+                    value={data.description || ''} 
+                    onChange={(e) => onChange('description', e.target.value)} 
+                    placeholder="Describe the main goals and deliverables..."
+                  />
+               </div>
+            </div>
+
+            <div>
+               <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">Timeline</label>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/30 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50">
+                  <div>
+                      <label className="flex items-center gap-2 text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-3 ml-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {t.startDate}
+                      </label>
+                      <div className="relative group cursor-pointer" onClick={() => (startDateRef.current as any)?.showPicker?.()}>
+                          <input 
+                              ref={startDateRef}
+                              type="date" 
+                              className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 pl-12 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 font-black text-sm shadow-sm appearance-none relative z-10 text-slate-700 dark:text-slate-200 cursor-pointer transition-all hover:border-indigo-300 dark:hover:border-indigo-700" 
+                              value={data.startDate || ''} 
+                              onChange={(e) => onChange('startDate', e.target.value)} 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                (e.currentTarget as any).showPicker?.();
+                              }}
+                          />
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400 pointer-events-none z-20 group-hover:scale-110 transition-transform" />
+                      </div>
+                  </div>
+                  <div>
+                      <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {t.endDate}
+                      </label>
+                      <div className="relative group cursor-pointer" onClick={() => (endDateRef.current as any)?.showPicker?.()}>
+                          <input 
+                              ref={endDateRef}
+                              type="date" 
+                              className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 pl-12 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 font-black text-sm shadow-sm appearance-none relative z-10 text-slate-700 dark:text-slate-200 cursor-pointer transition-all hover:border-indigo-300 dark:hover:border-indigo-700" 
+                              value={data.endDate || ''} 
+                              onChange={(e) => onChange('endDate', e.target.value)} 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                (e.currentTarget as any).showPicker?.();
+                              }}
+                          />
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none z-20 group-hover:scale-110 transition-transform" />
+                      </div>
+                  </div>
+               </div>
+            </div>
+
+            <div>
+               <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">{t.schedule}</label>
+               <div className="bg-slate-50 dark:bg-slate-800/30 p-2 rounded-[2rem] border border-slate-100 dark:border-slate-800 flex gap-2">
+                   {['daily', 'weekly'].map(type => (
+                       <button
+                         key={type}
+                         type="button"
+                         onClick={() => onChange('scheduleType', type)}
+                         className={`flex-1 py-5 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all ${data.scheduleType === type ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                       >
+                         {type === 'daily' ? t.everyDay : t.specificDays}
+                       </button>
+                   ))}
+               </div>
+               {data.scheduleType === 'weekly' && (
+                  <div className="flex justify-between gap-3 mt-6 px-2 animate-in slide-in-from-top-2">
+                     {DAYS_OF_WEEK.map((day: any) => (
+                       <button
+                         key={day}
+                         type="button"
+                         onClick={() => onChange('toggleDay', day)}
+                         className={`flex-1 aspect-square rounded-2xl text-[10px] md:text-xs font-black transition-all flex items-center justify-center ${data.days.includes(day) ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-110' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                       >
+                         {t.days[day]}
+                       </button>
+                     ))}
+                  </div>
+               )}
+            </div>
+
+            <div>
+               <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.themeColor}</label>
+               <div className="flex flex-wrap gap-4 px-2">
+                  {TAG_COLORS.map((c: any) => (
+                     <button 
+                       key={c} 
+                       type="button"
+                       onClick={() => onChange('color', c)} 
+                       className={`w-14 h-14 rounded-2xl bg-${c}-500 transition-all ${data.color === c ? 'ring-4 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 ring-indigo-500/30 scale-110 shadow-xl' : 'opacity-40 hover:opacity-100 hover:scale-105'}`} 
+                     />
+                  ))}
+               </div>
+            </div>
+         </div>
+      </div>
+    </div>
+  )
+}
+
 export const ProjectManager: React.FC<ProjectManagerProps> = ({ 
   language,
   projects, 
   tasks, 
   onAddProject, 
-  onUpdateProject,
+  onUpdateProject, 
   onDeleteProject, 
-  onAddTask,
-  onDeleteTask,
-  onUpdateTask,
-  categories = DEFAULT_CATEGORIES
+  onAddTask, 
+  onDeleteTask, 
+  onUpdateTask, 
+  categories = DEFAULT_CATEGORIES 
 }) => {
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   
-  // New Project State
   const [newProject, setNewProject] = useState<{
     name: string;
     description: string;
@@ -47,7 +199,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     name: '', 
     description: '', 
     color: 'indigo',
-    startDate: '',
+    startDate: getTodayStr(),
     endDate: '',
     scheduleType: 'daily',
     selectedDays: []
@@ -58,10 +210,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [isAddingRoot, setIsAddingRoot] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', parentTaskIds: [] as string[] });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [milestoneTaskId, setMilestoneTaskId] = useState<string | null>(null);
-  const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 4;
 
@@ -81,8 +230,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const t = TRANSLATIONS[language];
   const DAYS_OF_WEEK: DayOfWeek[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const handleProjectSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleProjectSubmit = (e?: React.FormEvent) => {
+    if(e) e.preventDefault();
     if (newProject.name.trim()) {
       const schedule: ProjectSchedule = {
         type: newProject.scheduleType,
@@ -102,7 +251,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         name: '', 
         description: '', 
         color: 'indigo', 
-        startDate: '', 
+        startDate: getTodayStr(), 
         endDate: '', 
         scheduleType: 'daily',
         selectedDays: []
@@ -114,8 +263,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     }
   };
 
-  const handleEditProjectSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditProjectSubmit = (e?: React.FormEvent) => {
+    if(e) e.preventDefault();
     if (editingProject && editingProject.name.trim()) {
       onUpdateProject(editingProject.id, {
         name: editingProject.name.trim(),
@@ -200,7 +349,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     return tasks.filter(t => t.projectId === activeProjectId);
   }, [tasks, activeProjectId]);
 
-  // Logic to build horizontal chains for vertical roots
   const projectTracks = useMemo(() => {
     if (!activeProjectId) return [];
     
@@ -209,7 +357,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     
     const buildChain = (current: Task, chain: Task[]) => {
       chain.push(current);
-      // For simplicity, we find the first child that depends ONLY on this task to continue the primary chain
       const child = projectTasks.find(t => t.parentTaskIds?.includes(current.id));
       if (child && !chain.includes(child)) {
         buildChain(child, chain);
@@ -228,7 +375,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const activeProject = projects.find(p => p.id === activeProjectId);
   const projectColor = activeProject?.color || 'indigo';
 
-  // Fix: Explicitly include 'key' in props type or use React.FC to allow React list reconciliation props
   const TaskCard = ({ task, isFirst, isLast }: { task: Task, isFirst: boolean, isLast: boolean, key?: React.Key }) => {
     const isLocked = task.parentTaskIds && task.parentTaskIds.length > 0 
       ? task.parentTaskIds.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED)
@@ -294,9 +440,197 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     );
   };
 
+  const createFormData = {
+    name: newProject.name,
+    description: newProject.description,
+    startDate: newProject.startDate,
+    endDate: newProject.endDate,
+    scheduleType: newProject.scheduleType,
+    days: newProject.selectedDays,
+    color: newProject.color
+  };
+  
+  const handleCreateChange = (field: string, value: any) => {
+    if (field === 'toggleDay') {
+       toggleDaySelection(value);
+    } else {
+       setNewProject(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const editFormData = editingProject ? {
+    name: editingProject.name,
+    description: editingProject.description,
+    startDate: editingProject.startDate,
+    endDate: editingProject.endDate,
+    scheduleType: editingProject.schedule?.type || 'daily',
+    days: editingProject.schedule?.days || [],
+    color: editingProject.color
+  } : null;
+
+  const handleEditChange = (field: string, value: any) => {
+    if (!editingProject) return;
+    
+    if (field === 'toggleDay') {
+        toggleEditDaySelection(value);
+        return;
+    }
+    
+    if (field === 'scheduleType') {
+       const currentSchedule = editingProject.schedule || { days: [] };
+       setEditingProject({
+           ...editingProject,
+           schedule: { ...currentSchedule, type: value }
+       });
+       return;
+    }
+    
+    setEditingProject(prev => prev ? ({ ...prev, [field]: value }) : null);
+  };
+
   return (
     <div className="flex flex-col w-full h-full gap-4 animate-in fade-in duration-500 relative max-w-6xl mx-auto overflow-hidden">
-      {!activeProjectId ? (
+      {isCreatingProject ? (
+        <ProjectForm 
+            mode="create"
+            title={t.createProject}
+            data={createFormData}
+            onChange={handleCreateChange}
+            onSubmit={handleProjectSubmit}
+            onCancel={() => setIsCreatingProject(false)}
+            t={t}
+            DAYS_OF_WEEK={DAYS_OF_WEEK}
+            TAG_COLORS={TAG_COLORS}
+        />
+      ) 
+      : editingProject ? (
+        <ProjectForm 
+            mode="edit"
+            title="Edit Project"
+            data={editFormData}
+            onChange={handleEditChange}
+            onSubmit={handleEditProjectSubmit}
+            onCancel={() => setEditingProject(null)}
+            t={t}
+            DAYS_OF_WEEK={DAYS_OF_WEEK}
+            TAG_COLORS={TAG_COLORS}
+        />
+      )
+      : activeProjectId ? (
+        <div className="flex flex-col h-full animate-in fade-in duration-500 w-full overflow-hidden px-2">
+           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-4 w-full bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm shrink-0">
+              <div className="flex items-center gap-6">
+                <button 
+                  onClick={() => setActiveProjectId(null)}
+                  className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:scale-110 active:scale-95"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="min-w-0">
+                  <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-tight mb-1 truncate">{activeProject?.name}</h3>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                        <Badge color={projectColor} className="text-[8px] font-black uppercase tracking-widest">{activeProject?.color}</Badge>
+                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em] opacity-70 truncate max-w-sm">{activeProject?.description}</p>
+                    </div>
+                    {(activeProject?.startDate || activeProject?.schedule) && (
+                        <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold mt-1">
+                            {activeProject.startDate && (
+                                <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3 text-indigo-400" />
+                                    <span>{activeProject.startDate} {activeProject.endDate ? `- ${activeProject.endDate}` : ''}</span>
+                                </div>
+                            )}
+                            {activeProject.schedule && (
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3 h-3 text-emerald-400" />
+                                    <span className="uppercase">
+                                        {activeProject.schedule.type === 'daily' 
+                                            ? t.everyDay 
+                                            : (activeProject.schedule.days?.map(d => t.days[d]) || []).join(', ')}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                  {activeProject && (
+                      <>
+                        <button 
+                            onClick={() => setEditingProject({
+                                ...activeProject,
+                                startDate: activeProject.startDate || getTodayStr()
+                            })}
+                            className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:scale-105 active:scale-95"
+                            title="Edit Project"
+                        >
+                            <Pencil className="w-4 h-4" />
+                        </button>
+                        <button 
+                            onClick={() => handleExportProject(activeProject)}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-slate-800 transition-all hover:scale-105 active:scale-95"
+                            title={t.exportProject}
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">{t.exportProject}</span>
+                        </button>
+                      </>
+                  )}
+              </div>
+           </div>
+
+           <div className="flex-1 w-full overflow-y-auto custom-scrollbar p-8 flex flex-col">
+                <div className="space-y-12 pb-16 min-w-max">
+                   {projectTracks.map((track, trackIdx) => (
+                     <div key={trackIdx} className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4 px-4">
+                           <div className={`w-1.5 h-4 rounded-full bg-${projectColor}-500 opacity-50`} />
+                           <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">{language === 'zh' ? `工作流支线 ${trackIdx + 1}` : `Stream ${trackIdx + 1}`}</h4>
+                        </div>
+                        <div className="flex items-center px-4">
+                           {track.map((task, stepIdx) => (
+                             <TaskCard 
+                               key={task.id} 
+                               task={task} 
+                               isFirst={stepIdx === 0} 
+                               isLast={stepIdx === track.length - 1} 
+                             />
+                           ))}
+                        </div>
+                     </div>
+                   ))}
+
+                   <div className="flex flex-col gap-4">
+                        {projectTracks.length > 0 && (
+                            <div className="flex items-center gap-4 px-4 opacity-40">
+                                <div className={`w-1.5 h-4 rounded-full bg-slate-300 dark:bg-slate-700`} />
+                                <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">{language === 'zh' ? '新工作流' : 'New Stream'}</h4>
+                            </div>
+                        )}
+                        <div className="px-4">
+                            <button
+                                onClick={() => {
+                                    setNewTask({ title: '', description: '', parentTaskIds: [] });
+                                    setIsAddingRoot(true);
+                                }}
+                                className="w-[260px] min-h-[160px] rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 flex flex-col items-center justify-center gap-4 transition-all group"
+                            >
+                                <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform flex items-center justify-center">
+                                    <Plus className="w-6 h-6 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                                </div>
+                                <span className="text-xs font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-500 transition-colors">{language === 'zh' ? '添加起始节点' : 'Add Starting Node'}</span>
+                            </button>
+                        </div>
+                   </div>
+                </div>
+           </div>
+        </div>
+      ) 
+      : (
         <div className="flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between px-4 mb-8 shrink-0">
             <div>
@@ -315,7 +649,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4 space-y-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
             {projects.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center bg-slate-50/50 dark:bg-slate-900/30 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[3rem] mx-4">
                 <Target className="w-16 h-16 text-slate-200 mb-6" />
@@ -335,15 +669,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   <div 
                     key={project.id} 
                     onClick={() => setActiveProjectId(project.id)}
-                    className="group relative flex flex-col md:flex-row items-stretch gap-6 p-6 md:p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl hover:border-indigo-500/20 transition-all cursor-pointer mx-2"
+                    className="group relative flex flex-col md:flex-row items-stretch gap-6 p-6 md:p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 transition-all cursor-pointer hover:border-indigo-500 hover:ring-4 hover:ring-indigo-500/10"
                   >
                     <div className="shrink-0 flex items-center justify-center">
                       <div className="relative w-20 h-20 md:w-24 md:h-24">
-                        <svg className="w-full h-full -rotate-90">
-                          <circle cx="50%" cy="50%" r="42%" className="stroke-slate-100 dark:stroke-slate-800 fill-none stroke-[8px]" />
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="42" className="stroke-slate-100 dark:stroke-slate-800 fill-none" strokeWidth="8" />
                           <circle 
-                            cx="50%" cy="50%" r="42%" 
-                            className={`stroke-${project.color}-500 fill-none stroke-[8px] transition-all duration-1000 ease-out`}
+                            cx="50" cy="50" r="42" 
+                            className={`stroke-${project.color}-500 fill-none transition-all duration-1000 ease-out`}
+                            strokeWidth="8"
+                            strokeLinecap="round"
                             style={{ 
                               strokeDasharray: '264', 
                               strokeDashoffset: (264 - (264 * progress) / 100).toString() 
@@ -391,7 +727,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                       </div>
                       <button 
                         onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all"
+                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -428,202 +764,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
           )}
         </div>
-      ) : (
-        <div className="flex flex-col h-full animate-in fade-in duration-500 w-full overflow-hidden px-2">
-           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-4 w-full bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm shrink-0">
-              <div className="flex items-center gap-6">
-                <button 
-                  onClick={() => setActiveProjectId(null)}
-                  className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:scale-110 active:scale-95"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="min-w-0">
-                  <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-tight mb-1 truncate">{activeProject?.name}</h3>
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                        <Badge color={projectColor} className="text-[8px] font-black uppercase tracking-widest">{activeProject?.color}</Badge>
-                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em] opacity-70 truncate max-w-sm">{activeProject?.description}</p>
-                    </div>
-                    {/* Schedule Info */}
-                    {(activeProject?.startDate || activeProject?.schedule) && (
-                        <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold mt-1">
-                            {activeProject.startDate && (
-                                <div className="flex items-center gap-1.5">
-                                    <Calendar className="w-3 h-3 text-indigo-400" />
-                                    <span>{activeProject.startDate} {activeProject.endDate ? `- ${activeProject.endDate}` : ''}</span>
-                                </div>
-                            )}
-                            {activeProject.schedule && (
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="w-3 h-3 text-emerald-400" />
-                                    <span className="uppercase">
-                                        {activeProject.schedule.type === 'daily' 
-                                            ? t.everyDay 
-                                            : activeProject.schedule.days?.map(d => t.days[d]).join(', ')}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-3">
-                  {activeProject && (
-                      <>
-                        <button 
-                            onClick={() => setEditingProject(activeProject)}
-                            className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:scale-105 active:scale-95"
-                            title="Edit Project"
-                        >
-                            <Pencil className="w-4 h-4" />
-                        </button>
-                        <button 
-                            onClick={() => handleExportProject(activeProject)}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-slate-800 transition-all hover:scale-105 active:scale-95"
-                            title={t.exportProject}
-                        >
-                            <Download className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">{t.exportProject}</span>
-                        </button>
-                      </>
-                  )}
-              </div>
-           </div>
-
-           <div className="flex-1 w-full overflow-y-auto custom-scrollbar pr-1 flex flex-col">
-                <div className="space-y-12 pb-16 pt-4 min-w-max">
-                   {projectTracks.map((track, trackIdx) => (
-                     <div key={trackIdx} className="flex flex-col gap-4">
-                        <div className="flex items-center gap-4 px-4">
-                           <div className={`w-1.5 h-4 rounded-full bg-${projectColor}-500 opacity-50`} />
-                           <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">{language === 'zh' ? `工作流支线 ${trackIdx + 1}` : `Stream ${trackIdx + 1}`}</h4>
-                        </div>
-                        <div className="flex items-center px-4">
-                           {track.map((task, stepIdx) => (
-                             <TaskCard 
-                               key={task.id} 
-                               task={task} 
-                               isFirst={stepIdx === 0} 
-                               isLast={stepIdx === track.length - 1} 
-                             />
-                           ))}
-                        </div>
-                     </div>
-                   ))}
-
-                   {/* Add Start Node Card */}
-                   <div className="flex flex-col gap-4">
-                        {projectTracks.length > 0 && (
-                            <div className="flex items-center gap-4 px-4 opacity-40">
-                                <div className={`w-1.5 h-4 rounded-full bg-slate-300 dark:bg-slate-700`} />
-                                <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">{language === 'zh' ? '新工作流' : 'New Stream'}</h4>
-                            </div>
-                        )}
-                        <div className="px-4">
-                            <button
-                                onClick={() => {
-                                    setNewTask({ title: '', description: '', parentTaskIds: [] });
-                                    setIsAddingRoot(true);
-                                }}
-                                className="w-[260px] min-h-[160px] rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 flex flex-col items-center justify-center gap-4 transition-all group"
-                            >
-                                <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform flex items-center justify-center">
-                                    <Plus className="w-6 h-6 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                                </div>
-                                <span className="text-xs font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-500 transition-colors">{language === 'zh' ? '添加起始节点' : 'Add Starting Node'}</span>
-                            </button>
-                        </div>
-                   </div>
-                </div>
-           </div>
-        </div>
       )}
 
-      {/* Edit Project Modal */}
-      {editingProject && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md animate-in fade-in">
-              <form onSubmit={handleEditProjectSubmit} className="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase shrink-0">Edit Project</h3>
-                  <div className="space-y-6 overflow-y-auto custom-scrollbar pr-2 -mr-2 flex-1">
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.projectName}</label>
-                          <input required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-black text-sm shadow-inner transition-all" value={editingProject.name} onChange={(e) => setEditingProject({...editingProject, name: e.target.value})} />
-                      </div>
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.description}</label>
-                          <textarea className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-sm h-24 resize-none shadow-inner transition-all leading-relaxed" value={editingProject.description || ''} onChange={(e) => setEditingProject({...editingProject, description: e.target.value})} />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.startDate}</label>
-                           <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-xs shadow-inner" value={editingProject.startDate || ''} onChange={(e) => setEditingProject({...editingProject, startDate: e.target.value})} />
-                        </div>
-                        <div>
-                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.endDate}</label>
-                           <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-xs shadow-inner" value={editingProject.endDate || ''} onChange={(e) => setEditingProject({...editingProject, endDate: e.target.value})} />
-                        </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.schedule}</label>
-                          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4">
-                             <div className="flex gap-4">
-                                <button 
-                                  type="button" 
-                                  onClick={() => setEditingProject({...editingProject, schedule: { ...editingProject.schedule, type: 'daily', days: undefined }})}
-                                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${(!editingProject.schedule || editingProject.schedule.type === 'daily') ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
-                                >
-                                  {t.everyDay}
-                                </button>
-                                <button 
-                                  type="button" 
-                                  onClick={() => setEditingProject({...editingProject, schedule: { ...editingProject.schedule, type: 'weekly', days: editingProject.schedule?.days || [] }})}
-                                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${editingProject.schedule?.type === 'weekly' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
-                                >
-                                  {t.specificDays}
-                                </button>
-                             </div>
-                             
-                             {editingProject.schedule?.type === 'weekly' && (
-                               <div className="flex justify-between gap-1 pt-2">
-                                 {DAYS_OF_WEEK.map(day => (
-                                   <button
-                                     key={day}
-                                     type="button"
-                                     onClick={() => toggleEditDaySelection(day)}
-                                     className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${editingProject.schedule?.days?.includes(day) ? 'bg-indigo-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
-                                   >
-                                     {t.days[day]}
-                                   </button>
-                                 ))}
-                               </div>
-                             )}
-                          </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-2">{t.themeColor}</label>
-                          <div className="flex flex-wrap gap-4 pl-1">
-                              {TAG_COLORS.map(c => (
-                                  <button type="button" key={c} onClick={() => setEditingProject({...editingProject, color: c})} className={`w-10 h-10 rounded-xl bg-${c}-500 border-2 transition-all ${editingProject.color === c ? 'border-white dark:border-slate-700 scale-110 shadow-lg ring-2 ring-current/20' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                              ))}
-                          </div>
-                      </div>
-                  </div>
-                  <div className="flex justify-end gap-4 mt-8 shrink-0 pt-6 border-t border-slate-100 dark:border-slate-800">
-                      <Button type="button" variant="ghost" className="rounded-2xl px-8 py-3.5" onClick={() => setEditingProject(null)}>{t.cancel}</Button>
-                      <Button type="submit" className="rounded-2xl px-12 py-3.5 shadow-lg shadow-indigo-500/10 font-black text-base">Save Changes</Button>
-                  </div>
-              </form>
-          </div>
-      )}
-
-      {/* Form Modals */}
       {(isAddingTaskToProject || isAddingRoot) && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md animate-in fade-in">
               <form onSubmit={handleTaskSubmit} className="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
@@ -659,22 +801,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
       {editingTask && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md animate-in fade-in">
               <form onSubmit={handleUpdateTaskSubmit} className="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                  {/* Header */}
                   <div className="flex items-center justify-between mb-6 shrink-0">
                       <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{language === 'zh' ? '管理任务' : 'Manage Step'}</h3>
                       <button type="button" onClick={() => setEditingTask(null)} className="p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 transition-all"><X className="w-6 h-6" /></button>
                   </div>
                   
-                  {/* Scrollable Content */}
                   <div className="space-y-6 overflow-y-auto custom-scrollbar pr-2 -mr-2 flex-1">
-                      
-                      {/* Title */}
                       <div>
                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.stepName}</label>
                           <input autoFocus required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-black text-sm shadow-inner" value={editingTask.title} onChange={(e) => setEditingTask({...editingTask, title: e.target.value})} />
                       </div>
 
-                      {/* Tags */}
                       <div>
                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{language === 'zh' ? '标签' : 'Tags'}</label>
                           <div className="flex flex-wrap gap-2 mb-3 px-1 min-h-[32px]">
@@ -705,7 +842,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                           </div>
                       </div>
 
-                      {/* Milestones */}
                       <div>
                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{language === 'zh' ? '里程碑' : 'Milestones'}</label>
                           <div className="space-y-2 mb-3">
@@ -753,89 +889,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                       </div>
                   </div>
                   
-                  {/* Actions */}
                   <div className="flex justify-end gap-4 mt-8 shrink-0 border-t border-slate-100 dark:border-slate-800 pt-6">
                       <Button type="button" variant="ghost" className="rounded-2xl px-8 py-3.5" onClick={() => setEditingTask(null)}>{t.cancel}</Button>
                       <Button type="submit" className="rounded-2xl px-12 py-3.5 shadow-lg shadow-indigo-500/10 font-black text-base tracking-wide">{language === 'zh' ? '保存更改' : 'Save Changes'}</Button>
-                  </div>
-              </form>
-          </div>
-      )}
-
-      {isCreatingProject && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md animate-in fade-in">
-              <form onSubmit={handleProjectSubmit} className="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase shrink-0">{t.createProject}</h3>
-                  <div className="space-y-6 overflow-y-auto custom-scrollbar pr-2 -mr-2 flex-1">
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.projectName}</label>
-                          <input autoFocus required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-black text-sm shadow-inner transition-all" value={newProject.name} onChange={(e) => setNewProject({...newProject, name: e.target.value})} />
-                      </div>
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.description}</label>
-                          <textarea className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-sm h-24 resize-none shadow-inner transition-all leading-relaxed" value={newProject.description} onChange={(e) => setNewProject({...newProject, description: e.target.value})} />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.startDate}</label>
-                           <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-xs shadow-inner" value={newProject.startDate} onChange={(e) => setNewProject({...newProject, startDate: e.target.value})} />
-                        </div>
-                        <div>
-                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.endDate}</label>
-                           <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-xs shadow-inner" value={newProject.endDate} onChange={(e) => setNewProject({...newProject, endDate: e.target.value})} />
-                        </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-2">{t.schedule}</label>
-                          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4">
-                             <div className="flex gap-4">
-                                <button 
-                                  type="button" 
-                                  onClick={() => setNewProject({...newProject, scheduleType: 'daily'})}
-                                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${newProject.scheduleType === 'daily' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
-                                >
-                                  {t.everyDay}
-                                </button>
-                                <button 
-                                  type="button" 
-                                  onClick={() => setNewProject({...newProject, scheduleType: 'weekly'})}
-                                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${newProject.scheduleType === 'weekly' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
-                                >
-                                  {t.specificDays}
-                                </button>
-                             </div>
-                             
-                             {newProject.scheduleType === 'weekly' && (
-                               <div className="flex justify-between gap-1 pt-2">
-                                 {DAYS_OF_WEEK.map(day => (
-                                   <button
-                                     key={day}
-                                     type="button"
-                                     onClick={() => toggleDaySelection(day)}
-                                     className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${newProject.selectedDays.includes(day) ? 'bg-indigo-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
-                                   >
-                                     {t.days[day]}
-                                   </button>
-                                 ))}
-                               </div>
-                             )}
-                          </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 ml-2">{t.themeColor}</label>
-                          <div className="flex flex-wrap gap-4 pl-1">
-                              {TAG_COLORS.map(c => (
-                                  <button type="button" key={c} onClick={() => setNewProject({...newProject, color: c})} className={`w-10 h-10 rounded-xl bg-${c}-500 border-2 transition-all ${newProject.color === c ? 'border-white dark:border-slate-700 scale-110 shadow-lg ring-2 ring-current/20' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                              ))}
-                          </div>
-                      </div>
-                  </div>
-                  <div className="flex justify-end gap-4 mt-8 shrink-0 pt-6 border-t border-slate-100 dark:border-slate-800">
-                      <Button type="button" variant="ghost" className="rounded-2xl px-8 py-3.5" onClick={() => setIsCreatingProject(false)}>{t.cancel}</Button>
-                      <Button type="submit" className="rounded-2xl px-12 py-3.5 shadow-lg shadow-indigo-500/10 font-black text-base">{t.createProject}</Button>
                   </div>
               </form>
           </div>
