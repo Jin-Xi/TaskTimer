@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, ChevronRight, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Plus, Trash2, ChevronRight, ChevronLeft, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { Project, Task, TaskStatus, Category, DayOfWeek } from '../types';
 import { TAG_COLORS, TRANSLATIONS, DEFAULT_CATEGORIES } from '../constants';
 import { Button } from './Button';
@@ -22,6 +22,162 @@ interface ProjectManagerProps {
 
 const getTodayStr = () => new Date().toISOString().split('T')[0];
 
+const DatePicker = ({ label, value, onChange, minDate }: { label: string, value: string, onChange: (date: string) => void, minDate?: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (value) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            setViewDate(date);
+        }
+    }
+  }, [value, isOpen]);
+
+  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
+
+  const handleDateSelect = (day: number) => {
+    const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    const year = newDate.getFullYear();
+    const month = String(newDate.getMonth() + 1).padStart(2, '0');
+    const d = String(newDate.getDate()).padStart(2, '0');
+    const isoDate = `${year}-${month}-${d}`;
+    onChange(isoDate);
+    setIsOpen(false);
+  };
+
+  const renderCalendar = () => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const days = daysInMonth(year, month);
+    const startDay = firstDayOfMonth(year, month);
+    
+    const dayElements = [];
+    
+    for (let i = 0; i < startDay; i++) {
+      dayElements.push(<div key={`empty-${i}`} className="w-8 h-8" />);
+    }
+
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+    // Fix: properly parse value string YYYY-MM-DD which is usually local time in this context,
+    // but standard Date(string) assumes UTC if only date is provided in some browsers or local in others.
+    // Safest is to split.
+    let selectedYear = -1, selectedMonth = -1, selectedDay = -1;
+    if (value) {
+        const parts = value.split('-').map(Number);
+        if (parts.length === 3) {
+            selectedYear = parts[0];
+            selectedMonth = parts[1] - 1;
+            selectedDay = parts[2];
+        }
+    }
+
+    for (let d = 1; d <= days; d++) {
+      const isSelected = selectedDay === d && selectedMonth === month && selectedYear === year;
+      const isToday = isCurrentMonth && today.getDate() === d;
+      
+      // Construct compare string
+      const currentIso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isDisabled = minDate ? currentIso < minDate : false;
+
+      dayElements.push(
+        <button
+          key={d}
+          type="button"
+          disabled={isDisabled}
+          onClick={(e) => { e.stopPropagation(); handleDateSelect(d); }}
+          className={`
+            w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all
+            ${isSelected 
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
+              : isToday 
+                ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' 
+                : isDisabled 
+                    ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }
+          `}
+        >
+          {d}
+        </button>
+      );
+    }
+
+    return dayElements;
+  };
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+        <label className="flex items-center gap-3 text-xs font-black text-indigo-500 uppercase tracking-[0.2em] mb-4 ml-1">
+            <CalendarIcon className="w-4.5 h-4.5" />
+            {label}
+        </label>
+        <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className={`
+                w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 
+                rounded-[2rem] p-5 outline-none font-black text-base transition-all text-left flex items-center justify-between
+                ${isOpen ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'hover:border-indigo-300 dark:hover:border-slate-600'}
+            `}
+        >
+            <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-400'}>
+                {value || 'Select Date'}
+            </span>
+            <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-90' : 'rotate-0'}`} />
+        </button>
+
+        {isOpen && (
+            <div className="absolute top-full left-0 mt-4 z-50 p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_30px_80px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_30px_80px_-15px_rgba(0,0,0,0.6)] border border-slate-100 dark:border-slate-800 w-[340px] animate-in fade-in zoom-in-95 slide-in-from-top-2">
+                <div className="flex items-center justify-between mb-6">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handlePrevMonth(); }} className="p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-all active:scale-95">
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">
+                        {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
+                    </span>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleNextMonth(); }} className="p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-all active:scale-95">
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="grid grid-cols-7 gap-y-3 justify-items-center mb-2">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                        <div key={i} className="text-center text-[10px] font-black text-slate-300 uppercase mb-2">
+                            {day}
+                        </div>
+                    ))}
+                    {renderCalendar()}
+                </div>
+            </div>
+        )}
+    </div>
+  );
+};
+
 const ProjectForm = ({ 
   mode, 
   title, 
@@ -37,10 +193,10 @@ const ProjectForm = ({
   const selectedDays = data?.schedule?.days || data?.selectedDays || [];
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-      <div className="flex items-center justify-between px-8 md:px-12 py-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-10">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
+      <div className="flex items-center justify-between px-8 md:px-12 py-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-10 sticky top-0">
          <div className="flex items-center gap-8">
-            <button type="button" onClick={onCancel} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-all active:scale-95 shadow-sm border border-slate-200 dark:border-slate-700">
+            <button type="button" onClick={onCancel} className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-all active:scale-95 shadow-sm border border-slate-200 dark:border-slate-700">
                <ArrowLeft className="w-6 h-6" />
             </button>
             <div className="min-w-0">
@@ -48,7 +204,7 @@ const ProjectForm = ({
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">{mode === 'create' ? t.projectPlanner : (data?.name || 'Project Detail')}</p>
             </div>
          </div>
-         <Button onClick={onSubmit} className="rounded-2xl px-8 md:px-10 py-4 shadow-xl shadow-indigo-500/20 font-black text-sm md:text-base uppercase tracking-wider shrink-0">
+         <Button onClick={onSubmit} className="rounded-2xl px-8 md:px-10 py-4 shadow-xl shadow-indigo-500/20 font-black text-sm md:text-base uppercase tracking-wider shrink-0 hover:shadow-indigo-500/30 transition-shadow">
             {mode === 'create' ? t.createProject : 'Save Changes'}
          </Button>
       </div>
@@ -61,7 +217,7 @@ const ProjectForm = ({
                   <input 
                     autoFocus 
                     required 
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 outline-none focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 font-black text-2xl shadow-inner transition-all" 
+                    className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-[2rem] p-6 outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 font-black text-2xl shadow-inner transition-all duration-300" 
                     value={data?.name || ''} 
                     onChange={(e) => onChange('name', e.target.value)} 
                     placeholder="e.g. Q4 Marketing Campaign"
@@ -70,7 +226,7 @@ const ProjectForm = ({
                <div>
                   <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.description}</label>
                   <textarea 
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 outline-none focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 font-medium text-lg h-48 resize-none shadow-inner leading-relaxed" 
+                    className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-[2rem] p-6 outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5 font-medium text-lg h-48 resize-none shadow-inner leading-relaxed transition-all duration-300" 
                     value={data?.description || ''} 
                     onChange={(e) => onChange('description', e.target.value)} 
                     placeholder="Describe the main goals and deliverables..."
@@ -80,29 +236,20 @@ const ProjectForm = ({
 
             <div>
                <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 ml-2">Timeline</label>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-10 bg-slate-50 dark:bg-slate-800/30 rounded-[3rem] border border-slate-100 dark:border-slate-800/50">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-10 bg-slate-50/50 dark:bg-slate-800/30 rounded-[3rem] border border-slate-200/50 dark:border-slate-800/50">
                   <div>
-                      <label className="flex items-center gap-3 text-xs font-black text-indigo-500 uppercase tracking-[0.2em] mb-4 ml-1">
-                        <Clock className="w-4.5 h-4.5" />
-                        {t.startDate}
-                      </label>
-                      <input 
-                          type="date" 
-                          className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-5 outline-none focus:border-indigo-500 font-black text-base transition-all" 
-                          value={data?.startDate || ''} 
-                          onChange={(e) => onChange('startDate', e.target.value)} 
+                      <DatePicker 
+                        label={t.startDate}
+                        value={data?.startDate || ''}
+                        onChange={(date) => onChange('startDate', date)}
                       />
                   </div>
                   <div>
-                      <label className="flex items-center gap-3 text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">
-                        <Clock className="w-4.5 h-4.5" />
-                        {t.endDate}
-                      </label>
-                      <input 
-                          type="date" 
-                          className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-5 outline-none focus:border-indigo-500 font-black text-base transition-all" 
-                          value={data?.endDate || ''} 
-                          onChange={(e) => onChange('endDate', e.target.value)} 
+                      <DatePicker 
+                        label={t.endDate}
+                        value={data?.endDate || ''}
+                        onChange={(date) => onChange('endDate', date)}
+                        minDate={data?.startDate}
                       />
                   </div>
                </div>
@@ -110,13 +257,13 @@ const ProjectForm = ({
 
             <div>
                <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.schedule}</label>
-               <div className="bg-slate-50 dark:bg-slate-800/30 p-2.5 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 flex gap-3">
+               <div className="bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 flex gap-3">
                    {['daily', 'weekly'].map(type => (
                        <button
                          key={type}
                          type="button"
                          onClick={() => onChange('scheduleType', type)}
-                         className={`flex-1 py-6 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all ${scheduleType === type ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                         className={`flex-1 py-6 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all duration-300 ${scheduleType === type ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                        >
                          {type === 'daily' ? t.everyDay : t.specificDays}
                        </button>
@@ -244,16 +391,16 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     return (
       <div className="flex items-center shrink-0">
         <div className={`
-          w-[300px] min-h-[220px] p-7 rounded-[2.5rem] bg-white dark:bg-slate-900 border-2 transition-all relative flex flex-col group/card
+          w-[300px] min-h-[220px] p-7 rounded-[2rem] bg-white dark:bg-slate-900 border transition-all duration-300 relative flex flex-col group/card
           ${isCompleted 
-            ? 'border-emerald-500/30 bg-emerald-50/[0.02]' 
+            ? 'border-emerald-200/50 bg-emerald-50/[0.1] dark:border-emerald-900/30' 
             : isLocked 
-              ? 'opacity-60 grayscale border-slate-100 dark:border-slate-800' 
-              : `border-slate-100 dark:border-slate-800 hover:border-${projectColor}-400 hover:ring-8 hover:ring-${projectColor}-500/5 hover:-translate-y-1.5 shadow-sm hover:shadow-xl`
+              ? 'opacity-60 grayscale border-slate-200/50 dark:border-slate-800' 
+              : `border-slate-200/60 dark:border-slate-800 hover:border-${projectColor}-400/50 hover:shadow-2xl hover:shadow-${projectColor}-500/10 hover:-translate-y-1.5 shadow-md shadow-slate-200/50 dark:shadow-black/20`
           }
         `}>
           <div className="flex items-center justify-between mb-5">
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'bg-emerald-50 text-emerald-600' : `bg-${projectColor}-50 text-${projectColor}-600`}`}>
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'bg-emerald-50 text-emerald-600' : `bg-${projectColor}-50 dark:bg-${projectColor}-900/30 text-${projectColor}-600 dark:text-${projectColor}-300`}`}>
               <div className={`w-2 h-2 rounded-full ${isCompleted ? 'bg-emerald-500' : isRunning ? `bg-${projectColor}-500 animate-pulse` : `bg-${projectColor}-500`}`} />
               {isCompleted ? 'DONE' : isLocked ? 'LOCKED' : isRunning ? 'RUNNING' : 'READY'}
             </div>
@@ -285,7 +432,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           <div className="flex items-center justify-center px-2 shrink-0">
              <div className="relative flex items-center">
                 <div className={`w-8 h-1.5 bg-gradient-to-r from-${projectColor}-500/20 to-${projectColor}-500/80 rounded-full`} />
-                <div className={`relative z-10 w-8 h-8 rounded-[1rem] bg-${projectColor}-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800 mx-[-16px]`}>
+                <div className={`relative z-10 w-8 h-8 rounded-[1rem] bg-${projectColor}-600 flex items-center justify-center shadow-lg shadow-${projectColor}-500/30 border-2 border-white dark:border-slate-800 mx-[-16px]`}>
                   <ChevronRight className="w-5 h-5 text-white" />
                 </div>
                 <div className={`w-8 h-1.5 bg-gradient-to-l from-${projectColor}-500/20 to-${projectColor}-500/80 rounded-full`} />
@@ -295,7 +442,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           <div className="flex items-center justify-center px-2 shrink-0">
             <button 
               onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [task.id] }); setIsAddingTaskToProject(task.id); }} 
-              className={`w-8 h-8 rounded-[1rem] bg-white dark:bg-slate-900 border-2 border-dashed border-${projectColor}-300 hover:border-${projectColor}-500 flex items-center justify-center shadow-sm hover:scale-110 transition-all group/add-btn`}
+              className={`w-8 h-8 rounded-[1rem] bg-white dark:bg-slate-900 border-2 border-dashed border-${projectColor}-300/50 hover:border-${projectColor}-500 flex items-center justify-center shadow-sm hover:scale-110 transition-all group/add-btn`}
             >
               <Plus className={`w-5 h-5 text-${projectColor}-400 group-hover/add-btn:text-${projectColor}-600`} />
             </button>
@@ -353,9 +500,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     const pColor = selectedProject.color || 'indigo';
     
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden animate-in fade-in bg-white dark:bg-slate-900 rounded-[2.5rem]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden animate-in fade-in bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-200/40 dark:shadow-black/40 border border-slate-100 dark:border-slate-800">
         {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
           <div className="flex items-center gap-6">
             <button onClick={() => setView('list')} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 transition-all"><ArrowLeft /></button>
             <div>
@@ -392,7 +539,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         <div className="flex-1 relative overflow-hidden bg-slate-50/20 dark:bg-slate-900/10">
            {isGraphView ? (
              <div className="absolute inset-0 overflow-auto p-8 custom-scrollbar">
-               <div className="h-[600px] w-full bg-slate-50/30 dark:bg-slate-800/20 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden relative">
+               <div className="h-[600px] w-full bg-slate-50/30 dark:bg-slate-800/20 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden relative shadow-inner">
                   <div className="absolute inset-0 overflow-auto force-scrollbar">
                     <div className="min-w-max min-h-max p-8">
                        <ProjectGraph tasks={projectTasks} color={pColor} />
@@ -431,7 +578,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                    )}
                    {projectTracks.length < 5 && (
                      <div className="px-6 mt-10">
-                        <button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }} className="w-[300px] min-h-[220px] rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 flex flex-col items-center justify-center gap-6 transition-all group bg-white/50 dark:bg-slate-900/50">
+                        <button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }} className="w-[300px] min-h-[220px] rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 flex flex-col items-center justify-center gap-6 transition-all group bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900/80">
                           <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 group-hover:scale-110 flex items-center justify-center transition-all shadow-sm">
                             <Plus className="w-8 h-8 text-slate-300 group-hover:text-indigo-500" />
                           </div>
@@ -446,8 +593,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         
         {/* Detail View Modals */}
         {(isAddingTaskToProject || isAddingRoot) && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/40 backdrop-blur-xl animate-in fade-in">
-              <form onSubmit={(e) => { e.preventDefault(); if (newTask.title.trim() && selectedProjectId) { onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskIds); setIsAddingTaskToProject(null); setIsAddingRoot(false); setNewTask({title:'', description:'', parentTaskIds:[]}); } }} className="bg-white dark:bg-slate-900 w-full max-w-xl p-10 rounded-[3rem] shadow-2xl border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-xl animate-in fade-in">
+              <form onSubmit={(e) => { e.preventDefault(); if (newTask.title.trim() && selectedProjectId) { onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskIds); setIsAddingTaskToProject(null); setIsAddingRoot(false); setNewTask({title:'', description:'', parentTaskIds:[]}); } }} className="bg-white dark:bg-slate-900 w-full max-w-xl p-10 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
                   <div className="flex items-center justify-between mb-10"><h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight">{isAddingRoot ? (language === 'zh' ? '添加起始节点' : 'New Start Node') : t.addStep}</h3><button type="button" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); }} className="p-4 rounded-2xl hover:bg-slate-50 text-slate-400 transition-all"><X className="w-7 h-7" /></button></div>
                   <input autoFocus required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-indigo-500/5 font-black text-lg" placeholder={t.stepName} value={newTask.title} onChange={(e) => setNewTask({...newTask, title: e.target.value})} />
                   <div className="flex justify-end gap-5 mt-12"><Button type="button" variant="ghost" className="rounded-2xl px-10 text-base" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); }}>{t.cancel}</Button><Button type="submit" className="rounded-2xl px-14 font-black text-lg shadow-xl shadow-indigo-500/10">{t.add}</Button></div>
@@ -456,8 +603,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         )}
 
         {editingTask && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/40 backdrop-blur-xl animate-in fade-in">
-              <form onSubmit={(e) => { e.preventDefault(); if (editingTask.title.trim()) { onUpdateTask(editingTask.id, editingTask); setEditingTask(null); } }} className="bg-white dark:bg-slate-900 w-full max-w-2xl p-10 md:p-12 rounded-[3.5rem] shadow-2xl border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-xl animate-in fade-in">
+              <form onSubmit={(e) => { e.preventDefault(); if (editingTask.title.trim()) { onUpdateTask(editingTask.id, editingTask); setEditingTask(null); } }} className="bg-white dark:bg-slate-900 w-full max-w-2xl p-10 md:p-12 rounded-[3.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
                   <div className="flex items-center justify-between mb-8 shrink-0"><h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">{language === 'zh' ? '管理任务' : 'Manage Step'}</h3><button type="button" onClick={() => setEditingTask(null)} className="p-4 rounded-2xl hover:bg-slate-50 text-slate-400 transition-all"><X className="w-7 h-7" /></button></div>
                   <div className="space-y-10 overflow-y-auto custom-scrollbar flex-1 pr-4">
                       <div><label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.stepName}</label><input autoFocus required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-indigo-500/5 font-black text-lg" value={editingTask.title} onChange={(e) => setEditingTask({...editingTask, title: e.target.value})} /></div>
@@ -541,7 +688,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                 <div 
                   key={project.id}
                   onClick={() => handleOpenDetail(project.id)}
-                  className="group flex flex-col md:flex-row items-stretch gap-8 p-8 md:p-10 bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-slate-50 dark:border-slate-800/50 hover:border-indigo-500/40 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)] transition-all cursor-pointer relative overflow-hidden"
+                  className="group flex flex-col md:flex-row items-stretch gap-8 p-8 md:p-10 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.5)] transition-all cursor-pointer relative overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-black/20"
                 >
                   <div className="relative w-28 h-28 md:w-32 md:h-32 shrink-0 mx-auto md:mx-0">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -580,7 +727,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   </div>
 
                   <div className="shrink-0 flex items-center justify-center border-t md:border-t-0 md:border-l-2 border-slate-100 dark:border-slate-800 pt-8 md:pt-0 md:pl-10">
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white rounded-[1.75rem] transition-all group-hover:scale-110 shadow-sm">
+                    <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white rounded-[1.75rem] transition-all group-hover:scale-110 shadow-sm">
                       <ChevronRight className="w-8 h-8" />
                     </div>
                   </div>

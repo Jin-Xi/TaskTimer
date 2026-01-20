@@ -5,6 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChronoFlow - AI Task Timer</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Tailwind Play CDN for instant preview -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,6 +16,10 @@
         darkMode: 'class',
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+            },
             colors: {
               slate: {
                 850: '#1e293b',
@@ -19,8 +27,9 @@
               }
             },
             backgroundImage: {
-              'dot-pattern': "radial-gradient(#cbd5e1 1px, transparent 1px)",
-              'dot-pattern-dark': "radial-gradient(#1e293b 1px, transparent 1px)",
+              'dot-pattern': "radial-gradient(#94a3b8 1px, transparent 1px)",
+              'dot-pattern-dark': "radial-gradient(#334155 1px, transparent 1px)",
+              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
             }
           }
         }
@@ -32,11 +41,11 @@
         margin: 0;
         padding: 0;
         height: 100%;
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
         background-color: #f8fafc;
         color: #0f172a;
         overflow: hidden;
-        transition: background-color 0.2s, color 0.2s;
+        transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
       }
 
       html.dark body {
@@ -46,41 +55,44 @@
       
       body {
         background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-        background-size: 24px 24px;
+        background-size: 32px 32px; /* Increased spacing for cleaner look */
+        background-position: 0 0;
       }
 
       html.dark body {
         background-image: radial-gradient(#1e293b 1px, transparent 1px);
       }
 
-      /* 强化滚动条可见性 - 满足“一直显示”视觉需求 */
+      /* 强化滚动条可见性 */
       ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: rgba(0,0,0,0.05);
-        border-radius: 5px;
-      }
-      .dark ::-webkit-scrollbar-track {
-        background: rgba(255,255,255,0.03);
+        background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #94a3b8; /* Slate 400 */
+        background: #cbd5e1;
         border-radius: 10px;
         border: 2px solid transparent;
         background-clip: padding-box;
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #475569; /* Slate 600 */
+        background: #334155;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background-color: #6366f1; /* Indigo 500 */
+        background-color: #94a3b8;
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background-color: #475569;
       }
 
       .custom-scrollbar {
         scrollbar-width: thin;
-        scrollbar-color: #6366f1 rgba(0,0,0,0.05);
+        scrollbar-color: #cbd5e1 transparent;
+      }
+      .dark .custom-scrollbar {
+        scrollbar-color: #334155 transparent;
       }
       
       /* 强制在 PC 上始终显示滚动条轨道 */
@@ -92,11 +104,17 @@
       }
 
       .animate-pulse-gentle {
-        animation: pulse-gentle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        animation: pulse-gentle 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
       @keyframes pulse-gentle {
         0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
+        50% { opacity: 0.85; }
+      }
+      
+      /* Smooth text rendering */
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     </style>
     <script type="importmap">

@@ -135,11 +135,11 @@ export const TaskList: React.FC<TaskListProps> = ({
     return (
       <div 
         key={task.id}
-        className={`group relative transition-all duration-300 rounded-[2rem] border-2 overflow-hidden ${
+        className={`group relative transition-all duration-300 rounded-[2rem] border overflow-hidden ${
           isRunning 
             ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50 ring-4 ring-indigo-500/5' 
-            : 'bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-100 dark:border-slate-800 shadow-sm'
-        } ${isCompleted ? 'opacity-70' : ''}`}
+            : 'bg-white dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 border-slate-200/60 dark:border-slate-800 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-black/30'
+        } ${isCompleted ? 'opacity-70 grayscale' : ''}`}
       >
         <div className="flex items-stretch min-h-[90px]">
           {isProjectChild && (
@@ -151,7 +151,7 @@ export const TaskList: React.FC<TaskListProps> = ({
               onClick={() => onSelect(task.id)}
               className={`shrink-0 w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all shadow-sm ${
                 isRunning 
-                  ? 'bg-indigo-600 text-white animate-pulse'
+                  ? 'bg-indigo-600 text-white animate-pulse shadow-indigo-500/30'
                   : isCompleted 
                     ? 'bg-emerald-100 text-emerald-500 hover:bg-emerald-200' 
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'
@@ -168,10 +168,10 @@ export const TaskList: React.FC<TaskListProps> = ({
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-5 mb-2">
-                <h4 className={`text-base md:text-lg font-bold truncate ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
+                <h4 className={`text-base md:text-lg font-bold truncate ${isCompleted ? 'text-slate-400 line-through decoration-2 decoration-slate-300' : 'text-slate-800 dark:text-slate-100'}`}>
                   {task.title}
                 </h4>
-                <span className="text-xs md:text-sm text-slate-400 font-black shrink-0 tabular-nums bg-slate-50 dark:bg-slate-800/80 px-3 py-1 rounded-xl">
+                <span className="text-xs md:text-sm text-slate-400 font-bold shrink-0 tabular-nums font-mono bg-slate-50 dark:bg-slate-800/80 px-3 py-1 rounded-xl">
                   {formatDuration(task.totalTime)}
                 </span>
               </div>
@@ -184,7 +184,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                   <Badge 
                     key={tag} 
                     color={getTagColor(tag)} 
-                    className="text-[10px] py-1 px-3 uppercase tracking-wider font-black whitespace-nowrap cursor-pointer hover:scale-105"
+                    className="text-[10px] py-1 px-3 uppercase tracking-wider font-bold whitespace-nowrap cursor-pointer hover:scale-105 shadow-sm"
                     onClick={() => toggleTaskTag(task, tag)}
                   >
                     {tag}
@@ -246,7 +246,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       </div>
 
       {activeTaskForTagging && (
-        <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-[2.5rem] p-7 shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[60]">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-indigo-200 dark:border-indigo-900 rounded-[2.5rem] p-7 shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[60]">
           <div className="flex items-center justify-between mb-6 px-1">
             <div className="flex flex-col">
               <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-1">{language === 'zh' ? '正在给任务添加标签' : 'Assigning Tags To'}</p>
@@ -265,7 +265,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                <button
                  key={cat.id}
                  onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
-                 className={`px-4 py-3 rounded-2xl border-2 text-xs font-black uppercase transition-all flex items-center gap-3 ${activeTaskForTagging.tags.includes(cat.name) ? `bg-${cat.color}-100 border-${cat.color}-500 text-${cat.color}-700 shadow-md` : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-indigo-300'}`}
+                 className={`px-4 py-3 rounded-2xl border text-xs font-black uppercase transition-all flex items-center gap-3 ${activeTaskForTagging.tags.includes(cat.name) ? `bg-${cat.color}-100 border-${cat.color}-500 text-${cat.color}-700 shadow-md` : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-indigo-300'}`}
                >
                  <div className={`w-2.5 h-2.5 rounded-full bg-${cat.color}-500`} />
                  {cat.name}
@@ -273,11 +273,11 @@ export const TaskList: React.FC<TaskListProps> = ({
              ))}
           </div>
 
-          <div className="pt-6 border-t border-slate-50 dark:border-slate-700/50">
+          <div className="pt-6 border-t border-slate-100 dark:border-slate-700/50">
             <div className="relative group/input">
               <input 
                 autoFocus
-                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all pr-14"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all pr-14"
                 placeholder={language === 'zh' ? '输入新标签并按回车...' : 'Type new tag and hit Enter...'}
                 value={customTagInput}
                 onChange={(e) => setCustomTagInput(e.target.value)}
@@ -316,7 +316,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         </div>
       )}
 
-      <div className={`relative transition-all duration-300 bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 ${isFocused ? 'border-indigo-400 shadow-[0_15px_40px_rgba(99,102,241,0.12)] ring-8 ring-indigo-500/5' : 'border-slate-100 dark:border-slate-800 shadow-sm'}`}>
+      <div className={`relative transition-all duration-300 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] border ${isFocused ? 'border-indigo-400 shadow-xl shadow-indigo-500/10 ring-8 ring-indigo-500/5' : 'border-slate-200/60 dark:border-slate-800 shadow-sm'}`}>
         <div className="flex items-center p-4">
           <div className="pl-5 pr-3"><Sparkles className="w-5 h-5 text-indigo-400/50" /></div>
           <input
@@ -329,13 +329,13 @@ export const TaskList: React.FC<TaskListProps> = ({
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmitTask()}
           />
-          <button onClick={() => handleSubmitTask()} className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-90 transition-all ml-2">
+          <button onClick={() => handleSubmitTask()} className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-90 transition-all ml-2">
             <Plus className="w-7 h-7" />
           </button>
         </div>
       </div>
 
-      <div className="flex bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-2 self-start shrink-0 border border-slate-100 dark:border-slate-800">
+      <div className="flex bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-2 self-start shrink-0 border border-slate-200/50 dark:border-slate-800">
           <button onClick={() => setFilter('all')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.all}</button>
           <button onClick={() => setFilter('active')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.active}</button>
           <button onClick={() => setFilter('completed')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.done}</button>

@@ -100,7 +100,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
   return (
     <div className={`group relative transition-all duration-700 w-full flex flex-col mx-auto max-w-4xl ${
       isHero 
-        ? 'bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 shadow-[0_20px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.4)] rounded-[3.5rem] md:rounded-[4.5rem] p-10 md:p-16' 
+        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-slate-200/50 dark:border-slate-800/50 shadow-[0_20px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.4)] rounded-[3.5rem] md:rounded-[4.5rem] p-10 md:p-16' 
         : 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-shadow'
     }`}>
       {(isRunning || isBreak) && (
@@ -137,7 +137,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
         <div className="w-full flex flex-col items-center mb-4">
           <div className="flex items-center justify-between w-full mb-6 pr-12">
             <div className="flex items-center gap-4 min-w-0">
-               <div className={`shrink-0 w-3.5 h-3.5 rounded-full ${isBreak ? 'bg-amber-500 animate-pulse' : isRunning ? 'bg-indigo-500 animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-300 dark:bg-slate-700'}`} />
+               <div className={`shrink-0 w-3.5 h-3.5 rounded-full ${isBreak ? 'bg-amber-500 animate-pulse' : isRunning ? 'bg-indigo-500 animate-pulse shadow-[0_0_15px_rgba(99,102,241,0.6)]' : 'bg-slate-300 dark:bg-slate-700'}`} />
                <h3 className={`${isHero ? 'text-xl md:text-3xl' : 'text-lg md:text-xl'} font-black text-slate-800 dark:text-slate-200 truncate tracking-tight`}>
                  {task.title}
                </h3>
@@ -161,7 +161,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
           )}
         </div>
 
-        <div className={`${isHero ? 'text-7xl sm:text-9xl md:text-[11rem] my-10' : 'text-5xl sm:text-6xl md:text-7xl my-8'} font-mono font-black text-center tabular-nums tracking-tighter leading-none ${isBreak ? 'text-amber-500' : isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-200 dark:text-slate-800'}`}>
+        <div className={`${isHero ? 'text-7xl sm:text-9xl md:text-[11rem] my-10' : 'text-5xl sm:text-6xl md:text-7xl my-8'} font-mono font-bold text-center tabular-nums tracking-tighter leading-none ${isBreak ? 'text-amber-500' : isRunning ? 'text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_20px_rgba(99,102,241,0.3)]' : 'text-slate-200 dark:text-slate-800'}`}>
           {formatTime(isBreak ? (POMODORO_BREAK_MS - sessionElapsed) : elapsed)}
         </div>
 
@@ -173,7 +173,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
              </div>
              <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className={`h-full transition-all duration-300 rounded-full ${isBreak ? 'bg-amber-500' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]'}`}
+                  className={`h-full transition-all duration-300 rounded-full ${isBreak ? 'bg-amber-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500 shadow-[0_0_12px_rgba(99,102,241,0.5)]'}`}
                   style={{ width: `${sessionProgress}%` }}
                 />
              </div>
@@ -182,7 +182,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
 
         {isHero && showBreakPrompt && (
           <div className="w-full max-w-lg mx-auto mb-10 animate-in slide-in-from-top-4">
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-8 rounded-[2.5rem] flex items-center justify-between gap-6">
+            <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/50 p-8 rounded-[2.5rem] flex items-center justify-between gap-6 backdrop-blur-sm">
                <div className="flex items-center gap-5">
                  <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/50 rounded-2xl flex items-center justify-center text-3xl">🍅</div>
                  <p className="text-base font-bold text-amber-800 dark:text-amber-200 leading-tight">{t.pomodoroTip}</p>
@@ -267,7 +267,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
         <div className="flex justify-center mt-6">
           <button 
             onClick={() => isBreak ? onStart(task.id) : isRunning ? onPause(task.id) : onStart(task.id)} 
-            className={`flex flex-col items-center justify-center transition-all ${isHero ? 'w-28 h-28 sm:w-32 sm:h-32 rounded-[3rem]' : 'w-20 h-20 rounded-[1.75rem]'} ${isBreak ? 'bg-amber-500 text-white shadow-2xl shadow-amber-500/30' : isRunning ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/30 hover:bg-indigo-700 active:scale-95'}`}
+            className={`flex flex-col items-center justify-center transition-all ${isHero ? 'w-28 h-28 sm:w-32 sm:h-32 rounded-[3rem]' : 'w-20 h-20 rounded-[1.75rem]'} ${isBreak ? 'bg-amber-500 text-white shadow-2xl shadow-amber-500/30' : isRunning ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95'}`}
           >
             {isBreak ? (
               <Play className="w-12 h-12 md:w-14 md:h-14 fill-current ml-1" />
@@ -341,7 +341,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                  <button 
                   key={i} 
                   onClick={() => handleAddSuggestedTask(title)}
-                  className="px-6 py-3.5 sm:px-10 sm:py-5 rounded-[1.75rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-sm sm:text-base md:text-lg font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm"
+                  className="px-6 py-3.5 sm:px-10 sm:py-5 rounded-[1.75rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-sm sm:text-base md:text-lg font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm hover:shadow-lg"
                  >
                    {title}
                  </button>
