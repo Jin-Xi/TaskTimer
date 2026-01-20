@@ -670,7 +670,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             <p className="text-slate-400 font-bold text-2xl max-w-sm mx-auto leading-relaxed">{t.createTaskHint}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 pb-16 px-1">
+          <div className="grid grid-cols-1 gap-8 pb-16 px-6 pt-4">
             {displayedProjects.map(project => {
               const pTasks = tasks.filter(tk => tk.projectId === project.id);
               const completed = pTasks.filter(tk => tk.status === TaskStatus.COMPLETED).length;
