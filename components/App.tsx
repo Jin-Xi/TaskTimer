@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon } from 'lucide-react';
-import { Task, TaskStatus, Milestone, Category, Project } from './types';
+import { Task, TaskStatus, Milestone, Category, Project } from '../types';
 import { 
   subscribeToTasks, 
   subscribeToCategories, 
@@ -9,20 +9,21 @@ import {
   addTask, 
   updateTask, 
   deleteTask, 
+  deleteTasks,
   addCategory, 
   deleteCategory, 
   addProject, 
   updateProject,
   deleteProject,
   deleteTasksByProjectId,
-} from './services/storageService';
-import { TaskTimer } from './components/TaskTimer';
-import { TaskList } from './components/TaskList';
-import { Stats } from './components/Stats';
-import { AIInsights } from './components/AIInsights';
-import { ProjectManager } from './components/ProjectManager';
-import { FullscreenFocus } from './components/FullscreenFocus';
-import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
+} from '../services/storageService';
+import { TaskTimer } from './TaskTimer';
+import { TaskList } from './TaskList';
+import { Stats } from './Stats';
+import { AIInsights } from './AIInsights';
+import { ProjectManager } from './ProjectManager';
+import { FullscreenFocus } from './FullscreenFocus';
+import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from '../constants';
 
 const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -100,6 +101,12 @@ const App: React.FC = () => {
     const updated = await deleteTask(id);
     setTasks(updated);
     if (focusTaskId === id) setFocusTaskId(null);
+  };
+
+  const handleDeleteTasks = async (ids: string[]) => {
+    const updated = await deleteTasks(ids);
+    setTasks(updated);
+    if (focusTaskId && ids.includes(focusTaskId)) setFocusTaskId(null);
   };
 
   const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
@@ -244,6 +251,7 @@ const App: React.FC = () => {
       activeTaskId={null} 
       onAdd={handleAddTask} 
       onDelete={handleDeleteTask} 
+      onDeleteMany={handleDeleteTasks}
       onSelect={(id) => {
         const t = tasks.find(x => x.id === id);
         if (t?.status === TaskStatus.RUNNING) {
@@ -349,7 +357,7 @@ const App: React.FC = () => {
           <section className="flex-1 flex flex-col overflow-hidden">
             {activeTab === 'tasks' && (
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-4 md:px-10">
-                <div className="w-full max-w-4xl py-6 md:py-12">
+                <div className="w-full max-w-[1600px] py-6 md:py-12">
                   <TaskTimer 
                     language={language} 
                     activeTasks={activeTimers} 
@@ -392,6 +400,10 @@ const App: React.FC = () => {
                   onDeleteTask={handleDeleteTask} 
                   onUpdateTask={handleUpdateTask} 
                   categories={categories} 
+                  onAddCategory={async (n, c) => { 
+                    const updated = await addCategory({id: generateUUID(), name: n, color: c}); 
+                    setCategories(updated); 
+                  }}
                 />
               </div>
             )}

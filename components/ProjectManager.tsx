@@ -485,13 +485,47 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     return tracks;
   }, [tasks, selectedProjectId]);
 
+  const handleFormChange = (f: string, v: any) => {
+    setFormData(prev => {
+        if (f === 'toggleDay') {
+            const currentSchedule = prev.schedule || { type: 'weekly', days: [] };
+            const currentDays = currentSchedule.days || [];
+            const newDays = currentDays.includes(v)
+                ? currentDays.filter((d: any) => d !== v)
+                : [...currentDays, v];
+            
+            return {
+                ...prev,
+                schedule: {
+                    ...currentSchedule,
+                    type: 'weekly',
+                    days: newDays
+                }
+            };
+        }
+        
+        if (f === 'scheduleType') {
+            const currentSchedule = prev.schedule || { type: 'daily', days: [] };
+            return {
+                ...prev,
+                schedule: {
+                    ...currentSchedule,
+                    type: v
+                }
+            };
+        }
+        
+        return { ...prev, [f]: v };
+    });
+  };
+
   if (view === 'create' || view === 'edit') {
     return (
       <ProjectForm 
         mode={view} 
         title={view === 'create' ? t.createProject : 'Edit Project'} 
         data={formData} 
-        onChange={(f: any, v: any) => setFormData(prev => f === 'toggleDay' ? { ...prev, schedule: { ...prev.schedule, days: (prev.schedule?.days || []).includes(v) ? prev.schedule.days.filter((d:any) => d !== v) : [...(prev.schedule?.days || []), v], type: 'weekly' } } : f === 'scheduleType' ? { ...prev, schedule: { ...prev.schedule, type: v } } : { ...prev, [f]: v })}
+        onChange={handleFormChange}
         onSubmit={handleSubmit} 
         onCancel={() => view === 'create' ? setView('list') : setView('detail')} 
         t={t} 
