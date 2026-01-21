@@ -1,6 +1,7 @@
 
 import { io, Socket } from "socket.io-client";
 import { Task, Category, Project, TaskStatus } from "../types";
+import { DEFAULT_CATEGORIES } from "../constants";
 
 const SERVER_URL = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001`;
 const STORAGE_KEYS = {
@@ -94,7 +95,15 @@ export const initSocket = () => {
 const getLocal = <T>(key: string, fallback: T): T => {
   const data = localStorage.getItem(key);
   if (!data) return fallback;
-  return JSON.parse(data);
+  try {
+    const parsed = JSON.parse(data);
+    // Ensure we don't return null/undefined if storage is corrupted
+    if (parsed === null || parsed === undefined) return fallback;
+    return parsed;
+  } catch (e) {
+    console.error('Error parsing local storage:', e);
+    return fallback;
+  }
 };
 
 const saveLocal = (key: string, data: any) => {
@@ -102,7 +111,6 @@ const saveLocal = (key: string, data: any) => {
 };
 
 export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
-  // Use demo data if local storage is empty
   const localTasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   if (localTasks.length === 0) {
     callback(DEMO_DATA.tasks);
@@ -131,7 +139,14 @@ export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
 };
 
 export const subscribeToCategories = (callback: (categories: Category[]) => void, defaults: Category[]) => {
-  const localCats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, defaults);
+  let localCats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, defaults);
+  
+  // Data Recovery: If categories are empty (user deleted all or init issue), restore defaults
+  if (!localCats || localCats.length === 0) {
+    localCats = defaults;
+    saveLocal(STORAGE_KEYS.CATEGORIES, localCats);
+  }
+  
   callback(localCats);
 
   const s = initSocket();
@@ -209,6 +224,16 @@ export const deleteTask = async (taskId: string) => {
   return updated;
 };
 
+export const deleteTasks = async (taskIds: string[]) => {
+  const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
+  const updated = tasks.filter(t => !taskIds.includes(t.id));
+  saveLocal(STORAGE_KEYS.TASKS, updated);
+
+  const s = initSocket();
+  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'set', data: updated });
+  return updated;
+};
+
 export const deleteTasksByProjectId = async (projectId: string) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   const updated = tasks.filter(t => t.projectId !== projectId);
@@ -220,7 +245,10 @@ export const deleteTasksByProjectId = async (projectId: string) => {
 };
 
 export const addCategory = async (category: Category) => {
-  const cats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, []);
+  let cats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES);
+  // Ensure we don't lose defaults if storage was mysteriously empty
+  if (cats.length === 0) cats = DEFAULT_CATEGORIES;
+  
   const updated = [...cats, category];
   saveLocal(STORAGE_KEYS.CATEGORIES, updated);
 
@@ -230,7 +258,10 @@ export const addCategory = async (category: Category) => {
 };
 
 export const deleteCategory = async (categoryId: string) => {
-  const cats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, []);
+  let cats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES);
+  // Ensure we don't lose defaults if storage was mysteriously empty
+  if (cats.length === 0) cats = DEFAULT_CATEGORIES;
+
   const updated = cats.filter(c => c.id !== categoryId);
   saveLocal(STORAGE_KEYS.CATEGORIES, updated);
 

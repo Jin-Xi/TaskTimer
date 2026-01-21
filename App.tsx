@@ -9,6 +9,7 @@ import {
   addTask, 
   updateTask, 
   deleteTask, 
+  deleteTasks,
   addCategory, 
   deleteCategory, 
   addProject, 
@@ -100,6 +101,12 @@ const App: React.FC = () => {
     const updated = await deleteTask(id);
     setTasks(updated);
     if (focusTaskId === id) setFocusTaskId(null);
+  };
+
+  const handleDeleteTasks = async (ids: string[]) => {
+    const updated = await deleteTasks(ids);
+    setTasks(updated);
+    if (focusTaskId && ids.includes(focusTaskId)) setFocusTaskId(null);
   };
 
   const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
@@ -244,6 +251,7 @@ const App: React.FC = () => {
       activeTaskId={null} 
       onAdd={handleAddTask} 
       onDelete={handleDeleteTask} 
+      onDeleteMany={handleDeleteTasks}
       onSelect={(id) => {
         const t = tasks.find(x => x.id === id);
         if (t?.status === TaskStatus.RUNNING) {
@@ -266,14 +274,14 @@ const App: React.FC = () => {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full py-8 md:py-10 px-6">
-      <div className="flex items-center gap-4 px-2 shrink-0 mb-4">
-        <div className="w-12 h-12 bg-indigo-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
+      <div className="flex items-center gap-4 px-2 shrink-0 mb-8 animate-in fade-in slide-in-from-left-2 duration-500">
+        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
           <TimerIcon className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{APP_NAME}</h1>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase font-sans">{APP_NAME}</h1>
       </div>
 
-      <nav className="flex-1 flex flex-col justify-center space-y-4 my-8">
+      <nav className="flex-1 flex flex-col space-y-3">
         {NAV_ITEMS.map(item => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -284,41 +292,46 @@ const App: React.FC = () => {
                 setActiveTab(item.id);
                 setIsMobileMenuOpen(false);
               }} 
-              className={`w-full flex items-center gap-5 px-6 py-5 rounded-2xl text-sm font-black transition-all group ${isActive ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/30 scale-[1.02]' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 group relative overflow-hidden ${
+                isActive 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+              }`}
             >
-              <Icon className={`w-6 h-6 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500'}`} />
-              <span className="uppercase tracking-widest">{(t as any)[item.labelKey]}</span>
+              <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-indigo-100' : 'text-slate-400 group-hover:text-indigo-500'}`} />
+              <span className="uppercase tracking-wider">{(t as any)[item.labelKey]}</span>
+              {isActive && <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />}
             </button>
           );
         })}
       </nav>
 
-      <div className="pt-8 flex gap-4 shrink-0">
-           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
-             {darkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
-             <span className="text-xs font-black uppercase tracking-widest">{darkMode ? t.lightMode : t.darkMode}</span>
+      <div className="pt-8 flex gap-4 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
+           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
+             {darkMode ? <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />}
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{darkMode ? t.lightMode : t.darkMode}</span>
            </button>
-           <button onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500 transition-all shadow-sm">
-             <Languages className="w-5 h-5 text-indigo-500" />
-             <span className="text-xs font-black uppercase tracking-widest">{t.langName}</span>
+           <button onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
+             <Languages className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{t.langName}</span>
            </button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-[#fcfdfe] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative">
+    <div className="flex h-screen bg-[#f8fafc] dark:bg-[#020617] font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative selection:bg-indigo-500/30">
       {/* PC Sidebar */}
-      <aside className="w-[300px] bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0">
+      <aside className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0">
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
       <div 
-        className={`fixed inset-0 z-[60] lg:hidden bg-slate-950/40 backdrop-blur-sm transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-[60] lg:hidden bg-slate-950/40 backdrop-blur-md transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
-      <aside className={`fixed top-0 bottom-0 left-0 z-[70] lg:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 bottom-0 left-0 z-[70] lg:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <button 
           onClick={() => setIsMobileMenuOpen(false)}
           className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 md:hidden"
@@ -329,13 +342,13 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Container */}
-      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0">
-        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
+      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-dot-pattern dark:bg-dot-pattern-dark">
+        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><TimerIcon className="w-5 h-5" /></div>
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg"><TimerIcon className="w-5 h-5" /></div>
             <h1 className="font-black text-xl tracking-tight uppercase">{APP_NAME}</h1>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all active:scale-95">
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all active:scale-95 border border-slate-200 dark:border-slate-700">
             <Menu className="w-6 h-6" />
           </button>
         </header>
@@ -343,8 +356,8 @@ const App: React.FC = () => {
         <div className="flex-1 flex flex-col min-h-0 relative">
           <section className="flex-1 flex flex-col overflow-hidden">
             {activeTab === 'tasks' && (
-              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-6 md:px-10">
-                <div className="w-full max-w-4xl py-10 md:py-16">
+              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-4 md:px-10">
+                <div className="w-full max-w-4xl py-6 md:py-12">
                   <TaskTimer 
                     language={language} 
                     activeTasks={activeTimers} 
@@ -365,7 +378,7 @@ const App: React.FC = () => {
               </div>
             )}
             {activeTab === 'projects' && (
-              <div className="flex-1 px-6 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
+              <div className="flex-1 px-4 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
                 <ProjectManager 
                   language={language} 
                   projects={projects} 
@@ -403,19 +416,15 @@ const App: React.FC = () => {
           </section>
 
           {/* Mobile bottom task list */}
-          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-10 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md max-h-[45vh] shrink-0">
-            <div className="flex items-center gap-3 mb-8">
-               <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
-               <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
-            </div>
+          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-2 border-t border-slate-100 dark:border-slate-800 px-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
             <SharedTaskList />
           </div>
         </div>
       </main>
 
       {/* PC Right Side Task List */}
-      <aside className="w-[30%] min-w-[460px] bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-12 py-12 force-scrollbar">
+      <aside className="w-[30%] min-w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-8 force-scrollbar">
             <SharedTaskList />
         </div>
       </aside>

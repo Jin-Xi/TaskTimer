@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, Palette, PlusCircle, Settings2, Hash } from 'lucide-react';
+import React, { useState, useId } from 'react';
+import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, PlusCircle, CheckCircle2, Circle, Layers, Zap, Clock, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
@@ -13,6 +13,7 @@ interface TaskListProps {
   activeTaskId: string | null;
   onAdd: (title: string, description: string, tags: string[], projectId?: string, parentTaskIds?: string[]) => void;
   onDelete: (id: string) => void;
+  onDeleteMany?: (ids: string[]) => void;
   onSelect: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onAddMilestone: (taskId: string, title: string, branch: string) => void;
@@ -40,36 +41,45 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
   defaultOpen = true 
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const contentId = useId();
 
   return (
-    <div className="space-y-3">
-      <div 
-        className="flex items-center justify-between px-3 cursor-pointer select-none group py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors"
+    <div className="mb-4 last:mb-20">
+      <button 
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        className="w-full flex items-center justify-between group select-none mb-2 px-1 py-1 sticky top-0 bg-[#f8fafc]/90 dark:bg-[#020617]/90 backdrop-blur-sm z-20"
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }}
       >
-        <div className="flex items-center gap-4">
-           <div className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''} text-slate-400 group-hover:text-indigo-500`}>
-             <ChevronRight className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+           <div className={`p-1 rounded-md transition-colors duration-300 ${isOpen ? `text-${color}-600 dark:text-${color}-400` : 'text-slate-400'}`}>
+             <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
            </div>
-           <div className={`w-2 h-5 rounded-full bg-${color}-500 shadow-sm shadow-${color}-500/30`} />
-           <h4 className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-[0.2em] text-sm">{title}</h4>
-           <span className="text-xs font-bold text-slate-400 ml-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">{count}</span>
+           
+           <h4 className="font-bold text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2">
+             {title}
+             <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-bold min-w-[1.5rem] text-center">{count}</span>
+           </h4>
         </div>
+        
         {progress !== undefined && (
-           <div className="flex items-center gap-3 opacity-50 group-hover:opacity-100 transition-opacity">
-             <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div style={{ width: `${progress}%` }} className={`h-full bg-${color}-500 rounded-full`} />
+           <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity pr-2">
+             <div className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div style={{ width: `${progress}%` }} className={`h-full bg-${color}-500 rounded-full transition-all duration-1000 ease-out`} />
              </div>
-             <span className={`text-[10px] font-black text-${color}-500 w-8 text-right`}>{progress}%</span>
            </div>
         )}
-      </div>
+      </button>
       
-      {isOpen && (
-        <div className="space-y-3 animate-in slide-in-from-top-1 fade-in duration-200">
+      <div 
+        id={contentId} 
+        role="region" 
+        className={`space-y-1.5 transition-all duration-300 origin-top ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 h-0 overflow-hidden'}`}
+      >
            {children}
-        </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -81,6 +91,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   activeTaskId, 
   onAdd, 
   onDelete, 
+  onDeleteMany,
   onSelect, 
   onUpdate,
   onAddMilestone,
@@ -93,8 +104,14 @@ export const TaskList: React.FC<TaskListProps> = ({
   const [newTitle, setNewTitle] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [taskToTag, setTaskToTag] = useState<string | null>(null);
-  const [customTagInput, setCustomTagInput] = useState('');
+  const [isManagingTags, setIsManagingTags] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
   
+  // Selection Mode State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const t = TRANSLATIONS[language];
 
   const handleSubmitTask = (e?: React.FormEvent) => {
@@ -113,6 +130,26 @@ export const TaskList: React.FC<TaskListProps> = ({
       : [...currentTags, tagName];
     onUpdate(task.id, { tags: newTags });
   };
+  
+  const toggleSelection = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedIds(newSet);
+  };
+  
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.size} tasks?`)) {
+      if (onDeleteMany) {
+        onDeleteMany(Array.from(selectedIds));
+      } else {
+        selectedIds.forEach(id => onDelete(id));
+      }
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+    }
+  };
 
   const formatDuration = (ms: number) => {
     const min = Math.floor(ms / 1000 / 60);
@@ -122,256 +159,374 @@ export const TaskList: React.FC<TaskListProps> = ({
   };
 
   const getTagColor = (tagName: string) => {
-      const cat = categories.find(c => c.name === tagName);
+      const cat = categories?.find(c => c.name === tagName);
       return cat ? cat.color : 'slate';
   };
 
   const activeTaskForTagging = tasks.find(t => t.id === taskToTag);
 
+  const filterIcons = {
+    all: Layers,
+    active: Zap,
+    completed: CheckCircle2
+  };
+
   const renderTask = (task: Task, isProjectChild: boolean = false, projectColor: string = 'indigo') => {
     const isRunning = task.status === TaskStatus.RUNNING;
     const isCompleted = task.status === TaskStatus.COMPLETED;
+    const isLocked = task.parentTaskIds?.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED);
+    const hasMilestones = task.milestones && task.milestones.length > 0;
+    const isSelected = selectedIds.has(task.id);
 
     return (
       <div 
         key={task.id}
-        className={`group relative transition-all duration-300 rounded-[2rem] border overflow-hidden ${
-          isRunning 
-            ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/50 ring-4 ring-indigo-500/5' 
-            : 'bg-white dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 border-slate-200/60 dark:border-slate-800 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-black/30'
-        } ${isCompleted ? 'opacity-70 grayscale' : ''}`}
+        onClick={() => {
+          if (isSelectionMode) toggleSelection(task.id);
+        }}
+        className={`group relative transition-all duration-200 rounded-xl border overflow-hidden ${
+          isSelectionMode 
+            ? isSelected 
+              ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-500 shadow-sm z-10' 
+              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-300 cursor-pointer'
+            : isRunning 
+              ? 'bg-white dark:bg-slate-900 border-indigo-500 shadow-md shadow-indigo-500/10 z-10 ring-1 ring-indigo-500/20' 
+              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 hover:border-indigo-300/50 dark:hover:border-slate-700 hover:shadow-sm'
+        } ${isCompleted ? 'opacity-60 grayscale-[0.3]' : ''} ${!isSelectionMode && isLocked ? 'opacity-50 bg-slate-50 dark:bg-slate-900 pointer-events-none' : ''}`}
       >
-        <div className="flex items-stretch min-h-[90px]">
-          {isProjectChild && (
-            <div className={`w-2 bg-${projectColor}-500 shrink-0 opacity-80`} />
-          )}
-          
-          <div className="flex-1 flex items-center gap-5 p-6 overflow-hidden">
+        <div className="flex items-center gap-0 min-h-[3.5rem]">
+           {/* Color Strip for Projects */}
+           {isProjectChild && (
+             <div className={`w-1 self-stretch bg-${projectColor}-500 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity`} />
+           )}
+
+           <div className="flex-1 flex items-center p-2 gap-3 overflow-hidden">
+            {/* Status Button / Checkbox - Compact Size */}
             <button
-              onClick={() => onSelect(task.id)}
-              className={`shrink-0 w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all shadow-sm ${
-                isRunning 
-                  ? 'bg-indigo-600 text-white animate-pulse shadow-indigo-500/30'
-                  : isCompleted 
-                    ? 'bg-emerald-100 text-emerald-500 hover:bg-emerald-200' 
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'
+              disabled={!isSelectionMode && isLocked}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (isSelectionMode) toggleSelection(task.id);
+                else onSelect(task.id); 
+              }}
+              className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm group/btn relative overflow-hidden ${
+                isSelectionMode
+                  ? isSelected 
+                    ? 'bg-indigo-500 text-white' 
+                    : 'bg-white dark:bg-slate-950 text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                  : isCompleted
+                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    : isRunning
+                    ? 'bg-indigo-600 text-white shadow-indigo-500/40'
+                    : isLocked
+                    ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
+                    : 'bg-slate-50 text-slate-400 hover:bg-indigo-500 hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-600'
               }`}
             >
-              {isCompleted ? (
-                <RotateCcw className="w-5 h-5" />
-              ) : isRunning ? (
-                <Pause className="w-5 h-5 fill-current" />
-              ) : (
-                <Play className="w-5 h-5 fill-current ml-1" />
-              )}
+              <div className={`transition-transform duration-300 ${isRunning ? 'scale-100' : 'group-hover/btn:scale-110'}`}>
+                 {isSelectionMode ? (
+                    isSelected ? <Check className="w-4 h-4" /> : <div className="w-4 h-4" />
+                 ) : (
+                    isCompleted ? <RotateCcw className="w-3.5 h-3.5" /> : isRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : isLocked ? <Lock className="w-3 h-3" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                 )}
+              </div>
             </button>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-5 mb-2">
-                <h4 className={`text-base md:text-lg font-bold truncate ${isCompleted ? 'text-slate-400 line-through decoration-2 decoration-slate-300' : 'text-slate-800 dark:text-slate-100'}`}>
-                  {task.title}
-                </h4>
-                <span className="text-xs md:text-sm text-slate-400 font-bold shrink-0 tabular-nums font-mono bg-slate-50 dark:bg-slate-800/80 px-3 py-1 rounded-xl">
-                  {formatDuration(task.totalTime)}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-3 flex-wrap relative">
-                {task.tags && task.tags.length > 0 && (
-                  <TagIcon className="w-3.5 h-3.5 text-slate-300" />
-                )}
-                {(task.tags || []).map(tag => (
-                  <Badge 
-                    key={tag} 
-                    color={getTagColor(tag)} 
-                    className="text-[10px] py-1 px-3 uppercase tracking-wider font-bold whitespace-nowrap cursor-pointer hover:scale-105 shadow-sm"
-                    onClick={() => toggleTaskTag(task, tag)}
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-                
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setTaskToTag(taskToTag === task.id ? null : task.id);
-                  }}
-                  className={`p-1.5 transition-all hover:scale-110 ${taskToTag === task.id ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-500'}`}
-                >
-                  <PlusCircle className="w-5 h-5" />
-                </button>
-                
-                {task.milestones?.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-indigo-400 dark:text-indigo-500 text-[11px] font-black uppercase tracking-wider ml-1 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-xl">
-                    <Flag className="w-3.5 h-3.5" />
-                    <span>{task.milestones.length}</span>
-                  </div>
-                )}
-              </div>
+
+            {/* Task Info - Compact Layout */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+               <div className="flex items-center gap-2">
+                 <h4 className={`text-sm font-semibold truncate leading-tight ${isCompleted ? 'line-through text-slate-400 decoration-slate-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {task.title}
+                 </h4>
+                 {isLocked && !isSelectionMode && (
+                    <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                 )}
+               </div>
+               
+               {(hasMilestones || (task.tags && task.tags.length > 0)) && (
+                 <div className="flex flex-wrap items-center gap-1.5 h-4">
+                    {hasMilestones && (
+                        <div className="flex items-center gap-0.5 text-slate-400">
+                          <Flag className="w-2.5 h-2.5" />
+                          <span className="text-[9px] font-bold">{task.milestones.length}</span>
+                        </div>
+                    )}
+
+                    {(task.tags || []).map(tag => (
+                      <span key={tag} className={`text-[9px] px-1.5 rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400`}>
+                        {tag}
+                      </span>
+                    ))}
+                 </div>
+               )}
             </div>
 
-            <div className="shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-               <button 
-                 onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} 
-                 className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all"
-               >
-                  <Trash2 className="w-5 h-5" />
-               </button>
+            {/* Meta & Actions - Right Aligned */}
+            <div className="flex items-center gap-2 pl-1 shrink-0">
+               <div className={`font-mono text-xs tabular-nums font-medium ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                 {formatDuration(task.totalTime)}
+               </div>
+
+               {!isSelectionMode && (
+                 <div className="flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-all sm:translate-x-2 group-hover:translate-x-0">
+                     <button 
+                       onClick={(e) => { e.stopPropagation(); setTaskToTag(task.id); }}
+                       className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-300 hover:text-indigo-500 transition-colors hidden sm:block"
+                     >
+                       <TagIcon className="w-3.5 h-3.5" />
+                     </button>
+
+                     <button
+                       onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { status: isCompleted ? TaskStatus.IDLE : TaskStatus.COMPLETED }); }}
+                       className={`p-1.5 rounded-lg transition-all ${isCompleted ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'}`}
+                       title={isCompleted ? "Mark as Incomplete" : "Mark as Done"}
+                     >
+                       {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+                     </button>
+                     
+                     <button
+                        onClick={(e) => { e.stopPropagation(); if(window.confirm('Delete this task?')) onDelete(task.id); }}
+                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all hidden sm:block"
+                        title="Delete Task"
+                     >
+                       <Trash2 className="w-3.5 h-3.5" />
+                     </button>
+                 </div>
+               )}
             </div>
-          </div>
+           </div>
         </div>
       </div>
     );
   };
 
-  const groupedTasks: {[key: string]: Task[]} = {};
-  const standalone: Task[] = [];
-
-  tasks.forEach(task => {
-      if (filter === 'active' && task.status === TaskStatus.COMPLETED) return;
-      if (filter === 'completed' && task.status !== TaskStatus.COMPLETED) return;
-
-      if (task.projectId) {
-          if (!groupedTasks[task.projectId]) groupedTasks[task.projectId] = [];
-          groupedTasks[task.projectId].push(task);
-      } else {
-          standalone.push(task);
-      }
+  const filteredTasks = tasks.filter(task => {
+    if (filter === 'active') return task.status === TaskStatus.RUNNING || task.status === TaskStatus.PAUSED || task.status === TaskStatus.IDLE;
+    if (filter === 'completed') return task.status === TaskStatus.COMPLETED;
+    return true;
   });
 
+  const activeTasks = filteredTasks.filter(t => t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED);
+  const todoTasks = filteredTasks.filter(t => t.status === TaskStatus.IDLE && !t.projectId);
+  const completedTasks = filteredTasks.filter(t => t.status === TaskStatus.COMPLETED);
+
   return (
-    <div className="space-y-8 flex flex-col h-full animate-in fade-in duration-500 max-w-full relative">
-      <div className="flex items-center justify-between shrink-0 px-2">
-        <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.5em]">{t.taskExplorer}</h2>
+    <div className="h-full flex flex-col relative bg-[#f8fafc] dark:bg-[#020617]">
+      {/* Header & Controls - Compact & Sticky */}
+      <div className="flex flex-col gap-3 mb-2 shrink-0 px-3 pt-3 pb-2 sticky top-0 z-30 bg-[#f8fafc]/95 dark:bg-[#020617]/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+               <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+               <h2 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">{t.taskExplorer}</h2>
+            </div>
+            
+            <div className="flex items-center gap-2">
+               <div className="bg-slate-100 dark:bg-slate-800/50 p-0.5 rounded-lg flex items-center gap-0.5">
+                  {(['all', 'active', 'completed'] as const).map(f => {
+                    const Icon = filterIcons[f];
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`
+                          p-1.5 rounded-md transition-all duration-300
+                          ${filter === f 
+                            ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' 
+                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                          }
+                        `}
+                        title={(t as any)[f]}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </button>
+                    );
+                  })}
+               </div>
+               
+               {isSelectionMode && selectedIds.size > 0 ? (
+                  <button 
+                    onClick={handleBulkDelete}
+                    className="p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all shadow-sm animate-in zoom-in"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+               ) : (
+                  <>
+                    <button 
+                      onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }}
+                      className={`p-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-500'}`}
+                      title="Select"
+                    >
+                      {isSelectionMode ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                    </button>
+                    <button 
+                      onClick={() => setIsManagingTags(true)}
+                      className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-500 transition-all"
+                      title={t.manageCategories}
+                    >
+                      <TagIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+               )}
+            </div>
+         </div>
+
+         {/* Quick Add - Compact */}
+         {!isSelectionMode && (
+           <div className={`relative group transition-all duration-300 ${isFocused ? 'scale-[1.01]' : ''}`}>
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                 <Plus className={`w-4 h-4 transition-colors duration-300 ${isFocused ? 'text-indigo-500 rotate-90' : 'text-slate-400'}`} />
+              </div>
+              <input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmitTask(e)}
+                placeholder={t.quickAdd}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-8 py-2.5 text-sm outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400 shadow-sm"
+              />
+              {newTitle && (
+                  <button 
+                    onClick={() => handleSubmitTask()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-indigo-500 text-white hover:bg-indigo-600 transition-colors shadow-md animate-in fade-in zoom-in"
+                  >
+                      <ChevronRight className="w-3 h-3" />
+                  </button>
+              )}
+           </div>
+         )}
       </div>
 
-      {activeTaskForTagging && (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-indigo-200 dark:border-indigo-900 rounded-[2.5rem] p-7 shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[60]">
-          <div className="flex items-center justify-between mb-6 px-1">
-            <div className="flex flex-col">
-              <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-1">{language === 'zh' ? '正在给任务添加标签' : 'Assigning Tags To'}</p>
-              <h5 className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate max-w-[280px]">{activeTaskForTagging.title}</h5>
-            </div>
-            <button 
-              onClick={() => { setTaskToTag(null); setCustomTagInput(''); }}
-              className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className="flex flex-wrap gap-3 mb-6 p-1">
-             {categories.map(cat => (
-               <button
-                 key={cat.id}
-                 onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
-                 className={`px-4 py-3 rounded-2xl border text-xs font-black uppercase transition-all flex items-center gap-3 ${activeTaskForTagging.tags.includes(cat.name) ? `bg-${cat.color}-100 border-${cat.color}-500 text-${cat.color}-700 shadow-md` : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-indigo-300'}`}
-               >
-                 <div className={`w-2.5 h-2.5 rounded-full bg-${cat.color}-500`} />
-                 {cat.name}
-               </button>
-             ))}
-          </div>
+      {/* Task List Content */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-10">
+         {filteredTasks.length === 0 ? (
+           <div className="flex flex-col items-center justify-center py-20 text-center opacity-60">
+              <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                 <Sparkles className="w-6 h-6 text-slate-300" />
+              </div>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{t.noTasksYet}</p>
+           </div>
+         ) : (
+           <>
+             {activeTasks.length > 0 && (
+               <CollapsibleGroup title={t.active} color="indigo" count={activeTasks.length}>
+                  {activeTasks.map(task => renderTask(task))}
+               </CollapsibleGroup>
+             )}
 
-          <div className="pt-6 border-t border-slate-100 dark:border-slate-700/50">
-            <div className="relative group/input">
-              <input 
-                autoFocus
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all pr-14"
-                placeholder={language === 'zh' ? '输入新标签并按回车...' : 'Type new tag and hit Enter...'}
-                value={customTagInput}
-                onChange={(e) => setCustomTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const name = customTagInput.trim();
-                    if (name) {
-                      const existing = categories.find(c => c.name.toLowerCase() === name.toLowerCase());
-                      if (!existing) {
-                        onAddCategory(name, TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)]);
-                      }
-                      if (!activeTaskForTagging.tags.includes(name)) {
-                        toggleTaskTag(activeTaskForTagging, name);
-                      }
-                      setCustomTagInput('');
-                    }
-                  }
-                }}
-              />
-              <button 
-                onClick={() => {
-                  const name = customTagInput.trim();
-                  if (name) {
-                    const existing = categories.find(c => c.name.toLowerCase() === name.toLowerCase());
-                    if (!existing) onAddCategory(name, TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)]);
-                    toggleTaskTag(activeTaskForTagging, name);
-                    setCustomTagInput('');
-                  }
-                }}
-                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all ${customTagInput.trim() ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-300 opacity-0'}`}
-              >
-                <Check className="w-5 h-5" />
-              </button>
+             {/* Projects Group */}
+             {projects.map(project => {
+                const pTasks = filteredTasks.filter(t => t.projectId === project.id);
+                if (pTasks.length === 0) return null;
+                const completedCount = pTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
+                const progress = Math.round((completedCount / pTasks.length) * 100);
+                
+                return (
+                  <CollapsibleGroup key={project.id} title={project.name} color={project.color} count={pTasks.length} progress={progress}>
+                     {pTasks.map(task => renderTask(task, true, project.color))}
+                  </CollapsibleGroup>
+                );
+             })}
+
+             {todoTasks.length > 0 && (
+               <CollapsibleGroup title={t.standaloneTasks} color="slate" count={todoTasks.length}>
+                  {todoTasks.map(task => renderTask(task))}
+               </CollapsibleGroup>
+             )}
+
+             {completedTasks.length > 0 && (
+               <CollapsibleGroup title={t.done} color="emerald" count={completedTasks.length} defaultOpen={false}>
+                  {completedTasks.map(task => renderTask(task))}
+               </CollapsibleGroup>
+             )}
+           </>
+         )}
+      </div>
+
+      {/* Tagging Modal */}
+      {taskToTag && activeTaskForTagging && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl p-5 border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
+               <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-black uppercase tracking-widest text-xs">{t.manageCategories}</h3>
+                  <button onClick={() => setTaskToTag(null)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><X className="w-4 h-4" /></button>
+               </div>
+               
+               <div className="flex flex-wrap gap-2 mb-5">
+                  {categories?.map(cat => (
+                     <Badge 
+                       key={cat.id} 
+                       color={cat.color}
+                       onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
+                       className={`px-2.5 py-1 cursor-pointer transition-all text-[10px] ${
+                         (activeTaskForTagging.tags || []).includes(cat.name) 
+                           ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900' 
+                           : 'opacity-60 hover:opacity-100'
+                       }`}
+                     >
+                       {cat.name}
+                     </Badge>
+                  ))}
+               </div>
+               <div className="text-center">
+                  <Button variant="secondary" onClick={() => setTaskToTag(null)} className="w-full rounded-xl py-2 text-xs">{t.saveConfig}</Button>
+               </div>
             </div>
-          </div>
-        </div>
+         </div>
       )}
 
-      <div className={`relative transition-all duration-300 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] border ${isFocused ? 'border-indigo-400 shadow-xl shadow-indigo-500/10 ring-8 ring-indigo-500/5' : 'border-slate-200/60 dark:border-slate-800 shadow-sm'}`}>
-        <div className="flex items-center p-4">
-          <div className="pl-5 pr-3"><Sparkles className="w-5 h-5 text-indigo-400/50" /></div>
-          <input
-            type="text"
-            placeholder={t.quickAdd}
-            className="flex-1 bg-transparent border-none py-4 outline-none text-base font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
-            value={newTitle}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmitTask()}
-          />
-          <button onClick={() => handleSubmitTask()} className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-90 transition-all ml-2">
-            <Plus className="w-7 h-7" />
-          </button>
-        </div>
-      </div>
+      {/* Manage Global Tags Modal */}
+      {isManagingTags && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl p-6 border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
+               <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-black uppercase tracking-tight text-lg">{t.manageCategories}</h3>
+                  <button onClick={() => setIsManagingTags(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><X className="w-5 h-5" /></button>
+               </div>
+               
+               <div className="space-y-2 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
+                  {categories?.map(cat => (
+                     <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                        <Badge color={cat.color} className="px-2.5 py-0.5 text-[10px]">{cat.name}</Badge>
+                        <button onClick={() => { if(window.confirm(t.deleteCategoryConfirm)) onDeleteCategory(cat.id); }} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                     </div>
+                  ))}
+               </div>
 
-      <div className="flex bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-2 self-start shrink-0 border border-slate-200/50 dark:border-slate-800">
-          <button onClick={() => setFilter('all')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.all}</button>
-          <button onClick={() => setFilter('active')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'active' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.active}</button>
-          <button onClick={() => setFilter('completed')} className={`text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl transition-all ${filter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{t.done}</button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-3 pb-24 space-y-10 no-scrollbar">
-        {Object.entries(groupedTasks).map(([pid, pTasks]) => {
-            const project = projects.find(p => p.id === pid);
-            const total = pTasks.length;
-            const done = pTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
-            const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-            const color = project?.color || 'indigo';
-
-            return (
-                <CollapsibleGroup
-                  key={pid}
-                  title={project?.name || 'Project'}
-                  color={color}
-                  count={total}
-                  progress={progress}
-                >
-                    {pTasks.map(task => renderTask(task, true, color))}
-                </CollapsibleGroup>
-            )
-        })}
-
-        {standalone.length > 0 && (
-            <CollapsibleGroup
-                title={t.standaloneTasks}
-                color="slate"
-                count={standalone.length}
-            >
-                {standalone.map(task => renderTask(task, false))}
-            </CollapsibleGroup>
-        )}
-      </div>
+               <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">{t.newCategory}</label>
+                  <div className="flex items-center gap-2 mb-3">
+                     <div className="flex-1 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-xl p-2.5 flex items-center gap-2">
+                        <div className={`w-2.5 h-2.5 rounded-full bg-${newTagColor}-500 shrink-0`} />
+                        <input 
+                           className="bg-transparent border-none outline-none text-xs font-bold w-full text-slate-700 dark:text-slate-200" 
+                           placeholder={t.categoryName}
+                           value={newTagName}
+                           onChange={(e) => setNewTagName(e.target.value)}
+                        />
+                     </div>
+                     <Button 
+                       disabled={!newTagName.trim()}
+                       onClick={() => { if(newTagName.trim()) { onAddCategory(newTagName.trim(), newTagColor); setNewTagName(''); } }} 
+                       className="rounded-xl w-10 h-10 p-0 flex items-center justify-center shrink-0"
+                     >
+                       <Plus className="w-4 h-4" />
+                     </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                     {TAG_COLORS.map(c => (
+                        <button 
+                           key={c}
+                           onClick={() => setNewTagColor(c)}
+                           className={`w-5 h-5 rounded-md bg-${c}-500 transition-all ${newTagColor === c ? 'ring-2 ring-offset-2 ring-slate-300 dark:ring-slate-600 dark:ring-offset-slate-900 scale-110' : 'opacity-40 hover:opacity-100'}`}
+                        />
+                     ))}
+                  </div>
+               </div>
+            </div>
+         </div>
+      )}
     </div>
   );
 };

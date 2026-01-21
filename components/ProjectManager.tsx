@@ -18,6 +18,7 @@ interface ProjectManagerProps {
   onDeleteTask: (id: string) => void;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   categories?: Category[]; 
+  onAddCategory: (name: string, color: string) => void;
 }
 
 const getTodayStr = () => new Date().toISOString().split('T')[0];
@@ -305,7 +306,7 @@ const ProjectForm = ({
 }
 
 export const ProjectManager: React.FC<ProjectManagerProps> = ({ 
-  language, projects, tasks, onAddProject, onUpdateProject, onDeleteProject, onAddTask, onDeleteTask, onUpdateTask, categories = DEFAULT_CATEGORIES 
+  language, projects, tasks, onAddProject, onUpdateProject, onDeleteProject, onAddTask, onDeleteTask, onUpdateTask, categories = DEFAULT_CATEGORIES, onAddCategory
 }) => {
   const [view, setView] = useState<'list' | 'create' | 'edit' | 'detail'>('list');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -316,6 +317,10 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [isAddingRoot, setIsAddingRoot] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', parentTaskIds: [] as string[] });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // State for new tag creation
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
 
   const [formData, setFormData] = useState<Partial<Project>>({
     name: '',
@@ -620,6 +625,53 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                           {categories.filter(c => !(editingTask.tags || []).includes(c.name)).map(c => (
                             <button key={c.id} type="button" onClick={() => setEditingTask({ ...editingTask, tags: [...(editingTask.tags || []), c.name] })} className="px-5 py-2.5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">{c.name}</button>
                           ))}
+                        </div>
+                        
+                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/50">
+                            <label className="block text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh' ? '新建标签' : 'Create New Tag'}</label>
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1.5 pl-4 flex items-center gap-3 focus-within:border-indigo-500/50 transition-colors">
+                                    <div className={`w-3 h-3 rounded-full bg-${newTagColor}-500 shadow-sm shrink-0`} />
+                                    <input 
+                                        value={newTagName}
+                                        onChange={(e) => setNewTagName(e.target.value)}
+                                        placeholder={language === 'zh' ? '标签名称...' : 'Tag Name...'}
+                                        className="bg-transparent border-none outline-none text-sm font-bold w-full text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                if (newTagName.trim()) {
+                                                    onAddCategory(newTagName.trim(), newTagColor);
+                                                    setNewTagName('');
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                <Button 
+                                    type="button" 
+                                    disabled={!newTagName.trim()}
+                                    onClick={() => {
+                                        if (newTagName.trim()) {
+                                            onAddCategory(newTagName.trim(), newTagColor);
+                                            setNewTagName('');
+                                        }
+                                    }}
+                                    className="rounded-2xl w-12 h-12 flex items-center justify-center p-0 shrink-0"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-3 mt-4 px-1">
+                                {TAG_COLORS.map(c => (
+                                    <button 
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setNewTagColor(c)}
+                                    className={`w-8 h-8 rounded-xl bg-${c}-500 transition-all duration-300 ${newTagColor === c ? 'ring-4 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-slate-200 dark:ring-slate-700 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                       </div>
                       <div>
