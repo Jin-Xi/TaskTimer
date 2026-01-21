@@ -357,7 +357,7 @@ const App: React.FC = () => {
           <section className="flex-1 flex flex-col overflow-hidden">
             {activeTab === 'tasks' && (
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-4 md:px-10">
-                <div className="w-full max-w-4xl py-6 md:py-12">
+                <div className="w-full max-w-[1600px] py-6 md:py-12">
                   <TaskTimer 
                     language={language} 
                     activeTasks={activeTimers} 
@@ -416,7 +416,11 @@ const App: React.FC = () => {
           </section>
 
           {/* Mobile bottom task list */}
-          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-2 border-t border-slate-100 dark:border-slate-800 px-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-8 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-3 mb-6 sticky top-0 bg-transparent z-10 py-2">
+               <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
+               <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
+            </div>
             <SharedTaskList />
           </div>
         </div>
@@ -424,7 +428,7 @@ const App: React.FC = () => {
 
       {/* PC Right Side Task List */}
       <aside className="w-[30%] min-w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-8 force-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-12 force-scrollbar">
             <SharedTaskList />
         </div>
       </aside>

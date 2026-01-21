@@ -57,21 +57,26 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
   const COLORS = ['#6366f1', '#10b981', '#64748b', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899'];
   const totalHours = (completedTasks.reduce((acc, t) => acc + t.totalTime, 0) / 1000 / 3600).toFixed(1);
 
-  if (tasks.length === 0) {
+  if (completedTasks.length === 0) {
     return (
-      <div className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3.5rem] p-20 text-center shadow-sm flex flex-col items-center">
-        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
-          <span className="text-3xl text-slate-300">📊</span>
+      <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in fade-in">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3.5rem] p-12 md:p-20 text-center shadow-sm flex flex-col items-center max-w-lg">
+          <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-8">
+            <span className="text-4xl grayscale opacity-50">📊</span>
+          </div>
+          <h3 className="text-xl font-black text-slate-800 dark:text-white mb-3">
+             {language === 'zh' ? '暂无数据' : 'No Data Yet'}
+          </h3>
+          <p className="text-slate-500 font-medium leading-relaxed">
+            {language === 'zh' ? '请先完成一些任务，统计数据将在此显示。' : 'Complete some tasks to see your productivity metrics here.'}
+          </p>
         </div>
-        <p className="text-slate-500 font-bold text-lg">
-          {language === 'zh' ? '暂无统计数据，请先追踪一些任务。' : 'Track some tasks to see statistics.'}
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="w-full animate-in fade-in duration-700 px-2">
+    <div className="w-full animate-in fade-in duration-700 px-2 pb-20">
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-slate-200/50 dark:border-slate-800/50 shadow-[0_20px_80px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.3)] rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 flex flex-col gap-6">
         
         <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-6">

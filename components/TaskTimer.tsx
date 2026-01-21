@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Play, Pause, Flag, Maximize2, CheckCircle2, Sparkles, Timer as TimerIcon, Pencil, Trash2, Check, X, ChevronRight, Coffee, Tag as TagIcon } from 'lucide-react';
+import { Play, Pause, Flag, Maximize2, CheckCircle2, Sparkles, Timer as TimerIcon, Pencil, Trash2, Check, X, ChevronRight, Coffee, Tag as TagIcon, ArrowRight, CornerDownRight } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
@@ -83,7 +83,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
   };
 
   const sortedMilestones = useMemo(() => {
-    return [...(task.milestones || [])].sort((a, b) => a.timestamp - b.timestamp);
+    return [...(task.milestones || [])].sort((a, b) => b.timestamp - a.timestamp);
   }, [task.milestones]);
 
   const sessionProgress = isBreak 
@@ -97,188 +97,197 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
     return cat ? cat.color : 'slate';
   };
 
+  const themeColor = isBreak ? 'amber' : 'indigo';
+
   return (
-    <div className={`group relative transition-all duration-700 w-full flex flex-col mx-auto max-w-4xl ${
-      isHero 
-        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-slate-200/50 dark:border-slate-800/50 shadow-[0_20px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.4)] rounded-[3.5rem] md:rounded-[4.5rem] p-10 md:p-16' 
-        : 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-shadow'
-    }`}>
-      {(isRunning || isBreak) && (
-        <div className={`absolute inset-0 ${isBreak ? 'bg-amber-500/[0.02]' : 'bg-indigo-500/[0.01]'} animate-pulse-gentle pointer-events-none rounded-[inherit]`} />
-      )}
-
-      {isHero && onDismiss && (
-        <button 
-          onClick={() => onDismiss(task.id)}
-          className="absolute top-10 right-10 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-90 z-20"
-          title={language === 'zh' ? '最小化计时器' : 'Minimize timer'}
-        >
-          <X className="w-6 h-6" />
-        </button>
-      )}
+    <div className={`
+      relative w-full max-w-[90rem] mx-auto flex flex-col lg:flex-row
+      bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl
+      border border-slate-200/50 dark:border-slate-800/50
+      rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl shadow-slate-200/40 dark:shadow-black/40
+      overflow-hidden transition-all duration-500 group
+      ${isHero ? 'min-h-[60vh] lg:h-[80vh]' : 'h-auto'}
+    `}>
+      {/* Background Decor */}
+      <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-br ${isRunning ? 'from-indigo-500/5 via-transparent to-violet-500/5' : 'from-slate-500/5 via-transparent to-gray-500/5'} pointer-events-none`} />
       
-      <div className="flex justify-center items-center gap-5 mb-10">
-        {isBreak && (
-          <div className="flex items-center gap-3 px-8 py-4 bg-amber-50 dark:bg-amber-950/30 text-amber-600 rounded-full border border-amber-100 dark:border-amber-900/50 animate-bounce">
-            <span className="text-2xl">🍅</span>
-            <span className="text-xs font-black uppercase tracking-[0.2em]">{t.onBreak}</span>
-          </div>
-        )}
-        <button 
-          onClick={() => onComplete(task.id)}
-          className="flex items-center gap-3 px-8 py-4 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-full hover:bg-emerald-600 hover:text-white transition-all transform hover:scale-105 active:scale-95 group/complete border border-emerald-100 dark:border-emerald-900/50"
-        >
-          <CheckCircle2 className="w-6 h-6 group-hover/complete:scale-110 transition-transform" />
-          <span className="text-xs font-black uppercase tracking-[0.2em]">{language === 'zh' ? '点击完成任务' : 'Complete Task'}</span>
-        </button>
-      </div>
-
-      <div className="relative z-10 w-full flex flex-col items-center">
-        <div className="w-full flex flex-col items-center mb-4">
-          <div className="flex items-center justify-between w-full mb-6 pr-12">
-            <div className="flex items-center gap-4 min-w-0">
-               <div className={`shrink-0 w-3.5 h-3.5 rounded-full ${isBreak ? 'bg-amber-500 animate-pulse' : isRunning ? 'bg-indigo-500 animate-pulse shadow-[0_0_15px_rgba(99,102,241,0.6)]' : 'bg-slate-300 dark:bg-slate-700'}`} />
-               <h3 className={`${isHero ? 'text-xl md:text-3xl' : 'text-lg md:text-xl'} font-black text-slate-800 dark:text-slate-200 truncate tracking-tight`}>
-                 {task.title}
-               </h3>
-            </div>
-            <button 
-              onClick={onEnterFocusMode} 
-              className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-90"
-            >
-              <Maximize2 className="w-6 h-6" />
-            </button>
-          </div>
-          
-          {isHero && task.tags && task.tags.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3 mb-4 animate-in fade-in slide-in-from-top-2 duration-700">
-               {task.tags.map(tag => (
-                 <Badge key={tag} color={getTagColor(tag)} className="px-4 py-1.5 rounded-full uppercase tracking-widest text-[10px]">
+      {/* LEFT SECTION: Timer Core */}
+      <div className="flex-1 flex flex-col items-center justify-between p-6 md:p-10 lg:p-12 relative z-10 min-w-0">
+        
+        {/* Top Header */}
+        <div className="w-full flex justify-between items-start mb-4 md:mb-0">
+           <div className="flex flex-wrap gap-2">
+              {task.tags?.map(tag => (
+                 <Badge key={tag} color={getTagColor(tag)} className="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest border-0 ring-1 ring-inset ring-black/5 dark:ring-white/10">
                    {tag}
                  </Badge>
-               ))}
-            </div>
-          )}
+              ))}
+           </div>
+           
+           <div className="flex gap-2 shrink-0">
+              <button 
+                onClick={onEnterFocusMode} 
+                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all active:scale-95"
+                title="Focus Mode"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+              {isHero && onDismiss && (
+                <button 
+                  onClick={() => onDismiss(task.id)}
+                  className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95"
+                  title="Minimize"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+           </div>
         </div>
 
-        <div className={`${isHero ? 'text-7xl sm:text-9xl md:text-[11rem] my-10' : 'text-5xl sm:text-6xl md:text-7xl my-8'} font-mono font-bold text-center tabular-nums tracking-tighter leading-none ${isBreak ? 'text-amber-500' : isRunning ? 'text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_20px_rgba(99,102,241,0.3)]' : 'text-slate-200 dark:text-slate-800'}`}>
-          {formatTime(isBreak ? (POMODORO_BREAK_MS - sessionElapsed) : elapsed)}
-        </div>
+        {/* Center Timer Display */}
+        <div className="flex flex-col items-center text-center w-full my-6 md:my-0">
+           <h3 className="text-xl md:text-3xl font-black text-slate-800 dark:text-slate-100 mb-2 md:mb-6 max-w-2xl leading-tight line-clamp-2">
+             {task.title}
+           </h3>
 
-        {isHero && (isRunning || isBreak) && (
-          <div className="w-full max-w-lg mx-auto mb-12 space-y-4">
-             <div className="flex items-center justify-between px-2">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{isBreak ? t.onBreak : t.sessionProgress}</span>
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest font-mono">{isBreak ? formatTime(Math.max(0, POMODORO_BREAK_MS - sessionElapsed)) : formatTime(sessionElapsed)}</span>
-             </div>
-             <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+           {/* Responsive Timer Text */}
+           <div className="w-full flex justify-center py-2 md:py-4">
+              <span className={`
+                 font-mono font-bold tabular-nums tracking-tighter leading-none select-none
+                 bg-clip-text text-transparent bg-gradient-to-b
+                 ${isBreak ? 'from-amber-400 to-amber-600' : isRunning ? 'from-indigo-500 to-violet-600 dark:from-indigo-400 dark:to-violet-400' : 'from-slate-400 to-slate-600'}
+                 text-[18vw] sm:text-[15vw] md:text-8xl lg:text-7xl xl:text-9xl 2xl:text-[10rem]
+                 transition-all duration-300 drop-shadow-sm
+              `}>
+                {formatTime(isBreak ? (POMODORO_BREAK_MS - sessionElapsed) : elapsed)}
+              </span>
+           </div>
+           
+           {/* Progress Bar */}
+           <div className="w-full max-w-[200px] md:max-w-xs mt-4 md:mt-8 space-y-2 opacity-80 hover:opacity-100 transition-opacity">
+              <div className="flex justify-between px-1">
+                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isBreak ? t.onBreak : t.sessionProgress}</span>
+                 <span className={`text-[10px] font-bold uppercase tracking-widest ${isBreak ? 'text-amber-500' : 'text-indigo-500'}`}>{Math.round(sessionProgress)}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full transition-all duration-300 rounded-full ${isBreak ? 'bg-amber-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500 shadow-[0_0_12px_rgba(99,102,241,0.5)]'}`}
+                  className={`h-full transition-all duration-1000 ease-linear rounded-full ${isBreak ? 'bg-amber-500' : 'bg-indigo-500'}`}
                   style={{ width: `${sessionProgress}%` }}
                 />
-             </div>
-          </div>
-        )}
-
-        {isHero && showBreakPrompt && (
-          <div className="w-full max-w-lg mx-auto mb-10 animate-in slide-in-from-top-4">
-            <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/50 p-8 rounded-[2.5rem] flex items-center justify-between gap-6 backdrop-blur-sm">
-               <div className="flex items-center gap-5">
-                 <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/50 rounded-2xl flex items-center justify-center text-3xl">🍅</div>
-                 <p className="text-base font-bold text-amber-800 dark:text-amber-200 leading-tight">{t.pomodoroTip}</p>
-               </div>
-               <button 
-                 onClick={() => onBreak(task.id)}
-                 className="shrink-0 px-8 py-4 bg-amber-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20"
-               >
-                 {t.startBreak}
-               </button>
-            </div>
-          </div>
-        )}
-
-        {isHero && !isBreak && (
-          <form 
-            onSubmit={handleAddMilestone}
-            className="w-full max-w-2xl mx-auto mb-12 group/mile"
-          >
-            <div className="relative flex items-center bg-slate-50 dark:bg-slate-800/40 rounded-[2rem] border border-slate-100 dark:border-slate-800/50 focus-within:border-indigo-500/50 focus-within:ring-8 focus-within:ring-indigo-500/5 transition-all px-8 py-5">
-              <Flag className="w-6 h-6 text-indigo-400 mr-5 shrink-0" />
-              <input 
-                ref={milestoneInputRef}
-                className="flex-1 bg-transparent border-none outline-none text-base font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-300 placeholder:font-medium"
-                placeholder={language === 'zh' ? '记录这一刻的进展...' : 'Record progress at this moment...'}
-                value={newMilestoneTitle}
-                onChange={(e) => setNewMilestoneTitle(e.target.value)}
-              />
-              <button 
-                type="submit"
-                disabled={!newMilestoneTitle.trim()}
-                className={`ml-3 p-2.5 rounded-xl transition-all ${newMilestoneTitle.trim() ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-300 opacity-0'}`}
-              >
-                <Check className="w-5 h-5" />
-              </button>
-            </div>
-          </form>
-        )}
-
-        {isHero && sortedMilestones.length > 0 && !isBreak && (
-          <div className="w-full max-w-2xl mx-auto space-y-5 max-h-[400px] overflow-y-auto custom-scrollbar px-6 mb-12 py-2 border-t border-slate-50 dark:border-slate-800/50 pt-10">
-            {sortedMilestones.map((m, idx) => (
-              <div key={m.id} className="relative flex items-center gap-6 group/m animate-in fade-in slide-in-from-bottom-2">
-                <div className="flex flex-col items-center">
-                  <div className={`w-3.5 h-3.5 rounded-full bg-indigo-500 z-10 shadow-[0_0_8px_rgba(99,102,241,0.4)]`} />
-                  {idx < sortedMilestones.length - 1 && (
-                    <div className="w-0.5 h-16 bg-indigo-100 dark:bg-indigo-900/40 absolute top-3.5 left-[6.5px]" />
-                  )}
-                </div>
-                
-                <div className="flex-1 flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-[1.75rem] shadow-sm hover:shadow-md transition-all group-hover/m:border-indigo-100 group-hover/m:-translate-y-0.5">
-                  <div className="flex-1 min-w-0">
-                    {editingMilestoneId === m.id ? (
-                      <input 
-                        autoFocus
-                        className="bg-transparent border-b-2 border-indigo-500 outline-none text-base font-bold text-slate-700 dark:text-slate-200 w-full pb-1"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(m.id)}
-                        onBlur={() => setEditingMilestoneId(null)}
-                      />
-                    ) : (
-                      <span className="text-base font-bold text-slate-700 dark:text-slate-200 truncate block">{m.title}</span>
-                    )}
-                  </div>
-                  
-                  <div className="shrink-0 flex items-center gap-5 ml-4">
-                    <span className="text-xs font-mono font-black text-indigo-500/80 bg-indigo-50/50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl">
-                       {m.taskTime ? formatTime(m.taskTime) : '--:--:--'}
-                    </span>
-                    <div className="flex items-center gap-2 opacity-0 group-hover/m:opacity-100 transition-opacity">
-                        <button onClick={() => handleStartEdit(m)} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4.5 h-4.5" /></button>
-                        <button onClick={() => onDeleteMilestone(task.id, m.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4.5 h-4.5" /></button>
-                    </div>
-                  </div>
-                </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex justify-center mt-6">
-          <button 
-            onClick={() => isBreak ? onStart(task.id) : isRunning ? onPause(task.id) : onStart(task.id)} 
-            className={`flex flex-col items-center justify-center transition-all ${isHero ? 'w-28 h-28 sm:w-32 sm:h-32 rounded-[3rem]' : 'w-20 h-20 rounded-[1.75rem]'} ${isBreak ? 'bg-amber-500 text-white shadow-2xl shadow-amber-500/30' : isRunning ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95'}`}
-          >
-            {isBreak ? (
-              <Play className="w-12 h-12 md:w-14 md:h-14 fill-current ml-1" />
-            ) : isRunning ? (
-              <Pause className="w-12 h-12 md:w-14 md:h-14" />
-            ) : (
-              <Play className="w-12 h-12 md:w-14 md:h-14 fill-current ml-1" />
-            )}
-            {isHero && isBreak && <span className="text-[10px] font-black uppercase tracking-widest mt-2">{t.endBreak}</span>}
-          </button>
+           </div>
         </div>
+
+        {/* Bottom Controls */}
+        <div className="flex items-center justify-center gap-6 md:gap-10 pb-2 md:pb-0">
+           <button 
+             onClick={() => onComplete(task.id)}
+             className="flex flex-col items-center gap-2 group/btn"
+             title="Complete Task"
+           >
+             <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-white transition-all active:scale-95 shadow-sm flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
+             </div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover/btn:text-emerald-500 transition-colors hidden md:block">Done</span>
+           </button>
+
+           <button 
+             onClick={() => isBreak ? onStart(task.id) : isRunning ? onPause(task.id) : onStart(task.id)} 
+             className={`
+               relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-[2rem] transition-all duration-300 shadow-xl active:scale-95
+               ${isBreak 
+                 ? 'bg-amber-500 text-white shadow-amber-500/40 hover:bg-amber-400' 
+                 : isRunning 
+                   ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-indigo-500/10 border-4 border-indigo-50 dark:border-slate-700' 
+                   : 'bg-indigo-600 text-white shadow-indigo-500/40 hover:bg-indigo-500 hover:scale-105'}
+             `}
+           >
+             {isRunning ? <Pause className="w-8 h-8 md:w-10 md:h-10 fill-current" /> : <Play className="w-8 h-8 md:w-10 md:h-10 fill-current ml-1" />}
+           </button>
+
+           <button 
+             onClick={() => onBreak(task.id)}
+             disabled={isBreak}
+             className={`flex flex-col items-center gap-2 group/btn ${isBreak ? 'opacity-50 cursor-not-allowed' : ''}`}
+             title="Take Break"
+           >
+             <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-sm ${showBreakPrompt ? 'bg-amber-100 text-amber-600 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover/btn:bg-amber-500 group-hover/btn:text-white'}`}>
+                <Coffee className="w-5 h-5 md:w-6 md:h-6" />
+             </div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover/btn:text-amber-500 transition-colors hidden md:block">Break</span>
+           </button>
+        </div>
+      </div>
+
+      {/* RIGHT SECTION: Milestones (Sidebar on Desktop, Bottom on Mobile) */}
+      <div className="w-full lg:w-96 bg-slate-50/80 dark:bg-slate-950/30 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800/50 flex flex-col shrink-0 lg:h-full transition-all duration-300">
+         <div className="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+               <Flag className="w-4 h-4 text-slate-400" />
+               <h4 className="font-bold text-xs uppercase tracking-widest text-slate-500">{t.newMilestone}</h4>
+            </div>
+            <span className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-black text-slate-400">{task.milestones?.length || 0}</span>
+         </div>
+         
+         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 min-h-[160px] max-h-[300px] lg:max-h-none lg:min-h-0 bg-slate-50/30 dark:bg-slate-900/10">
+            {sortedMilestones.length === 0 ? (
+               <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-50 space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
+                    <CornerDownRight className="w-4 h-4 text-slate-300" />
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 max-w-[150px]">{language === 'zh' ? '记录关键进展...' : 'Track your progress...'}</p>
+               </div>
+            ) : (
+               sortedMilestones.map((m) => (
+                  <div key={m.id} className="group/item relative bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-indigo-200 dark:hover:border-indigo-900 transition-all shadow-sm">
+                     <div className="flex justify-between items-start gap-3 mb-1">
+                        {editingMilestoneId === m.id ? (
+                           <input 
+                              autoFocus
+                              className="w-full bg-transparent border-b-2 border-indigo-500 outline-none text-sm font-bold"
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(m.id)}
+                              onBlur={() => setEditingMilestoneId(null)}
+                           />
+                        ) : (
+                           <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-tight">{m.title}</p>
+                        )}
+                     </div>
+                     
+                     <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] font-mono font-medium text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                           {m.taskTime ? formatTime(m.taskTime) : '00:00:00'}
+                        </span>
+                        
+                        <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                           <button onClick={() => handleStartEdit(m)} className="p-1 text-slate-400 hover:text-indigo-500"><Pencil className="w-3 h-3" /></button>
+                           <button onClick={() => onDeleteMilestone(task.id, m.id)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                     </div>
+                  </div>
+               ))
+            )}
+         </div>
+
+         <div className="p-4 border-t border-slate-100 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+            <form onSubmit={handleAddMilestone} className="relative group/input">
+                <input 
+                  ref={milestoneInputRef}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-4 pr-10 py-3 outline-none text-xs font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                  placeholder={language === 'zh' ? '添加节点...' : 'Add milestone...'}
+                  value={newMilestoneTitle}
+                  onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                />
+                <button 
+                  type="submit"
+                  disabled={!newMilestoneTitle.trim()}
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${newMilestoneTitle.trim() ? 'bg-indigo-600 text-white shadow-md hover:scale-105' : 'text-slate-300'}`}
+                >
+                   <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+            </form>
+         </div>
       </div>
     </div>
   );
@@ -314,36 +323,50 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
 
   if (activeTasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-center animate-in fade-in duration-1000 w-full max-w-4xl mx-auto px-6">
-        <div className="relative mb-12 md:mb-20 shrink-0">
-            <div className="w-24 h-24 md:w-32 md:h-32 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full flex items-center justify-center shadow-inner">
-                <TimerIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-600 dark:text-indigo-500 drop-shadow-sm" />
+      <div className="w-full h-full flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-700 py-10 px-4">
+        <div 
+            className="relative mb-8 group cursor-pointer" 
+            onClick={() => document.getElementById('quick-add-input')?.focus()}
+        >
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-slate-900 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-500/10 border border-slate-100 dark:border-slate-800 group-hover:scale-105 transition-all duration-500 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-[2rem]" />
+                <TimerIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500/80 group-hover:text-indigo-600 transition-colors" />
             </div>
-            <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping opacity-20 scale-150" />
+            {/* Decorative Pulse Rings */}
+            <div className="absolute inset-0 border-2 border-dashed border-indigo-200 dark:border-indigo-900 rounded-[2rem] animate-[spin_10s_linear_infinite] opacity-50 pointer-events-none scale-110" />
+            <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
         </div>
         
-        <h3 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 dark:text-white mb-8 md:mb-10 tracking-tight leading-tight">
+        <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
           {t.noActiveTask}
         </h3>
-        <p className="text-slate-400 dark:text-slate-500 text-lg sm:text-xl md:text-3xl font-medium max-w-2xl mx-auto leading-relaxed mb-16 md:mb-24 opacity-80">
+        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium max-w-sm mx-auto leading-relaxed mb-10">
           {t.selectTaskToStart}
         </p>
 
         {suggestedTasks.length > 0 && (
-          <div className="w-full max-w-3xl space-y-8 md:space-y-12">
-            <div className="flex items-center gap-5 justify-center">
-              <Sparkles className="w-6 h-6 text-amber-500" />
-              <span className="text-sm font-black uppercase tracking-[0.5em] text-slate-400">{t.suggestedTasks}</span>
-              <Sparkles className="w-6 h-6 text-amber-500" />
+          <div className="w-full max-w-2xl space-y-6 animate-in slide-in-from-bottom-6 duration-1000 delay-200">
+            <div className="flex items-center gap-4 justify-center">
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-800" />
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                {t.suggestedTasks}
+              </div>
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-800" />
             </div>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            
+            <div className="flex flex-wrap justify-center gap-3">
                {suggestedTasks.map((title, i) => (
                  <button 
                   key={i} 
                   onClick={() => handleAddSuggestedTask(title)}
-                  className="px-6 py-3.5 sm:px-10 sm:py-5 rounded-[1.75rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-sm sm:text-base md:text-lg font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm hover:shadow-lg"
+                  className="group relative px-5 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 text-xs md:text-sm font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm hover:shadow-lg hover:-translate-y-0.5 overflow-hidden"
                  >
-                   {title}
+                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-900 opacity-0 group-hover:opacity-100 transition-opacity" />
+                   <span className="relative z-10 flex items-center gap-2">
+                     {title}
+                     <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all text-indigo-500" />
+                   </span>
                  </button>
                ))}
             </div>
@@ -356,7 +379,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
   const currentTask = activeTasks[0];
 
   return (
-    <div className="w-full animate-in fade-in slide-in-from-top-4 duration-700 px-4 sm:px-6 mx-auto flex flex-col items-center">
+    <div className="w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-500 px-4 md:px-8 py-4">
       <SingleTimer 
         language={language}
         task={currentTask}
