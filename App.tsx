@@ -400,6 +400,10 @@ const App: React.FC = () => {
                   onDeleteTask={handleDeleteTask} 
                   onUpdateTask={handleUpdateTask} 
                   categories={categories} 
+                  onAddCategory={async (n, c) => { 
+                    const updated = await addCategory({id: generateUUID(), name: n, color: c}); 
+                    setCategories(updated); 
+                  }}
                 />
               </div>
             )}
