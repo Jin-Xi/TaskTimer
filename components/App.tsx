@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon } from 'lucide-react';
-import { Task, TaskStatus, Milestone, Category, Project } from '../types';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, HelpCircle } from 'lucide-react';
+import { Task, TaskStatus, Milestone, Category, Project, Language } from '../types';
 import { 
   subscribeToTasks, 
   subscribeToCategories, 
@@ -22,7 +22,9 @@ import { TaskList } from './TaskList';
 import { Stats } from './Stats';
 import { AIInsights } from './AIInsights';
 import { ProjectManager } from './ProjectManager';
+import { AIProjectGenerator } from './AIProjectGenerator';
 import { FullscreenFocus } from './FullscreenFocus';
+import { GuideModal } from './GuideModal';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from '../constants';
 
 const generateUUID = () => {
@@ -43,9 +45,10 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('tasks');
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   
-  const [language, setLanguage] = useState<'en' | 'zh'>(() => {
-    return (localStorage.getItem('chrono_lang') as 'en' | 'zh') || 'zh';
+  const [language, setLanguage] = useState<Language>(() => {
+    return (localStorage.getItem('chrono_lang') as Language) || 'zh-CN';
   });
 
   const t = TRANSLATIONS[language];
@@ -67,6 +70,13 @@ const App: React.FC = () => {
   }, [language]);
 
   useEffect(() => {
+    // Check for first visit
+    const hasVisited = localStorage.getItem('chrono_has_visited');
+    if (!hasVisited) {
+      setShowGuide(true);
+      localStorage.setItem('chrono_has_visited', 'true');
+    }
+
     const unsubTasks = subscribeToTasks(setTasks);
     const unsubCats = subscribeToCategories(setCategories, DEFAULT_CATEGORIES);
     const unsubProjs = subscribeToProjects(setProjects);
@@ -95,6 +105,53 @@ const App: React.FC = () => {
     };
     const updated = await addTask(newTask);
     setTasks(updated);
+  };
+
+  const handleAIPlanGenerated = async (projectData: any, aiTasks: any[]) => {
+    const projectId = generateUUID();
+    const newProject: Project = {
+      id: projectId,
+      name: projectData.name,
+      description: projectData.description,
+      color: projectData.color || 'indigo',
+      createdAt: Date.now(),
+      schedule: { type: 'daily' }
+    };
+
+    await addProject(newProject);
+
+    // Map temporary IDs from AI to real UUIDs
+    const idMap: Record<string, string> = {};
+    aiTasks.forEach(t => {
+      idMap[t.id] = generateUUID();
+    });
+
+    const realTasks: Task[] = aiTasks.map(t => ({
+      id: idMap[t.id],
+      title: t.title,
+      description: t.description,
+      tags: t.tag ? [t.tag] : ['Work'],
+      status: TaskStatus.IDLE,
+      totalTime: 0,
+      estimatedTime: (t.estimatedMinutes || 0) * 60 * 1000,
+      createdAt: Date.now(),
+      logs: [],
+      milestones: [],
+      projectId: projectId,
+      parentTaskIds: (t.parentIds || []).map((pid: string) => idMap[pid]).filter(Boolean)
+    }));
+
+    // Add all tasks sequentially to ensure storage consistency
+    for (const task of realTasks) {
+      await addTask(task);
+    }
+
+    // Refresh state manually to be safe, though subscription should catch it
+    setProjects(prev => [...prev, newProject]);
+    setTasks(prev => [...prev, ...realTasks]);
+
+    // Navigate to Project Manager tab
+    setActiveTab('projects');
   };
 
   const handleDeleteTask = async (id: string) => {
@@ -165,7 +222,7 @@ const App: React.FC = () => {
     if (task.parentTaskIds?.length > 0) {
       const unfinished = tasks.filter(t => task.parentTaskIds.includes(t.id) && t.status !== TaskStatus.COMPLETED);
       if (unfinished.length > 0) {
-        alert(language === 'zh' ? `请先完成前置任务：${unfinished.map(p => p.title).join(', ')}` : `Prerequisites needed: ${unfinished.map(p => p.title).join(', ')}`);
+        alert(language === 'zh-TW' ? `請先完成前置任務：${unfinished.map(p => p.title).join(', ')}` : `请先完成前置任务：${unfinished.map(p => p.title).join(', ')}`);
         return;
       }
     }
@@ -235,11 +292,11 @@ const App: React.FC = () => {
   const getSuggestedTasks = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 11) {
-      return language === 'zh' ? ['总结日志', '准备明日待办', '放松听歌'] : ['Daily Log', 'Prep Tomorrow', 'Relax & Music'];
+      return language === 'zh-TW' ? ['總結日誌', '準備明日待辦', '放鬆聽歌'] : ['总结日志', '准备明日待办', '放松听歌'];
     } else if (hour >= 11 && hour < 17) {
-      return language === 'zh' ? ['深度编码', '核心架构设计', '午间冥想'] : ['Deep Coding', 'Architecture Design', 'Lunch Meditation'];
+      return language === 'zh-TW' ? ['深度編碼', '核心架構設計', '午後冥想'] : ['深度编码', '核心架构设计', '午间冥想'];
     } else {
-      return language === 'zh' ? ['复盘今日', '代码审计', '学习新技术'] : ['Daily Review', 'Code Audit', 'Learn New Tech'];
+      return language === 'zh-TW' ? ['複盤今日', '代碼審計', '學習新技術'] : ['复盘今日', '代码审计', '学习新技术'];
     }
   };
 
@@ -306,15 +363,26 @@ const App: React.FC = () => {
         })}
       </nav>
 
-      <div className="pt-8 flex gap-4 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
-           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
-             {darkMode ? <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />}
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{darkMode ? t.lightMode : t.darkMode}</span>
+      {/* Guide & Mode Switch */}
+      <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
+           <button 
+             onClick={() => setShowGuide(true)}
+             className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all font-bold text-xs uppercase tracking-widest"
+           >
+             <HelpCircle className="w-4 h-4" />
+             {t.help}
            </button>
-           <button onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
-             <Languages className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{t.langName}</span>
-           </button>
+
+           <div className="flex gap-4">
+             <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
+               {darkMode ? <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />}
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{darkMode ? t.lightMode : t.darkMode}</span>
+             </button>
+             <button onClick={() => setLanguage(language === 'zh-CN' ? 'zh-TW' : 'zh-CN')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
+               <Languages className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{t.langName}</span>
+             </button>
+           </div>
       </div>
     </div>
   );
@@ -375,6 +443,14 @@ const App: React.FC = () => {
                     categories={categories}
                   />
                 </div>
+              </div>
+            )}
+            {activeTab === 'ai-planner' && (
+              <div className="flex-1 overflow-hidden">
+                <AIProjectGenerator 
+                  language={language} 
+                  onPlanGenerated={handleAIPlanGenerated} 
+                />
               </div>
             )}
             {activeTab === 'projects' && (
@@ -446,6 +522,10 @@ const App: React.FC = () => {
           backgroundImage={focusBgImage}
           onSetBackgroundImage={(url) => { setFocusBgImage(url); localStorage.setItem('chrono_focus_bg', url); }}
         />
+      )}
+
+      {showGuide && (
+        <GuideModal language={language} onClose={() => setShowGuide(false)} />
       )}
     </div>
   );

@@ -7,6 +7,8 @@ export enum TaskStatus {
   BREAK = 'BREAK',
 }
 
+export type Language = 'zh-CN' | 'zh-TW';
+
 export interface TimeLog {
   start: number;
   end: number | null;
@@ -52,6 +54,7 @@ export interface Task {
   tags: string[];
   status: TaskStatus;
   totalTime: number;
+  estimatedTime?: number; // Estimated duration in milliseconds
   createdAt: number;
   logs: TimeLog[];
   milestones: Milestone[];

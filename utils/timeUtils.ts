@@ -1,4 +1,6 @@
 
+import { Language } from '../types';
+
 /**
  * Formats milliseconds into a HH:MM:SS string.
  * @param ms Milliseconds to format
@@ -19,12 +21,15 @@ export const formatTime = (ms: number): string => {
 /**
  * Formats duration into a human-readable string like '1h 30m' or '45m'.
  */
-export const formatDurationHuman = (ms: number, language: 'en' | 'zh' = 'zh'): string => {
+export const formatDurationHuman = (ms: number, language: Language = 'zh-CN'): string => {
   const min = Math.floor(ms / 1000 / 60);
   const hr = Math.floor(min / 60);
   
+  const hourUnit = language === 'zh-TW' ? '小時' : '小时';
+  const minUnit = language === 'zh-TW' ? '分鐘' : '分钟';
+
   if (hr > 0) {
-    return language === 'zh' ? `${hr}小时 ${min % 60}分钟` : `${hr}h ${min % 60}m`;
+    return `${hr}${hourUnit} ${min % 60}${minUnit}`;
   }
-  return language === 'zh' ? `${min}分钟` : `${min}m`;
+  return `${min}${minUnit}`;
 };

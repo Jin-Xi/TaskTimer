@@ -29,13 +29,13 @@ describe('timeUtils', () => {
   });
 
   describe('formatDurationHuman', () => {
-    it('should format short durations in English', () => {
-      expect(formatDurationHuman(60000, 'en')).toBe('1m');
+    it('should format short durations in Simplified Chinese', () => {
+      expect(formatDurationHuman(60000, 'zh-CN')).toBe('1分钟');
     });
 
-    it('should format long durations in Chinese', () => {
+    it('should format long durations in Traditional Chinese', () => {
       const ninetyMins = 90 * 60 * 1000;
-      expect(formatDurationHuman(ninetyMins, 'zh')).toBe('1小时 30分钟');
+      expect(formatDurationHuman(ninetyMins, 'zh-TW')).toBe('1小時 30分鐘');
     });
   });
 });

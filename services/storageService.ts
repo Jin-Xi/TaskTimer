@@ -5,9 +5,9 @@ import { DEFAULT_CATEGORIES } from "../constants";
 
 const SERVER_URL = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001`;
 const STORAGE_KEYS = {
-  TASKS: 'chrono_tasks_v2',
-  CATEGORIES: 'chrono_categories_v2',
-  PROJECTS: 'chrono_projects_v2'
+  TASKS: 'chrono_tasks_v3',
+  CATEGORIES: 'chrono_categories_v3',
+  PROJECTS: 'chrono_projects_v3'
 };
 
 const minsAgo = (m: number) => Date.now() - (m * 60 * 1000);
@@ -15,64 +15,71 @@ const minsAgo = (m: number) => Date.now() - (m * 60 * 1000);
 const DEMO_DATA = {
   tasks: [
     {
-      id: 'task-demo-standalone',
-      title: '深度阅读：生产力手册',
-      description: '分析 ChronoFlow 的核心交互逻辑。',
-      tags: ['Creative', 'Study'],
+      id: 'task-demo-1',
+      title: '阅读《原子习惯》',
+      description: '每天阅读30分钟，建立良好的微习惯。',
+      tags: ['Study'],
+      status: TaskStatus.COMPLETED,
+      totalTime: 1800000,
+      createdAt: minsAgo(180),
+      logs: [{ start: minsAgo(150), end: minsAgo(120) }],
+      milestones: [],
+      parentTaskIds: []
+    },
+    {
+      id: 'task-demo-2',
+      title: '晨间运动',
+      description: '有氧运动或瑜伽。',
+      tags: ['Exercise'],
       status: TaskStatus.COMPLETED,
       totalTime: 2700000,
-      createdAt: minsAgo(120),
-      logs: [{ start: minsAgo(105), end: minsAgo(60) }],
-      milestones: [
-        { id: 'm-s1', title: '完成前三章阅读', timestamp: minsAgo(90), branch: 'main' },
-        { id: 'm-s2', title: '整理核心笔记', timestamp: minsAgo(65), branch: 'refine' }
-      ],
+      createdAt: minsAgo(300),
+      logs: [{ start: minsAgo(290), end: minsAgo(245) }],
+      milestones: [{ id: 'm-gym-1', title: '完成热身', timestamp: minsAgo(280), branch: 'main' }],
+      projectId: 'project-demo-life',
       parentTaskIds: []
     },
     {
-      id: 'task-p1',
-      title: '需求分析与原型设计',
+      id: 'task-demo-3',
+      title: '回复工作邮件',
+      description: '处理收件箱中的未读消息。',
       tags: ['Work'],
-      status: TaskStatus.COMPLETED,
-      totalTime: 3600000,
-      createdAt: minsAgo(500),
-      logs: [{ start: minsAgo(480), end: minsAgo(420) }],
-      milestones: [{ id: 'm-p1', title: '导出原型图', timestamp: minsAgo(425), branch: 'main' }],
-      projectId: 'project-demo-1',
-      parentTaskIds: []
-    },
-    {
-      id: 'task-p2',
-      title: '核心计时逻辑开发',
-      tags: ['Work'],
-      status: TaskStatus.COMPLETED,
-      totalTime: 7200000,
-      createdAt: minsAgo(400),
-      logs: [{ start: minsAgo(380), end: minsAgo(260) }],
-      milestones: [{ id: 'm-p2', title: 'Socket.IO 联调成功', timestamp: minsAgo(280), branch: 'main' }],
-      projectId: 'project-demo-1',
-      parentTaskIds: ['task-p1']
-    },
-    {
-      id: 'task-p3',
-      title: 'UI/UX 验收与部署',
-      tags: ['Creative'],
       status: TaskStatus.IDLE,
       totalTime: 0,
-      createdAt: minsAgo(200),
+      createdAt: minsAgo(60),
       logs: [],
       milestones: [],
-      projectId: 'project-demo-1',
-      parentTaskIds: ['task-p2']
+      projectId: 'project-demo-work',
+      parentTaskIds: []
+    },
+    {
+      id: 'task-demo-4',
+      title: '整理周报',
+      description: '汇总本周工作进度。',
+      tags: ['Work'],
+      status: TaskStatus.IDLE,
+      totalTime: 0,
+      createdAt: minsAgo(50),
+      logs: [],
+      milestones: [],
+      projectId: 'project-demo-work',
+      parentTaskIds: ['task-demo-3']
     }
   ] as Task[],
   projects: [
     {
-      id: 'project-demo-1',
-      name: 'ChronoFlow 2.0 升级计划',
-      description: '包含核心引擎重构与 AI 教练集成。',
-      createdAt: minsAgo(600),
-      color: 'violet'
+      id: 'project-demo-life',
+      name: '健康生活',
+      description: '保持身心健康的日常习惯。',
+      createdAt: minsAgo(1000),
+      color: 'emerald'
+    },
+    {
+      id: 'project-demo-work',
+      name: '日常工作流',
+      description: '高效处理日常办公事务。',
+      createdAt: minsAgo(800),
+      color: 'indigo'
     }
   ] as Project[]
 };

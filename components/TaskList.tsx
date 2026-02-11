@@ -1,13 +1,13 @@
 
 import React, { useState, useId } from 'react';
 import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, PlusCircle, CheckCircle2, Circle, Layers, Zap, Clock, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
-import { Task, TaskStatus, Milestone, Category, Project } from '../types';
+import { Task, TaskStatus, Milestone, Category, Project, Language } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
 import { TRANSLATIONS, TAG_COLORS } from '../constants';
 
 interface TaskListProps {
-  language: 'en' | 'zh';
+  language: Language;
   tasks: Task[];
   projects: Project[];
   activeTaskId: string | null;
@@ -177,6 +177,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     const isLocked = task.parentTaskIds?.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED);
     const hasMilestones = task.milestones && task.milestones.length > 0;
     const isSelected = selectedIds.has(task.id);
+    const showEstimated = task.totalTime === 0 && task.estimatedTime && task.estimatedTime > 0;
 
     return (
       <div 
@@ -264,7 +265,11 @@ export const TaskList: React.FC<TaskListProps> = ({
             {/* Meta & Actions - Right Aligned */}
             <div className="flex items-center gap-2 pl-1 shrink-0">
                <div className={`font-mono text-xs tabular-nums font-medium ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                 {formatDuration(task.totalTime)}
+                 {showEstimated ? (
+                   <span className="text-slate-300 dark:text-slate-600">Est: {formatDuration(task.estimatedTime || 0)}</span>
+                 ) : (
+                   formatDuration(task.totalTime)
+                 )}
                </div>
 
                {!isSelectionMode && (

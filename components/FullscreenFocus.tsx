@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Play, Pause, X, Image as ImageIcon, Calendar, Clock } from 'lucide-react';
-import { Task, TaskStatus } from '../types';
+import { Task, TaskStatus, Language } from '../types';
 import { Button } from './Button';
 
 interface FullscreenFocusProps {
-  language: 'en' | 'zh';
+  language: Language;
   activeTask: Task | null;
   onToggleStatus: (taskId: string) => void;
   onExit: () => void;
@@ -75,14 +76,14 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
     }
   };
 
-  const formattedDate = currentTime.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', {
+  const formattedDate = currentTime.toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : 'zh-CN', {
     year: 'numeric',
-    month: language === 'zh' ? 'long' : 'short',
+    month: 'long',
     day: 'numeric',
-    weekday: language === 'zh' ? 'long' : 'short',
+    weekday: 'long',
   });
 
-  const formattedClock = currentTime.toLocaleTimeString(language === 'zh' ? 'zh-CN' : 'en-US', {
+  const formattedClock = currentTime.toLocaleTimeString(language === 'zh-TW' ? 'zh-TW' : 'zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',

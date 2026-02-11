@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Play, Pause, Flag, Maximize2, CheckCircle2, Sparkles, Timer as TimerIcon, Pencil, Trash2, Check, X, ChevronRight, Coffee, Tag as TagIcon, ArrowRight, CornerDownRight } from 'lucide-react';
-import { Task, TaskStatus, Milestone, Category } from '../types';
+import { Task, TaskStatus, Milestone, Category, Language } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
 import { TRANSLATIONS, DEFAULT_CATEGORIES } from '../constants';
@@ -11,7 +11,7 @@ const POMODORO_WORK_MS = 50 * 60 * 1000;
 const POMODORO_BREAK_MS = 5 * 60 * 1000;
 
 interface SingleTimerProps {
-  language: 'en' | 'zh';
+  language: Language;
   task: Task;
   isHero?: boolean;
   onPause: (taskId: string) => void;
@@ -235,7 +235,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
                     <CornerDownRight className="w-4 h-4 text-slate-300" />
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 max-w-[150px]">{language === 'zh' ? '记录关键进展...' : 'Track your progress...'}</p>
+                  <p className="text-[10px] font-bold text-slate-400 max-w-[150px]">{language === 'zh-TW' ? '記錄關鍵進展...' : '记录关键进展...'}</p>
                </div>
             ) : (
                sortedMilestones.map((m) => (
@@ -275,7 +275,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                 <input 
                   ref={milestoneInputRef}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-4 pr-10 py-3 outline-none text-xs font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
-                  placeholder={language === 'zh' ? '添加节点...' : 'Add milestone...'}
+                  placeholder={language === 'zh-TW' ? '新增節點...' : '添加节点...'}
                   value={newMilestoneTitle}
                   onChange={(e) => setNewMilestoneTitle(e.target.value)}
                 />
@@ -317,7 +317,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
 
   const handleAddSuggestedTask = (title: string) => {
     if (onAddTask) {
-      onAddTask(title, '', language === 'zh' ? ['快速任务'] : ['Quick Task']);
+      onAddTask(title, '', language === 'zh-TW' ? ['快速任務'] : ['快速任务']);
     }
   };
 
@@ -400,7 +400,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
 };
 
 interface TaskTimerProps {
-  language: 'en' | 'zh';
+  language: Language;
   activeTasks: Task[];
   onStart: (taskId: string) => void;
   onPause: (taskId: string) => void;

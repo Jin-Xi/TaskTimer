@@ -1,14 +1,14 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Trash2, ChevronRight, ChevronLeft, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download, Calendar as CalendarIcon } from 'lucide-react';
-import { Project, Task, TaskStatus, Category, DayOfWeek } from '../types';
+import { Project, Task, TaskStatus, Category, DayOfWeek, Language } from '../types';
 import { TAG_COLORS, TRANSLATIONS, DEFAULT_CATEGORIES } from '../constants';
 import { Button } from './Button';
 import { Badge } from './Badge';
 import { ProjectGraph } from './ProjectGraph';
 
 interface ProjectManagerProps {
-  language: 'en' | 'zh';
+  language: Language;
   projects: Project[];
   tasks: Task[];
   onAddProject: (project: Omit<Project, 'id' | 'createdAt'>) => void;
@@ -23,10 +23,11 @@ interface ProjectManagerProps {
 
 const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-const DatePicker = ({ label, value, onChange, minDate }: { label: string, value: string, onChange: (date: string) => void, minDate?: string }) => {
+const DatePicker = ({ label, value, onChange, minDate, language }: { label: string, value: string, onChange: (date: string) => void, minDate?: string, language: Language }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
   const containerRef = useRef<HTMLDivElement>(null);
+  const t = TRANSLATIONS[language];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,9 +83,6 @@ const DatePicker = ({ label, value, onChange, minDate }: { label: string, value:
 
     const today = new Date();
     const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
-    // Fix: properly parse value string YYYY-MM-DD which is usually local time in this context,
-    // but standard Date(string) assumes UTC if only date is provided in some browsers or local in others.
-    // Safest is to split.
     let selectedYear = -1, selectedMonth = -1, selectedDay = -1;
     if (value) {
         const parts = value.split('-').map(Number);
@@ -99,7 +97,6 @@ const DatePicker = ({ label, value, onChange, minDate }: { label: string, value:
       const isSelected = selectedDay === d && selectedMonth === month && selectedYear === year;
       const isToday = isCurrentMonth && today.getDate() === d;
       
-      // Construct compare string
       const currentIso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const isDisabled = minDate ? currentIso < minDate : false;
 
@@ -129,7 +126,7 @@ const DatePicker = ({ label, value, onChange, minDate }: { label: string, value:
     return dayElements;
   };
 
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const dayHeaders = [t.days.Sun, t.days.Mon, t.days.Tue, t.days.Wed, t.days.Thu, t.days.Fri, t.days.Sat];
 
   return (
     <div className="relative w-full" ref={containerRef}>
@@ -147,7 +144,7 @@ const DatePicker = ({ label, value, onChange, minDate }: { label: string, value:
             `}
         >
             <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-400'}>
-                {value || 'Select Date'}
+                {value || (language === 'zh-TW' ? '選擇日期' : '选择日期')}
             </span>
             <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-90' : 'rotate-0'}`} />
         </button>
@@ -159,14 +156,14 @@ const DatePicker = ({ label, value, onChange, minDate }: { label: string, value:
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <span className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">
-                        {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
+                        {t.months ? t.months[viewDate.getMonth()] : viewDate.getMonth() + 1} {viewDate.getFullYear()}
                     </span>
                     <button type="button" onClick={(e) => { e.stopPropagation(); handleNextMonth(); }} className="p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-all active:scale-95">
                         <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
                 <div className="grid grid-cols-7 gap-y-3 justify-items-center mb-2">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                    {dayHeaders.map((day, i) => (
                         <div key={i} className="text-center text-[10px] font-black text-slate-300 uppercase mb-2">
                             {day}
                         </div>
@@ -188,7 +185,8 @@ const ProjectForm = ({
   onCancel, 
   t, 
   DAYS_OF_WEEK, 
-  TAG_COLORS 
+  TAG_COLORS,
+  language
 }: any) => {
   const scheduleType = data?.schedule?.type || data?.scheduleType || 'daily';
   const selectedDays = data?.schedule?.days || data?.selectedDays || [];
@@ -243,6 +241,7 @@ const ProjectForm = ({
                         label={t.startDate}
                         value={data?.startDate || ''}
                         onChange={(date) => onChange('startDate', date)}
+                        language={language}
                       />
                   </div>
                   <div>
@@ -251,6 +250,7 @@ const ProjectForm = ({
                         value={data?.endDate || ''}
                         onChange={(date) => onChange('endDate', date)}
                         minDate={data?.startDate}
+                        language={language}
                       />
                   </div>
                </div>
@@ -312,13 +312,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isGraphView, setIsGraphView] = useState(false);
   
-  // State for task management modals
   const [isAddingTaskToProject, setIsAddingTaskToProject] = useState<string | null>(null);
   const [isAddingRoot, setIsAddingRoot] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', parentTaskIds: [] as string[] });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // State for new tag creation
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
 
@@ -387,7 +385,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     return cat ? cat.color : 'slate';
   };
 
-  // Re-define TaskCard to use the correct `tasks` scope for lock checking
   const TaskCard: React.FC<{ task: Task; isFirst: boolean; isLast: boolean; projectColor: string }> = ({ task, isFirst, isLast, projectColor }) => {
     const isLocked = task.parentTaskIds?.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED);
     const isCompleted = task.status === TaskStatus.COMPLETED;
@@ -530,7 +527,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         onCancel={() => view === 'create' ? setView('list') : setView('detail')} 
         t={t} 
         DAYS_OF_WEEK={DAYS_OF_WEEK} 
-        TAG_COLORS={TAG_COLORS} 
+        TAG_COLORS={TAG_COLORS}
+        language={language} 
       />
     );
   }
@@ -581,7 +579,16 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                <div className="h-[600px] w-full bg-slate-50/30 dark:bg-slate-800/20 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden relative shadow-inner">
                   <div className="absolute inset-0 overflow-auto force-scrollbar">
                     <div className="min-w-max min-h-max p-8">
-                       <ProjectGraph tasks={projectTasks} color={pColor} />
+                       {projectTasks.length === 0 ? (
+                          <div className="h-full flex flex-col items-center justify-center text-center p-10 opacity-60">
+                             <GitBranchPlus className="w-16 h-16 text-slate-300 mb-6" />
+                             <h3 className="text-xl font-black text-slate-700 dark:text-slate-200 mb-2">{t.noProjectTasks}</h3>
+                             <p className="text-slate-400 font-bold mb-8">{t.addProjectTaskHint}</p>
+                             <Button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }}>{t.addStep}</Button>
+                          </div>
+                       ) : (
+                          <ProjectGraph tasks={projectTasks} color={pColor} />
+                       )}
                     </div>
                   </div>
                </div>
@@ -590,16 +597,23 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
              <div className="absolute inset-0 overflow-auto custom-scrollbar force-scrollbar p-8 md:p-12">
                 <div className="space-y-16 pb-24 min-w-max">
                    {projectTracks.length === 0 ? (
-                     <div className="w-[360px] h-[240px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center gap-6 text-slate-300">
-                        <GitBranchPlus className="w-14 h-14 opacity-20" />
-                        <span className="text-xs font-black uppercase tracking-widest">{language === 'zh' ? '暂无支线' : 'No Streams'}</span>
+                     <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center text-center opacity-70">
+                        <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                           <GitBranchPlus className="w-10 h-10 text-slate-400" />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-2">{t.noProjectTasks}</h3>
+                        <p className="text-slate-500 font-bold mb-8">{t.addProjectTaskHint}</p>
+                        <button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }} className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3">
+                           <Plus className="w-5 h-5" />
+                           {language === 'zh-TW' ? '新增工作流' : '添加新工作流'}
+                        </button>
                      </div>
                    ) : (
                      projectTracks.map((track, trackIdx) => (
                        <div key={trackIdx} className="flex flex-col gap-6">
                           <div className="flex items-center gap-4 px-6">
                              <div className={`w-2 h-6 rounded-full bg-${pColor}-500 opacity-60 shadow-[0_0_10px_rgba(var(--tw-shadow-color),0.3)]`} />
-                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">{language === 'zh' ? `工作流支线 ${trackIdx + 1}` : `Stream ${trackIdx + 1}`}</h4>
+                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">{language === 'zh-TW' ? `工作流支線 ${trackIdx + 1}` : `工作流支线 ${trackIdx + 1}`}</h4>
                           </div>
                           <div className="flex items-center px-6">
                             {track.map((task, stepIdx) => (
@@ -615,13 +629,13 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                        </div>
                      ))
                    )}
-                   {projectTracks.length < 5 && (
+                   {projectTracks.length > 0 && projectTracks.length < 5 && (
                      <div className="px-6 mt-10">
                         <button onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [] }); setIsAddingRoot(true); }} className="w-[300px] min-h-[220px] rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-400 flex flex-col items-center justify-center gap-6 transition-all group bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900/80">
                           <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 group-hover:scale-110 flex items-center justify-center transition-all shadow-sm">
                             <Plus className="w-8 h-8 text-slate-300 group-hover:text-indigo-500" />
                           </div>
-                          <span className="text-sm font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-500 transition-all">{language === 'zh' ? '添加新工作流' : 'New Stream'}</span>
+                          <span className="text-sm font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-500 transition-all">{language === 'zh-TW' ? '新增工作流' : '添加新工作流'}</span>
                         </button>
                      </div>
                    )}
@@ -634,7 +648,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         {(isAddingTaskToProject || isAddingRoot) && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-xl animate-in fade-in">
               <form onSubmit={(e) => { e.preventDefault(); if (newTask.title.trim() && selectedProjectId) { onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskIds); setIsAddingTaskToProject(null); setIsAddingRoot(false); setNewTask({title:'', description:'', parentTaskIds:[]}); } }} className="bg-white dark:bg-slate-900 w-full max-w-xl p-10 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
-                  <div className="flex items-center justify-between mb-10"><h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight">{isAddingRoot ? (language === 'zh' ? '添加起始节点' : 'New Start Node') : t.addStep}</h3><button type="button" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); }} className="p-4 rounded-2xl hover:bg-slate-50 text-slate-400 transition-all"><X className="w-7 h-7" /></button></div>
+                  <div className="flex items-center justify-between mb-10"><h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight">{isAddingRoot ? (language === 'zh-TW' ? '新增起始節點' : '添加起始节点') : t.addStep}</h3><button type="button" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); }} className="p-4 rounded-2xl hover:bg-slate-50 text-slate-400 transition-all"><X className="w-7 h-7" /></button></div>
                   <input autoFocus required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-indigo-500/5 font-black text-lg" placeholder={t.stepName} value={newTask.title} onChange={(e) => setNewTask({...newTask, title: e.target.value})} />
                   <div className="flex justify-end gap-5 mt-12"><Button type="button" variant="ghost" className="rounded-2xl px-10 text-base" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); }}>{t.cancel}</Button><Button type="submit" className="rounded-2xl px-14 font-black text-lg shadow-xl shadow-indigo-500/10">{t.add}</Button></div>
               </form>
@@ -644,12 +658,12 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         {editingTask && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-xl animate-in fade-in">
               <form onSubmit={(e) => { e.preventDefault(); if (editingTask.title.trim()) { onUpdateTask(editingTask.id, editingTask); setEditingTask(null); } }} className="bg-white dark:bg-slate-900 w-full max-w-2xl p-10 md:p-12 rounded-[3.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                  <div className="flex items-center justify-between mb-8 shrink-0"><h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">{language === 'zh' ? '管理任务' : 'Manage Step'}</h3><button type="button" onClick={() => setEditingTask(null)} className="p-4 rounded-2xl hover:bg-slate-50 text-slate-400 transition-all"><X className="w-7 h-7" /></button></div>
+                  <div className="flex items-center justify-between mb-8 shrink-0"><h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">{language === 'zh-TW' ? '管理任務' : '管理任务'}</h3><button type="button" onClick={() => setEditingTask(null)} className="p-4 rounded-2xl hover:bg-slate-50 text-slate-400 transition-all"><X className="w-7 h-7" /></button></div>
                   <div className="space-y-10 overflow-y-auto custom-scrollbar flex-1 pr-4">
                       <div><label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.stepName}</label><input autoFocus required className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-indigo-500/5 font-black text-lg" value={editingTask.title} onChange={(e) => setEditingTask({...editingTask, title: e.target.value})} /></div>
                       <div><label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.description}</label><textarea className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-indigo-500/5 font-medium text-base h-32 resize-none shadow-inner leading-relaxed" value={editingTask.description || ''} onChange={(e) => setEditingTask({...editingTask, description: e.target.value})} /></div>
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh' ? '标签分类' : 'Tags'}</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh-TW' ? '標籤分類' : '标签分类'}</label>
                         <div className="flex flex-wrap gap-3 mb-6 p-6 bg-slate-50 dark:bg-slate-800/30 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800">
                           {(editingTask.tags || []).length > 0 ? (editingTask.tags || []).map(tag => (
                             <Badge key={tag} color={categories.find(c => c.name === tag)?.color || 'slate'} onClick={() => setEditingTask({ ...editingTask, tags: editingTask.tags.filter(t => t !== tag) })} className="cursor-pointer hover:bg-red-500 hover:text-white transition-all py-2 px-5 rounded-2xl text-[11px]">{tag} <X className="w-4 h-4 ml-2" /></Badge>
@@ -662,14 +676,14 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                         </div>
                         
                         <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/50">
-                            <label className="block text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh' ? '新建标签' : 'Create New Tag'}</label>
+                            <label className="block text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh-TW' ? '新建標籤' : '新建标签'}</label>
                             <div className="flex items-center gap-3">
                                 <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1.5 pl-4 flex items-center gap-3 focus-within:border-indigo-500/50 transition-colors">
                                     <div className={`w-3 h-3 rounded-full bg-${newTagColor}-500 shadow-sm shrink-0`} />
                                     <input 
                                         value={newTagName}
                                         onChange={(e) => setNewTagName(e.target.value)}
-                                        placeholder={language === 'zh' ? '标签名称...' : 'Tag Name...'}
+                                        placeholder={language === 'zh-TW' ? '標籤名稱...' : '标签名称...'}
                                         className="bg-transparent border-none outline-none text-sm font-bold w-full text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
@@ -709,7 +723,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh' ? 'WBS 里程碑' : 'Milestones'}</label>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh-TW' ? 'WBS 里程碑' : 'WBS 里程碑'}</label>
                         <div className="space-y-3 mb-6">
                           {(editingTask.milestones || []).map(m => (
                             <div key={m.id} className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 group/mile">
@@ -722,11 +736,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                           ))}
                         </div>
                         <div className="relative">
-                          <input className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-[1.75rem] px-8 py-5 outline-none text-base font-bold focus:border-indigo-500 transition-all shadow-inner" placeholder={language === 'zh' ? '输入关键节点标题并回车...' : 'Type milestone and Enter...'} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const val = (e.target as HTMLInputElement).value.trim(); if (val) { setEditingTask({ ...editingTask, milestones: [...(editingTask.milestones || []), { id: Math.random().toString(36).substr(2, 9), title: val, timestamp: Date.now(), branch: 'main' }] }); (e.target as HTMLInputElement).value = ''; } } }} />
+                          <input className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-[1.75rem] px-8 py-5 outline-none text-base font-bold focus:border-indigo-500 transition-all shadow-inner" placeholder={language === 'zh-TW' ? '輸入關鍵節點標題並回車...' : '输入关键节点标题并回车...'} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const val = (e.target as HTMLInputElement).value.trim(); if (val) { setEditingTask({ ...editingTask, milestones: [...(editingTask.milestones || []), { id: Math.random().toString(36).substr(2, 9), title: val, timestamp: Date.now(), branch: 'main' }] }); (e.target as HTMLInputElement).value = ''; } } }} />
                         </div>
                       </div>
                   </div>
-                  <div className="flex justify-end gap-5 mt-10 pt-10 border-t-2 border-slate-100 dark:border-slate-800 shrink-0"><Button type="button" variant="ghost" className="rounded-2xl px-10 text-base" onClick={() => setEditingTask(null)}>{t.cancel}</Button><Button type="submit" className="rounded-2xl px-14 md:px-18 font-black text-base md:text-lg shadow-xl shadow-indigo-500/10">{language === 'zh' ? '保存更新' : 'Save Changes'}</Button></div>
+                  <div className="flex justify-end gap-5 mt-10 pt-10 border-t-2 border-slate-100 dark:border-slate-800 shrink-0"><Button type="button" variant="ghost" className="rounded-2xl px-10 text-base" onClick={() => setEditingTask(null)}>{t.cancel}</Button><Button type="submit" className="rounded-2xl px-14 md:px-18 font-black text-base md:text-lg shadow-xl shadow-indigo-500/10">{language === 'zh-TW' ? '保存更新' : '保存更新'}</Button></div>
               </form>
           </div>
         )}
@@ -753,7 +767,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             <div className="w-32 h-32 bg-slate-50 dark:bg-slate-800/50 rounded-[3rem] flex items-center justify-center mb-10 shadow-inner">
               <GitBranchPlus className="w-12 h-12 text-slate-200" />
             </div>
-            <p className="text-slate-400 font-bold text-2xl max-w-sm mx-auto leading-relaxed">{t.createTaskHint}</p>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-2">{t.noProjectsYet}</h3>
+            <p className="text-slate-400 font-bold max-w-sm mx-auto leading-relaxed mb-8">{t.createProjectHint}</p>
+            <Button onClick={handleCreateProject} size="lg" className="rounded-2xl px-12 py-4 shadow-xl">
+               {t.newProject}
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 pb-16 px-6 pt-4">

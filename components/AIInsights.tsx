@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sparkles, BrainCircuit, Info, Eye, EyeOff, ShieldCheck, Settings, X, Save, Database, Server, Cpu, Check, ArrowRight } from 'lucide-react';
-import { Task, TaskStatus, AIConfig, AIProvider } from '../types';
+import { Task, TaskStatus, AIConfig, AIProvider, Language } from '../types';
 import { Button } from './Button';
 import { generateProductivityAnalysis } from '../services/aiService';
 import { TRANSLATIONS } from '../constants';
 
 interface AIInsightsProps {
-  language: 'en' | 'zh';
+  language: Language;
   tasks: Task[];
 }
 
@@ -47,7 +47,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
       const data = await generateProductivityAnalysis(tasks, aiConfig, language);
       setResult(data);
     } catch (err: any) {
-      setError(err.message || (language === 'zh' ? "分析失败" : "Analysis failed"));
+      setError(err.message || (language === 'zh-TW' ? "分析失敗" : "分析失败"));
     } finally {
       setLoading(false);
     }
@@ -129,7 +129,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ language, tasks }) => {
             <Info className="w-12 h-12 mx-auto mb-8 opacity-60" />
             <p className="font-bold text-xl md:text-2xl mb-10 leading-tight">{error}</p>
             <Button variant="secondary" size="lg" onClick={() => setShowSettings(true)} className="rounded-[2rem] px-12 text-lg">
-               {language === 'zh' ? '修正配置' : 'Fix Config'}
+               {language === 'zh-TW' ? '修正設定' : '修正配置'}
             </Button>
           </div>
         </div>

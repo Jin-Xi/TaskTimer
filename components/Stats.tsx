@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
-import { Task, TaskStatus } from '../types';
+import { Task, TaskStatus, Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 
 interface StatsProps {
-  language: 'en' | 'zh';
+  language: Language;
   tasks: Task[];
 }
 
@@ -65,10 +65,10 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
             <span className="text-4xl grayscale opacity-50">📊</span>
           </div>
           <h3 className="text-xl font-black text-slate-800 dark:text-white mb-3">
-             {language === 'zh' ? '暂无数据' : 'No Data Yet'}
+             {language === 'zh-TW' ? '暫無數據' : '暂无数据'}
           </h3>
           <p className="text-slate-500 font-medium leading-relaxed">
-            {language === 'zh' ? '请先完成一些任务，统计数据将在此显示。' : 'Complete some tasks to see your productivity metrics here.'}
+            {language === 'zh-TW' ? '請先完成一些任務，統計數據將在此顯示。' : '请先完成一些任务，统计数据将在此显示。'}
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
                 {t.analytics}
               </h2>
               <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
-                {language === 'zh' ? '专注效率统计' : 'Focus Metrics'}
+                {language === 'zh-TW' ? '專注效率統計' : '专注效率统计'}
               </p>
            </div>
            <div className="flex gap-6">
