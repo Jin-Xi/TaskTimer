@@ -44,8 +44,8 @@ const App: React.FC = () => {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  const [language, setLanguage] = useState<'en' | 'zh'>(() => {
-    return (localStorage.getItem('chrono_lang') as 'en' | 'zh') || 'zh';
+  const [language, setLanguage] = useState<'zh-CN' | 'zh-TW'>(() => {
+    return (localStorage.getItem('chrono_lang') as 'zh-CN' | 'zh-TW') || 'zh-CN';
   });
 
   const t = TRANSLATIONS[language];
@@ -165,7 +165,7 @@ const App: React.FC = () => {
     if (task.parentTaskIds?.length > 0) {
       const unfinished = tasks.filter(t => task.parentTaskIds.includes(t.id) && t.status !== TaskStatus.COMPLETED);
       if (unfinished.length > 0) {
-        alert(language === 'zh' ? `请先完成前置任务：${unfinished.map(p => p.title).join(', ')}` : `Prerequisites needed: ${unfinished.map(p => p.title).join(', ')}`);
+        alert(`请先完成前置任务：${unfinished.map(p => p.title).join(', ')}`);
         return;
       }
     }
@@ -235,11 +235,11 @@ const App: React.FC = () => {
   const getSuggestedTasks = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 11) {
-      return language === 'zh' ? ['总结日志', '准备明日待办', '放松听歌'] : ['Daily Log', 'Prep Tomorrow', 'Relax & Music'];
+      return ['总结日志', '准备明日待办', '放松听歌'];
     } else if (hour >= 11 && hour < 17) {
-      return language === 'zh' ? ['深度编码', '核心架构设计', '午间冥想'] : ['Deep Coding', 'Architecture Design', 'Lunch Meditation'];
+      return ['深度编码', '核心架构设计', '午间冥想'];
     } else {
-      return language === 'zh' ? ['复盘今日', '代码审计', '学习新技术'] : ['Daily Review', 'Code Audit', 'Learn New Tech'];
+      return ['复盘今日', '代码审计', '学习新技术'];
     }
   };
 
@@ -311,7 +311,7 @@ const App: React.FC = () => {
              {darkMode ? <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />}
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{darkMode ? t.lightMode : t.darkMode}</span>
            </button>
-           <button onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
+           <button onClick={() => setLanguage(language === 'zh-CN' ? 'zh-TW' : 'zh-CN')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
              <Languages className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{t.langName}</span>
            </button>

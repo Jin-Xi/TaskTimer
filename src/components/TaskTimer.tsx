@@ -317,7 +317,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
 
   const handleAddSuggestedTask = (title: string) => {
     if (onAddTask) {
-      onAddTask(title, '', language === 'zh-TW' ? ['快速任務'] : ['快速任务']);
+      onAddTask(title, '', ['快速任务']);
     }
   };
 
