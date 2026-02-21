@@ -322,16 +322,16 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-[#f8fafc] dark:bg-[#020617] font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative selection:bg-indigo-500/30">
       {/* PC Sidebar */}
-      <aside className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0">
+      <aside className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-100 dark:border-slate-800 md:flex flex-col z-20 shrink-0">
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
       <div 
-        className={`fixed inset-0 z-[60] lg:hidden bg-slate-950/40 backdrop-blur-md transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-[60] md:hidden bg-slate-950/40 backdrop-blur-md transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
-      <aside className={`fixed top-0 bottom-0 left-0 z-[70] lg:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 bottom-0 left-0 z-[70] md:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <button 
           onClick={() => setIsMobileMenuOpen(false)}
           className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 md:hidden"
@@ -343,7 +343,7 @@ const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-dot-pattern dark:bg-dot-pattern-dark">
-        <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
+        <header className="md:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg"><TimerIcon className="w-5 h-5" /></div>
             <h1 className="font-black text-xl tracking-tight uppercase">{APP_NAME}</h1>
@@ -420,7 +420,7 @@ const App: React.FC = () => {
           </section>
 
           {/* Mobile bottom task list */}
-          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-8 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+          <div className="lg:hidden w-full overflow-y-auto custom-scrollbar pt-8 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
             <div className="flex items-center gap-3 mb-6 sticky top-0 bg-transparent z-10 py-2">
                <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
                <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
@@ -431,7 +431,7 @@ const App: React.FC = () => {
       </main>
 
       {/* PC Right Side Task List */}
-      <aside className="w-[30%] min-w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
+      <aside className="w-[30%] min-w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 hidden lg:flex flex-col z-20 shrink-0 h-full overflow-hidden">
         <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-12 force-scrollbar">
             <SharedTaskList />
         </div>

@@ -25,6 +25,7 @@ import { ProjectManager } from './ProjectManager';
 import { AIProjectGenerator } from './AIProjectGenerator';
 import { FullscreenFocus } from './FullscreenFocus';
 import { GuideModal } from './GuideModal';
+import { DrawerHandle } from './DrawerHandle';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from '../constants';
 
 const generateUUID = () => {
@@ -45,10 +46,16 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('tasks');
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   
   const [language, setLanguage] = useState<Language>(() => {
-    return (localStorage.getItem('chrono_lang') as Language) || 'zh-CN';
+    const stored = localStorage.getItem('chrono_lang');
+    // 验证存储的值是否有效，否则使用默认值
+    if (stored === 'zh-CN' || stored === 'zh-TW') {
+      return stored;
+    }
+    return 'zh-CN';
   });
 
   const t = TRANSLATIONS[language];
@@ -130,7 +137,7 @@ const App: React.FC = () => {
       id: idMap[t.id],
       title: t.title,
       description: t.description,
-      tags: t.tag ? [t.tag] : ['Work'],
+      tags: t.tag ? [t.tag] : ['工作'],
       status: TaskStatus.IDLE,
       totalTime: 0,
       estimatedTime: (t.estimatedMinutes || 0) * 60 * 1000,
@@ -410,7 +417,7 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Container */}
-      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-dot-pattern dark:bg-dot-pattern-dark">
+      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0">
         <header className="lg:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg"><TimerIcon className="w-5 h-5" /></div>
@@ -494,24 +501,79 @@ const App: React.FC = () => {
               </div>
             )}
           </section>
-
-          {/* Mobile bottom task list */}
-          <div className="xl:hidden w-full overflow-y-auto custom-scrollbar pt-8 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-3 mb-6 sticky top-0 bg-transparent z-10 py-2">
-               <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
-               <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
-            </div>
-            <SharedTaskList />
-          </div>
         </div>
       </main>
 
-      {/* PC Right Side Task List */}
-      <aside className="w-[30%] min-w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-12 force-scrollbar">
-            <SharedTaskList />
+      {/* PC Drawer Handle (≥1024px) */}
+      <DrawerHandle
+        isOpen={isTaskDrawerOpen}
+        onToggle={() => setIsTaskDrawerOpen(!isTaskDrawerOpen)}
+        language={language}
+        position="right"
+      />
+
+      {/* Mobile Drawer Handle (<1024px) */}
+      <DrawerHandle
+        isOpen={isTaskDrawerOpen}
+        onToggle={() => setIsTaskDrawerOpen(!isTaskDrawerOpen)}
+        language={language}
+        position="bottom"
+      />
+
+      {/* PC Task Drawer (≥1024px) */}
+      <aside
+        className={`fixed top-0 right-0 h-full w-[350px] xl:w-[400px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-l border-slate-200/50 dark:border-slate-800/50 shadow-2xl z-20 transition-transform duration-300 ease-in-out hidden md:flex flex-col ${
+          isTaskDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
+            <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
+          </div>
+          <button
+            onClick={() => setIsTaskDrawerOpen(false)}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            title={language === 'zh-TW' ? '隱藏' : '隐藏'}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
+          <SharedTaskList />
         </div>
       </aside>
+
+      {/* Mobile Task Drawer (<1024px) */}
+      <aside
+        className={`fixed bottom-0 left-0 right-0 h-[75vh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200/50 dark:border-slate-800/50 shadow-2xl z-20 transition-transform duration-300 ease-in-out md:hidden flex flex-col rounded-t-3xl ${
+          isTaskDrawerOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
+            <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
+          </div>
+          <button
+            onClick={() => setIsTaskDrawerOpen(false)}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4">
+          <SharedTaskList />
+        </div>
+      </aside>
+
+      {/* Overlay / Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-10 transition-opacity duration-300 ${
+          isTaskDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsTaskDrawerOpen(false)}
+      />
 
       {isFocusMode && activeFocusTask && (
         <FullscreenFocus 

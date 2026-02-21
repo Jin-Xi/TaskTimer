@@ -1,9 +1,6 @@
-
-import { io, Socket } from "socket.io-client";
 import { Task, Category, Project, TaskStatus } from "../types";
 import { DEFAULT_CATEGORIES } from "../constants";
 
-const SERVER_URL = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001`;
 const STORAGE_KEYS = {
   TASKS: 'chrono_tasks_v3',
   CATEGORIES: 'chrono_categories_v3',
@@ -18,7 +15,7 @@ const DEMO_DATA = {
       id: 'task-demo-1',
       title: '阅读《原子习惯》',
       description: '每天阅读30分钟，建立良好的微习惯。',
-      tags: ['Study'],
+      tags: ['学习'],
       status: TaskStatus.COMPLETED,
       totalTime: 1800000,
       createdAt: minsAgo(180),
@@ -30,7 +27,7 @@ const DEMO_DATA = {
       id: 'task-demo-2',
       title: '晨间运动',
       description: '有氧运动或瑜伽。',
-      tags: ['Exercise'],
+      tags: ['运动'],
       status: TaskStatus.COMPLETED,
       totalTime: 2700000,
       createdAt: minsAgo(300),
@@ -43,7 +40,7 @@ const DEMO_DATA = {
       id: 'task-demo-3',
       title: '回复工作邮件',
       description: '处理收件箱中的未读消息。',
-      tags: ['Work'],
+      tags: ['工作'],
       status: TaskStatus.IDLE,
       totalTime: 0,
       createdAt: minsAgo(60),
@@ -56,7 +53,7 @@ const DEMO_DATA = {
       id: 'task-demo-4',
       title: '整理周报',
       description: '汇总本周工作进度。',
-      tags: ['Work'],
+      tags: ['工作'],
       status: TaskStatus.IDLE,
       totalTime: 0,
       createdAt: minsAgo(50),
@@ -82,21 +79,6 @@ const DEMO_DATA = {
       color: 'indigo'
     }
   ] as Project[]
-};
-
-let socket: Socket;
-
-export const initSocket = () => {
-    if (!socket && typeof window !== 'undefined') {
-        socket = io(SERVER_URL, {
-            reconnectionDelayMax: 10000,
-            transports: ['websocket', 'polling'],
-            autoConnect: false
-        });
-        
-        socket.on('connect', () => console.log('Connected to sync server'));
-    }
-    return socket;
 };
 
 const getLocal = <T>(key: string, fallback: T): T => {
@@ -125,53 +107,20 @@ export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
   } else {
     callback(localTasks);
   }
-
-  const s = initSocket();
-  if (!s) return () => {};
-  s.connect();
-
-  s.on('init', (data) => {
-    if (data.tasks) {
-      saveLocal(STORAGE_KEYS.TASKS, data.tasks);
-      callback(data.tasks);
-    }
-  });
-
-  s.on('sync_tasks', (tasks: Task[]) => {
-    saveLocal(STORAGE_KEYS.TASKS, tasks);
-    callback(tasks);
-  });
-
-  return () => { s.off('sync_tasks'); s.disconnect(); };
+  return () => {};
 };
 
 export const subscribeToCategories = (callback: (categories: Category[]) => void, defaults: Category[]) => {
   let localCats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, defaults);
-  
+
   // Data Recovery: If categories are empty (user deleted all or init issue), restore defaults
   if (!localCats || localCats.length === 0) {
     localCats = defaults;
     saveLocal(STORAGE_KEYS.CATEGORIES, localCats);
   }
-  
+
   callback(localCats);
-
-  const s = initSocket();
-  if (!s) return () => {};
-
-  s.on('init', (data) => {
-    if (data.categories?.length > 0) {
-      saveLocal(STORAGE_KEYS.CATEGORIES, data.categories);
-      callback(data.categories);
-    }
-  });
-
-  s.on('sync_categories', (categories: Category[]) => {
-    saveLocal(STORAGE_KEYS.CATEGORIES, categories);
-    callback(categories);
-  });
-
-  return () => { s.off('sync_categories'); };
+  return () => {};
 };
 
 export const subscribeToProjects = (callback: (projects: Project[]) => void) => {
@@ -182,32 +131,13 @@ export const subscribeToProjects = (callback: (projects: Project[]) => void) => 
   } else {
     callback(localProjs);
   }
-
-  const s = initSocket();
-  if (!s) return () => {};
-
-  s.on('init', (data) => {
-    if (data.projects) {
-      saveLocal(STORAGE_KEYS.PROJECTS, data.projects);
-      callback(data.projects);
-    }
-  });
-
-  s.on('sync_projects', (projects: Project[]) => {
-    saveLocal(STORAGE_KEYS.PROJECTS, projects);
-    callback(projects);
-  });
-
-  return () => { s.off('sync_projects'); };
+  return () => {};
 };
 
 export const addTask = async (task: Task) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   const updated = [...tasks, task];
   saveLocal(STORAGE_KEYS.TASKS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'add', data: task });
   return updated;
 };
 
@@ -215,9 +145,6 @@ export const updateTask = async (taskId: string, updates: Partial<Task>) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   const updated = tasks.map(t => t.id === taskId ? { ...t, ...updates } : t);
   saveLocal(STORAGE_KEYS.TASKS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'update', data: { id: taskId, ...updates } });
   return updated;
 };
 
@@ -225,9 +152,6 @@ export const deleteTask = async (taskId: string) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   const updated = tasks.filter(t => t.id !== taskId);
   saveLocal(STORAGE_KEYS.TASKS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'delete', data: { id: taskId } });
   return updated;
 };
 
@@ -235,9 +159,6 @@ export const deleteTasks = async (taskIds: string[]) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   const updated = tasks.filter(t => !taskIds.includes(t.id));
   saveLocal(STORAGE_KEYS.TASKS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'set', data: updated });
   return updated;
 };
 
@@ -245,9 +166,6 @@ export const deleteTasksByProjectId = async (projectId: string) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
   const updated = tasks.filter(t => t.projectId !== projectId);
   saveLocal(STORAGE_KEYS.TASKS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'tasks', action: 'set', data: updated });
   return updated;
 };
 
@@ -255,12 +173,9 @@ export const addCategory = async (category: Category) => {
   let cats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES);
   // Ensure we don't lose defaults if storage was mysteriously empty
   if (cats.length === 0) cats = DEFAULT_CATEGORIES;
-  
+
   const updated = [...cats, category];
   saveLocal(STORAGE_KEYS.CATEGORIES, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'categories', action: 'add', data: category });
   return updated;
 };
 
@@ -271,9 +186,6 @@ export const deleteCategory = async (categoryId: string) => {
 
   const updated = cats.filter(c => c.id !== categoryId);
   saveLocal(STORAGE_KEYS.CATEGORIES, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'categories', action: 'delete', data: { id: categoryId } });
   return updated;
 };
 
@@ -281,9 +193,6 @@ export const addProject = async (project: Project) => {
   const projs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
   const updated = [...projs, project];
   saveLocal(STORAGE_KEYS.PROJECTS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'projects', action: 'add', data: project });
   return updated;
 };
 
@@ -291,9 +200,6 @@ export const updateProject = async (projectId: string, updates: Partial<Project>
   const projs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
   const updated = projs.map(p => p.id === projectId ? { ...p, ...updates } : p);
   saveLocal(STORAGE_KEYS.PROJECTS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'projects', action: 'update', data: { id: projectId, ...updates } });
   return updated;
 };
 
@@ -301,9 +207,6 @@ export const deleteProject = async (projectId: string) => {
   const projs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
   const updated = projs.filter(p => p.id !== projectId);
   saveLocal(STORAGE_KEYS.PROJECTS, updated);
-
-  const s = initSocket();
-  if (s?.connected) s.emit('updateData', { type: 'projects', action: 'delete', data: { id: projectId } });
   return updated;
 };
 

@@ -29,7 +29,7 @@ const getPlannerPrompt = (goal: string, context: string, lang: Language) => `
     Rules for decomposition:
     1. Create a logical hierarchy (Work Breakdown Structure).
     2. Estimate realistic duration for each task in minutes.
-    3. Suggest a relevant category/tag for each task (e.g., 'Work', 'Study', 'Creative', 'Exercise').
+    3. Suggest a relevant category/tag for each task (e.g., '工作', '学习', '创意', '运动').
     4. Define dependencies: If Task B cannot start before Task A, set Task A's ID as parent of Task B.
     5. Keep task titles concise but actionable.
     

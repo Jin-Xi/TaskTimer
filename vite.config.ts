@@ -15,5 +15,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true
-  }
+  },  
+  root: './', // 项目根目录
+  publicDir: 'public'
 } as any);

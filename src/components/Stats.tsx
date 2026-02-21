@@ -112,11 +112,11 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
             <p className="text-sm font-black text-slate-700 dark:text-slate-200 truncate">{categoryData[0]?.name || 'N/A'}</p>
           </div>
           <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-5 rounded-3xl border border-indigo-100/50 dark:border-indigo-900/30">
-            <p className="text-[8px] text-indigo-500/70 uppercase font-black tracking-widest mb-2">Weekly Focus</p>
+            <p className="text-[8px] text-indigo-500/70 uppercase font-black tracking-widest mb-2">专注时长</p>
             <p className="text-xl font-black text-indigo-600">{(weeklyDurationData.reduce((a,b) => a + b.duration, 0) / 60).toFixed(1)}h</p>
           </div>
            <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-3xl border border-emerald-100/50 dark:border-emerald-900/30">
-            <p className="text-[8px] text-emerald-500/70 uppercase font-black tracking-widest mb-2">Weekly Goals</p>
+            <p className="text-[8px] text-emerald-500/70 uppercase font-black tracking-widest mb-2">标达成数</p>
             <p className="text-xl font-black text-emerald-600">{completedTasks.filter(t => t.logs.some(l => l.start > weekAgo)).length}</p>
           </div>
         </div>

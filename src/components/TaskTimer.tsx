@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Play, Pause, Flag, Maximize2, CheckCircle2, Sparkles, Timer as TimerIcon, Pencil, Trash2, Check, X, ChevronRight, Coffee, Tag as TagIcon, ArrowRight, CornerDownRight } from 'lucide-react';
+import { Play, Pause, Flag, Maximize2, CheckCircle2, Sparkles, Timer as TimerIcon, Pencil, Trash2, Check, X, ChevronRight, Coffee, Tag as TagIcon, ArrowRight, CornerDownRight, GripVertical } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Language } from '../types';
 import { Button } from './Button';
 import { Badge } from './Badge';
@@ -34,6 +34,10 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
+  const [splitPosition, setSplitPosition] = useState(() => {
+    const saved = localStorage.getItem('chrono_split_position');
+    return saved ? parseFloat(saved) : 65;
+  });
   const milestoneInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -82,6 +86,33 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
     }
   };
 
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const container = e.currentTarget.parentElement;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const startLeftWidth = containerRect.width * (splitPosition / 100);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newLeftWidth = startLeftWidth + deltaX;
+      const newPercent = (newLeftWidth / containerRect.width) * 100;
+      const clampedPercent = Math.max(30, Math.min(85, newPercent));
+      setSplitPosition(clampedPercent);
+    };
+
+    const handleMouseUp = () => {
+      localStorage.setItem('chrono_split_position', String(splitPosition));
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   const sortedMilestones = useMemo(() => {
     return [...(task.milestones || [])].sort((a, b) => b.timestamp - a.timestamp);
   }, [task.milestones]);
@@ -112,7 +143,10 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
       <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-br ${isRunning ? 'from-indigo-500/5 via-transparent to-violet-500/5' : 'from-slate-500/5 via-transparent to-gray-500/5'} pointer-events-none`} />
       
       {/* LEFT SECTION: Timer Core */}
-      <div className="flex-1 flex flex-col items-center justify-between p-6 md:p-10 lg:p-12 relative z-10 min-w-0">
+      <div
+        className="flex flex-col items-center justify-between p-6 md:p-10 lg:p-12 relative z-10 min-w-0"
+        style={{ width: window.innerWidth >= 1024 ? `${splitPosition}%` : '100%' }}
+      >
         
         {/* Top Header */}
         <div className="w-full flex justify-between items-start mb-4 md:mb-0">
@@ -151,12 +185,12 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
            </h3>
 
            {/* Responsive Timer Text */}
-           <div className="w-full flex justify-center py-2 md:py-4">
+           <div className="w-full flex justify-center py-2 md:py-4 overflow-hidden">
               <span className={`
                  font-mono font-bold tabular-nums tracking-tighter leading-none select-none
                  bg-clip-text text-transparent bg-gradient-to-b
                  ${isBreak ? 'from-amber-400 to-amber-600' : isRunning ? 'from-indigo-500 to-violet-600 dark:from-indigo-400 dark:to-violet-400' : 'from-slate-400 to-slate-600'}
-                 text-[18vw] sm:text-[15vw] md:text-8xl lg:text-7xl xl:text-9xl 2xl:text-[10rem]
+                 text-[clamp(2rem,12vw,8rem)] sm:text-[clamp(2.5rem,10vw,9rem)] md:text-6xl lg:text-7xl xl:text-9xl 2xl:text-[10rem]
                  transition-all duration-300 drop-shadow-sm
               `}>
                 {formatTime(isBreak ? (POMODORO_BREAK_MS - sessionElapsed) : elapsed)}
@@ -219,8 +253,21 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
         </div>
       </div>
 
+      {/* Resizable Split Handle (Desktop only) */}
+      <div
+        className="hidden lg:block w-1 bg-slate-200 dark:bg-slate-700 hover:bg-indigo-500 transition-colors relative z-20 shrink-0 cursor-col-resize"
+        onMouseDown={handleDragStart}
+      >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-12 bg-white dark:bg-slate-800 border-2 border-indigo-500 rounded-lg shadow-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+          <GripVertical className="w-3 h-3 text-indigo-500" />
+        </div>
+      </div>
+
       {/* RIGHT SECTION: Milestones (Sidebar on Desktop, Bottom on Mobile) */}
-      <div className="w-full lg:w-96 bg-slate-50/80 dark:bg-slate-950/30 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800/50 flex flex-col shrink-0 lg:h-full transition-all duration-300">
+      <div
+        className="w-full bg-slate-50/80 dark:bg-slate-950/30 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800/50 flex flex-col shrink-0 lg:h-full transition-all duration-300"
+        style={{ width: window.innerWidth >= 1024 ? `${100 - splitPosition}%` : '100%' }}
+      >
          <div className="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
             <div className="flex items-center gap-2">
                <Flag className="w-4 h-4 text-slate-400" />

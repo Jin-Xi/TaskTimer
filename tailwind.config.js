@@ -3,12 +3,7 @@
 export default {
   content: [
     "./index.html",
-    "./App.tsx",
-    "./types.ts",
-    "./constants.ts",
-    "./components/**/*.{ts,tsx}",
-    "./services/**/*.{ts,tsx}",
-    "./utils/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
   ],
   darkMode: 'class',
   theme: {

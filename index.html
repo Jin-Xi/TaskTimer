@@ -9,32 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Tailwind Play CDN for instant preview -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
-            },
-            colors: {
-              slate: {
-                850: '#1e293b',
-                950: '#020617',
-              }
-            },
-            backgroundImage: {
-              'dot-pattern': "radial-gradient(#94a3b8 1px, transparent 1px)",
-              'dot-pattern-dark': "radial-gradient(#334155 1px, transparent 1px)",
-              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-            }
-          }
-        }
-      }
-    </script>
     <style type="text/css">
       /* 基础重置与全局样式 */
       html, body {
@@ -53,15 +27,6 @@
         color: #f8fafc;
       }
       
-      body {
-        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-        background-size: 32px 32px; /* Increased spacing for cleaner look */
-        background-position: 0 0;
-      }
-
-      html.dark body {
-        background-image: radial-gradient(#1e293b 1px, transparent 1px);
-      }
 
       /* 强化滚动条可见性 */
       ::-webkit-scrollbar {
@@ -117,31 +82,6 @@
         -moz-osx-font-smoothing: grayscale;
       }
     </style>
-    <script type="importmap">
-{
-  "imports": {
-    "socket.io-client": "https://esm.sh/socket.io-client@^4.8.3",
-    "express": "https://esm.sh/express@^5.2.1",
-    "http": "https://esm.sh/http@^0.0.1-security",
-    "socket.io": "https://esm.sh/socket.io@^4.8.3",
-    "fs": "https://esm.sh/fs@^0.0.1-security",
-    "path": "https://esm.sh/path@^0.12.7",
-    "cors": "https://esm.sh/cors@^2.8.5",
-    "url": "https://esm.sh/url@^0.11.4",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "recharts": "https://esm.sh/recharts@^2.15.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "vitest": "https://esm.sh/vitest@^4.0.17",
-    "vitest/": "https://esm.sh/vitest@^4.0.17/",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "child_process": "https://esm.sh/child_process@^1.0.2"
-  }
-}
-</script>
   </head>
   <body>
     <div id="root"></div>

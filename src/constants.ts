@@ -266,10 +266,10 @@ export const NAV_ITEMS = [
 ];
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'c1', name: 'Study', color: 'indigo' },
-  { id: 'c2', name: 'Work', color: 'slate' },
-  { id: 'c3', name: 'Exercise', color: 'emerald' },
-  { id: 'c4', name: 'Creative', color: 'rose' }
+  { id: 'c1', name: '学习', color: 'indigo' },
+  { id: 'c2', name: '工作', color: 'slate' },
+  { id: 'c3', name: '运动', color: 'emerald' },
+  { id: 'c4', name: '创意', color: 'rose' }
 ];
 
 export const TAG_COLORS = [
