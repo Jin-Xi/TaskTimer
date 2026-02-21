@@ -1,0 +1,150 @@
+Index: CHANGELOG.md
+===================================================================
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+deleted file mode 100644
+--- a/CHANGELOG.md	(revision 3cd176b831a2329143e51432268c1c17831fed64)
++++ /dev/null	(revision 3cd176b831a2329143e51432268c1c17831fed64)
+@@ -1,46 +0,0 @@
+-# Changelog
+-
+-All notable changes to ChronoFlow will be documented in this file.
+-
+-## [Unreleased]
+-
+-### Added
+-- HeroUI v2 component library integration (@heroui/react@^2.8.9)
+-- Framer Motion for animations (bundled with HeroUI)
+-- `HeroUIProvider` wrapper in `src/main.tsx`
+-- HeroUI `Button` component (replaced custom Button.tsx)
+-- HeroUI `Chip` component (replaced custom Badge.tsx)
+-- HeroUI `Modal` components (Modal, ModalContent, ModalHeader, ModalBody, ModalFooter)
+-- HeroUI `Checkbox` component for selection modes
+-- HeroUI Modal implementations:
+-  - GuideModal - Onboarding modal
+-  - TaskList tagging and tag management modals
+-  - ProjectManager Add Task and Edit Task modals
+-- AISettingsModalHeroUI.tsx prototype for AI settings
+-
+-### Changed
+-- Migrated from custom Button component to HeroUI Button
+-  - API changes: `disabled` → `isDisabled`, `onClick` → `onPress`, `variant` values
+-  - Color mapping: primary → `color="success"`, danger → `color="danger"`
+-- Migrated from custom Badge component to HeroUI Chip
+-  - Color mapping: green → `success`, ochre → `warning`, terracotta → `danger`
+-- Updated Tailwind config to include HeroUI content paths
+-- Updated documentation (CLAUDE.md, README.md) with HeroUI usage guidelines
+-
+-### Removed
+-- `src/components/Button.tsx` (backed up to `.backup/Button.tsx.backup`)
+-- `src/components/Badge.tsx` (backed up to `.backup/Badge.tsx.backup`)
+-
+-### Fixed
+-- All 15 unit tests passing with HeroUI components
+-- TypeScript compilation successful with HeroUI v2 types
+-
+-## [1.0.0] - 2026-03-06
+-
+-### Initial Release
+-- Task timer with milestone tracking
+-- Project workflow management (WBS)
+-- AI-powered productivity insights
+-- Data visualization with Recharts
+-- Multi-language support (Simplified Chinese, Traditional Chinese)
+-- Dark mode support
+Index: openspec/changes/migrate-ui-to-heroui/ROLLBACK.md
+===================================================================
+diff --git a/openspec/changes/migrate-ui-to-heroui/ROLLBACK.md b/openspec/changes/migrate-ui-to-heroui/ROLLBACK.md
+deleted file mode 100644
+--- a/openspec/changes/migrate-ui-to-heroui/ROLLBACK.md	(revision 3cd176b831a2329143e51432268c1c17831fed64)
++++ /dev/null	(revision 3cd176b831a2329143e51432268c1c17831fed64)
+@@ -1,90 +0,0 @@
+-# HeroUI Migration Rollback Guide
+-
+-This document describes how to rollback the HeroUI migration if needed.
+-
+-## Pre-Migration Baseline
+-
+-**Tag:** `pre-heroui-migration` (can be created from commit `d0c7f26` or similar)
+-**Date:** Before HeroUI migration began
+-**Branch:** `glm实验性分支` (or equivalent)
+-
+-## Rollback Procedure
+-
+-### Quick Rollback (Git Revert)
+-
+-If you need to rollback the entire HeroUI migration:
+-
+-```bash
+-# 1. Checkout the pre-migration commit
+-git checkout d0c7f26  # or use the tagged commit
+-
+-# 2. Create a rollback branch
+-git checkout -b rollback/heroui-migration
+-
+-# 3. Push the rollback branch
+-git push origin rollback/heroui-migration
+-```
+-
+-### Selective Rollback by Phase
+-
+-If you need to rollback specific phases:
+-
+-#### Rollback Phase 5 (ProjectManager Modals)
+-```bash
+-git revert 928c97e..HEAD  # Revert from Phase 5 completion
+-```
+-
+-#### Rollback Phase 4 (GuideModal)
+-```bash
+-git revert 64ca0f8  # Revert Phase 4 commit
+-```
+-
+-#### Rollback Phase 3 (TaskList)
+-```bash
+-git revert 5d7c16e  # Revert Phase 3 commit
+-```
+-
+-#### Rollback Phase 2 (Base Components)
+-```bash
+-# Restore Button.tsx and Badge.tsx from backup
+-cp .backup/Button.tsx.backup src/components/Button.tsx
+-cp .backup/Badge.tsx.backup src/components/Badge.tsx
+-
+-# Update imports back to custom components
+-git checkout HEAD~1 -- src/components/
+-```
+-
+-## Backup Files
+-
+-The following files have been backed up before deletion:
+-- `.backup/Button.tsx.backup` - Original Button component
+-- `.backup/Badge.tsx.backup` - Original Badge component
+-
+-## Migration Commits Reference
+-
+-- `5d7c16e` - Phase 3: Task Management UI Components
+-- `64ca0f8` - Phase 4: Settings and Modal Components
+-- `2d33a93` - Phase 4 & 5: Documentation and ProjectManager modals
+-- `928c97e` - docs: Update task progress
+-
+-## Dependencies to Remove (if needed)
+-
+-If completely removing HeroUI:
+-
+-```bash
+-npm uninstall @heroui/react framer-motion
+-```
+-
+-Then restore:
+-- `src/main.tsx` - Remove HeroUIProvider wrapper
+-- `tailwind.config.js` - Remove HeroUI content paths
+-- `src/components/Button.tsx` - Restore from backup
+-- `src/components/Badge.tsx` - Restore from backup
+-
+-## Testing After Rollback
+-
+-After any rollback, verify:
+-1. All 15 unit tests pass: `npm run test`
+-2. Production build succeeds: `npm run build`
+-3. UI renders correctly in both light and dark modes
+-4. All component interactions work as expected

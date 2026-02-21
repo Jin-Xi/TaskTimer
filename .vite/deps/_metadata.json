@@ -1,0 +1,76 @@
+{
+  "hash": "09a2195e",
+  "configHash": "cdb087a3",
+  "lockfileHash": "62fe41d5",
+  "browserHash": "d39ef173",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "7f5a2b99",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "0e900bcc",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "96b76364",
+      "needsInterop": true
+    },
+    "@heroui/react": {
+      "src": "../../node_modules/@heroui/react/dist/index.mjs",
+      "file": "@heroui_react.js",
+      "fileHash": "4dad9d7c",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "0e285a46",
+      "needsInterop": false
+    },
+    "recharts": {
+      "src": "../../node_modules/recharts/es6/index.js",
+      "file": "recharts.js",
+      "fileHash": "3431a652",
+      "needsInterop": false
+    },
+    "@google/genai": {
+      "src": "../../node_modules/@google/genai/dist/web/index.mjs",
+      "file": "@google_genai.js",
+      "fileHash": "c3d20be8",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "dist-T4GXQ2VX": {
+      "file": "dist-T4GXQ2VX.js"
+    },
+    "src-UW24ZMRV-GJVFKPBU": {
+      "file": "src-UW24ZMRV-GJVFKPBU.js"
+    },
+    "chunk-VCHV22QC": {
+      "file": "chunk-VCHV22QC.js"
+    },
+    "chunk-ERLRPAAT": {
+      "file": "chunk-ERLRPAAT.js"
+    },
+    "es-FW5JVNZV": {
+      "file": "es-FW5JVNZV.js"
+    },
+    "chunk-EQH3MWCK": {
+      "file": "chunk-EQH3MWCK.js"
+    },
+    "chunk-PAMVEWRW": {
+      "file": "chunk-PAMVEWRW.js"
+    },
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+Index: .vite/deps/_metadata.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>{\r\n  \"hash\": \"f63c2b64\",\r\n  \"configHash\": \"cdb087a3\",\r\n  \"lockfileHash\": \"a8102f8e\",\r\n  \"browserHash\": \"bfd64a2b\",\r\n  \"optimized\": {},\r\n  \"chunks\": {}\r\n}
+===================================================================
+diff --git a/.vite/deps/_metadata.json b/.vite/deps/_metadata.json
+--- a/.vite/deps/_metadata.json	(revision d1f76ae52dbbd16178580fdbae6f79c7afb16916)
++++ b/.vite/deps/_metadata.json	(date 1772820937893)
+@@ -1,8 +1,8 @@
+ {
+-  "hash": "f63c2b64",
++  "hash": "09a2195e",
+   "configHash": "cdb087a3",
+-  "lockfileHash": "a8102f8e",
+-  "browserHash": "bfd64a2b",
++  "lockfileHash": "62fe41d5",
++  "browserHash": "d87732f1",
+   "optimized": {},
+   "chunks": {}
+ }
+\ No newline at end of file
