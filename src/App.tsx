@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, ChevronRight, ChevronLeft } from 'lucide-react';
-import { Task, TaskStatus, Milestone, Category, Project } from './types';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, HelpCircle, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
 import { 
   subscribeToTasks, 
   subscribeToCategories, 
@@ -421,12 +421,28 @@ const App: React.FC = () => {
           </section>
 
           {/* Mobile bottom task list */}
-          <div className="lg:hidden w-full overflow-y-auto custom-scrollbar pt-8 border-t border-slate-100 dark:border-slate-800 px-6 md:px-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl max-h-[45vh] shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-3 mb-6 sticky top-0 bg-transparent z-10 py-2">
-               <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
-               <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
+          <div className={`
+            xl:hidden w-full custom-scrollbar border-t border-slate-100 dark:border-slate-800 
+            bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]
+            transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col
+            ${isTaskListOpen ? 'max-h-[45vh]' : 'max-h-[60px]'}
+          `}>
+            <div 
+              className="flex items-center justify-between px-6 md:px-10 py-4 sticky top-0 z-20 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+              onClick={() => setIsTaskListOpen(!isTaskListOpen)}
+            >
+               <div className="flex items-center gap-3">
+                 <div className={`w-1.5 h-6 rounded-full bg-indigo-500 transition-all duration-300 ${isTaskListOpen ? 'h-6' : 'h-3 opacity-50'}`} />
+                 <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">{t.taskExplorer}</h2>
+               </div>
+               <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 transition-colors">
+                 {isTaskListOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+               </div>
             </div>
-            <SharedTaskList />
+            
+            <div className={`flex-1 overflow-y-auto custom-scrollbar px-6 md:px-10 pb-8 transition-opacity duration-300 delay-100 ${isTaskListOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+               <SharedTaskList />
+            </div>
           </div>
 
           {/* Desktop Sidebar Toggle Button */}
