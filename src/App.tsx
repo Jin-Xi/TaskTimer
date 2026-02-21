@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, HelpCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
 import { 
   subscribeToTasks, 
@@ -15,15 +15,15 @@ import {
   updateProject,
   deleteProject,
   deleteTasksByProjectId,
-} from './services/storageService';
-import { TaskTimer } from './components/TaskTimer';
-import { TaskList } from './components/TaskList';
-import { Stats } from './components/Stats';
-import { AIInsights } from './components/AIInsights';
-import { ProjectManager } from './components/ProjectManager';
-import { AIProjectGenerator } from './components/AIProjectGenerator';
-import { FullscreenFocus } from './components/FullscreenFocus';
-import { GuideModal } from './components/GuideModal';
+} from '../services/storageService';
+import { TaskTimer } from '../components/TaskTimer';
+import { TaskList } from '../components/TaskList';
+import { Stats } from '../components/Stats';
+import { AIInsights } from '../components/AIInsights';
+import { ProjectManager } from '../components/ProjectManager';
+import { AIProjectGenerator } from '../components/AIProjectGenerator';
+import { FullscreenFocus } from '../components/FullscreenFocus';
+import { GuideModal } from '../components/GuideModal';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
 
 const generateUUID = () => {
@@ -44,6 +44,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState('tasks');
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTaskListOpen, setIsTaskListOpen] = useState(true);
   const [showGuide, setShowGuide] = useState(false);
   
   const [language, setLanguage] = useState<Language>(() => {
@@ -502,11 +503,24 @@ const App = () => {
             </div>
             <SharedTaskList />
           </div>
+
+          {/* Desktop Sidebar Toggle Button */}
+          <button
+            onClick={() => setIsTaskListOpen(!isTaskListOpen)}
+            className="hidden xl:flex absolute right-0 top-1/2 -translate-y-1/2 z-50 p-1.5 bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-xl shadow-md text-slate-400 hover:text-indigo-500 transition-all hover:pr-3"
+            aria-label={isTaskListOpen ? "Close sidebar" : "Open sidebar"}
+          >
+            {isTaskListOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
       </main>
 
       {/* PC Right Side Task List */}
-      <aside className="w-[30%] min-w-[420px] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden">
+      <aside className={`
+        bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800 
+        hidden xl:flex flex-col z-20 shrink-0 h-full overflow-hidden transition-all duration-300 ease-in-out relative
+        ${isTaskListOpen ? 'w-[30%] min-w-[420px] opacity-100' : 'w-0 min-w-0 opacity-0 border-l-0'}
+      `}>
         <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-12 force-scrollbar">
             <SharedTaskList />
         </div>
