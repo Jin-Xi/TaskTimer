@@ -311,9 +311,9 @@ export const TaskList: React.FC<TaskListProps> = ({
     return true;
   });
 
-  const activeTasks = filteredTasks.filter(t => t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED);
+  const activeTasks = filteredTasks.filter(t => (t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED) && !t.projectId);
   const todoTasks = filteredTasks.filter(t => t.status === TaskStatus.IDLE && !t.projectId);
-  const completedTasks = filteredTasks.filter(t => t.status === TaskStatus.COMPLETED);
+  const completedTasks = filteredTasks.filter(t => t.status === TaskStatus.COMPLETED && !t.projectId);
 
   return (
     <div className="h-full flex flex-col relative bg-[#f8fafc] dark:bg-[#020617]">
