@@ -265,6 +265,27 @@ export const NAV_ITEMS = [
   { id: 'ai-insights', labelKey: 'aiInsights', icon: Zap },
 ];
 
+export const AI_MODELS: Record<string, { name: string; models: string[]; defaultModel: string }[]> = {
+  gemini: [
+    { name: 'Gemini 2.5 Pro', models: ['gemini-2.5-pro-exp-03-25'], defaultModel: 'gemini-2.5-pro-exp-03-25' },
+    { name: 'Gemini 2.0 Flash', models: ['gemini-2.0-flash-exp'], defaultModel: 'gemini-2.0-flash-exp' },
+    { name: 'Gemini 1.5 Pro', models: ['gemini-1.5-pro', 'gemini-1.5-pro-exp'], defaultModel: 'gemini-1.5-pro' },
+    { name: 'Gemini 1.5 Flash', models: ['gemini-1.5-flash', 'gemini-1.5-flash-exp'], defaultModel: 'gemini-1.5-flash' },
+  ],
+  deepseek: [
+    { name: 'DeepSeek V3', models: ['deepseek-chat', 'deepseek-reasoner'], defaultModel: 'deepseek-chat' },
+  ],
+  openai: [
+    { name: 'GPT-4o', models: ['gpt-4o', 'gpt-4o-turbo'], defaultModel: 'gpt-4o' },
+    { name: 'GPT-4o Mini', models: ['gpt-4o-mini'], defaultModel: 'gpt-4o-mini' },
+    { name: 'GPT-4 Turbo', models: ['gpt-4-turbo'], defaultModel: 'gpt-4-turbo' },
+  ],
+  custom: [
+    { name: 'DeepSeek V3 (硅基)', models: ['deepseek-ai/DeepSeek-V3', 'deepseek-ai/DeepSeek-R1'], defaultModel: 'deepseek-ai/DeepSeek-V3' },
+    { name: 'Qwen', models: ['Qwen/Qwen2.5-72B-Instruct', 'Qwen/Qwen2.5-7B-Instruct'], defaultModel: 'Qwen/Qwen2.5-72B-Instruct' },
+  ],
+};
+
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'c1', name: '学习', color: 'indigo' },
   { id: 'c2', name: '工作', color: 'slate' },

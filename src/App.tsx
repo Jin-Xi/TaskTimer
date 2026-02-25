@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
 import { 
   subscribeToTasks, 
@@ -24,6 +24,7 @@ import { AIInsights } from './components/AIInsights';
 import { AIProjectGenerator } from './components/AIProjectGenerator';
 import { ProjectManager } from './components/ProjectManager';
 import { FullscreenFocus } from './components/FullscreenFocus';
+import { AISettingsModal } from './components/AISettingsModal';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
 
 const generateUUID = () => {
@@ -45,6 +46,7 @@ const App: React.FC = () => {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTaskListOpen, setIsTaskListOpen] = useState(true);
+  const [showAISettings, setShowAISettings] = useState(false);
 
   const [language, setLanguage] = useState<'zh-CN' | 'zh-TW'>(() => {
     return (localStorage.getItem('chrono_lang') as 'zh-CN' | 'zh-TW') || 'zh-CN';
@@ -246,21 +248,42 @@ const App: React.FC = () => {
     } as Project);
     setProjects(updatedProjects);
 
-    // Create tasks with the project ID
-    const tasksWithProject = tasksData.map(task => ({
-      ...task,
-      id: generateUUID(),
-      projectId,
+    // Build ID mapping from temporary IDs to actual UUIDs
+    const idMapping = new Map<string, string>();
+    const tasksWithUUIDs = tasksData.map(task => {
+      const newId = generateUUID();
+      idMapping.set(task.id, newId);
+      return {
+        ...task,
+        _originalId: task.id,
+        id: newId
+      };
+    });
+
+    // Create tasks with proper field mappings
+    const tasksWithProject = tasksWithUUIDs.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      tags: task.tag ? [task.tag] : [],
       status: TaskStatus.IDLE,
       totalTime: 0,
+      estimatedTime: task.estimatedMinutes ? task.estimatedMinutes * 60 * 1000 : undefined,
       createdAt: Date.now(),
       logs: [],
-      milestones: []
+      milestones: [],
+      projectId,
+      // Map parentIds (temp IDs) to parentTaskIds (actual UUIDs)
+      parentTaskIds: (task.parentIds || []).map((parentId: string) => idMapping.get(parentId)).filter(Boolean) as string[]
     }));
 
+    // Add all tasks and get the final updated tasks array
+    let finalTasks: Task[] = [];
     for (const task of tasksWithProject) {
-      await addTask(task);
+      finalTasks = await addTask(task as Task);
     }
+    // Update tasks state to reflect the changes
+    setTasks(finalTasks);
 
     // Navigate to projects tab
     setActiveTab('projects');
@@ -340,7 +363,15 @@ const App: React.FC = () => {
         })}
       </nav>
 
-      <div className="pt-8 flex gap-4 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
+      <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
+        <button
+          onClick={() => setShowAISettings(true)}
+          className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-all font-bold text-xs uppercase tracking-widest"
+        >
+          <Key className="w-4 h-4" />
+          {t.aiSettings}
+        </button>
+        <div className="flex gap-4">
            <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
              {darkMode ? <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />}
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{darkMode ? t.lightMode : t.darkMode}</span>
@@ -349,6 +380,7 @@ const App: React.FC = () => {
              <Languages className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{t.langName}</span>
            </button>
+        </div>
       </div>
     </div>
   );
@@ -498,7 +530,7 @@ const App: React.FC = () => {
       </aside>
 
       {isFocusMode && activeFocusTask && (
-        <FullscreenFocus 
+        <FullscreenFocus
           language={language}
           activeTask={activeFocusTask}
           onToggleStatus={(id) => tasks.find(t => t.id === id)?.status === TaskStatus.RUNNING ? handlePauseTask(id) : handleStartTask(id)}
@@ -506,6 +538,10 @@ const App: React.FC = () => {
           backgroundImage={focusBgImage}
           onSetBackgroundImage={(url) => { setFocusBgImage(url); localStorage.setItem('chrono_focus_bg', url); }}
         />
+      )}
+
+      {showAISettings && (
+        <AISettingsModal language={language} onClose={() => setShowAISettings(false)} />
       )}
     </div>
   );

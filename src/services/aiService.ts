@@ -1,6 +1,12 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
 import { Task, TaskStatus, AIAnalysisResult, AIConfig, Language, Project } from "../types";
+
+// Provider endpoints for OpenAI-compatible APIs
+const PROVIDER_ENDPOINTS: Record<string, string> = {
+  openai: 'https://api.openai.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/v1/chat/completions',
+  custom: '' // Will use config.baseUrl
+};
 
 const getSystemInstruction = (lang: Language) => `
     You are a professional high-level productivity coach for the app "ChronoFlow".
@@ -25,14 +31,18 @@ const getPlannerPrompt = (goal: string, context: string, lang: Language) => `
     Context/Constraints: "${context}"
 
     Please decompose this goal into a structured project plan with concrete tasks.
-    
+
     Rules for decomposition:
     1. Create a logical hierarchy (Work Breakdown Structure).
     2. Estimate realistic duration for each task in minutes.
     3. Suggest a relevant category/tag for each task (e.g., '工作', '学习', '创意', '运动').
-    4. Define dependencies: If Task B cannot start before Task A, set Task A's ID as parent of Task B.
+    4. CRITICAL: Define task dependencies to create a meaningful workflow:
+       - Each task (except the first) should have at least one parent task
+       - Build dependencies based on logical sequence (preparation → execution → review)
+       - Example: For reading a book: t1"了解书籍结构" → t2"制定阅读计划" → t3"阅读第一章" → t4"整理笔记" → t5"写读后感"
+       - Set parentIds as an array of prerequisite task IDs (e.g., ["t1"] or ["t1", "t2"])
     5. Keep task titles concise but actionable.
-    
+
     Response Format (JSON):
     {
       "projectName": "String",
@@ -45,11 +55,65 @@ const getPlannerPrompt = (goal: string, context: string, lang: Language) => `
           "description": "String",
           "estimatedMinutes": Number,
           "tag": "String",
-          "parentIds": ["String (optional ID of prerequisite task)"]
+          "parentIds": ["String (array of prerequisite task IDs - create dependencies!)"]
         }
       ]
     }
 `;
+
+// Unified API call function for OpenAI-compatible providers
+async function callOpenAICompatibleAPI(
+  config: AIConfig,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string> {
+  const endpoint = config.provider === 'custom'
+    ? `${config.baseUrl}/chat/completions`
+    : PROVIDER_ENDPOINTS[config.provider];
+
+  if (!endpoint) {
+    throw new Error(`Unknown provider: ${config.provider}`);
+  }
+
+  const apiKey = config.apiKey || import.meta.env.VITE_API_KEY;
+  if (!apiKey) {
+    throw new Error("未配置 AI API 密钥");
+  }
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+
+  const body: any = {
+    model: config.model,
+    messages,
+    temperature: 0.7,
+    response_format: { type: 'json_object' }
+  };
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('API 返回了空响应');
+  }
+
+  return data.choices[0].message.content;
+}
 
 export const generateProductivityAnalysis = async (tasks: Task[], config: AIConfig, language: Language = 'zh-CN'): Promise<AIAnalysisResult> => {
   const completedTasks = tasks.filter(t => t.status === TaskStatus.COMPLETED || t.totalTime > 0);
@@ -68,14 +132,16 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
   const systemInstruction = getSystemInstruction(language);
   const userPrompt = getAnalysisPrompt(taskSummary, language);
 
+  // Gemini provider (using SDK for structured output)
   if (config.provider === 'gemini') {
+    const { GoogleGenAI, Type } = await import("@google/genai");
     const apiKey = config.apiKey || import.meta.env.VITE_API_KEY;
     if (!apiKey) {
       throw new Error(language === 'zh-TW' ? "未配置 AI API 密鑰" : "未配置 AI API 密钥");
     }
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: config.model || 'gemini-3-pro-preview',
+      model: config.model || 'gemini-2.5-pro-exp-03-25',
       contents: userPrompt,
       config: {
         systemInstruction,
@@ -84,7 +150,7 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
           type: Type.OBJECT,
           properties: {
             summary: { type: Type.STRING },
-            suggestions: { 
+            suggestions: {
               type: Type.ARRAY,
               items: { type: Type.STRING }
             },
@@ -102,22 +168,34 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
     return JSON.parse(text) as AIAnalysisResult;
   }
 
-  // Fallback for other providers (omitted for brevity, assume similar structure)
-  throw new Error("Only Gemini is supported for this feature currently.");
+  // OpenAI-compatible providers (OpenAI, DeepSeek, Custom)
+  if (config.provider === 'openai' || config.provider === 'deepseek' || config.provider === 'custom') {
+    const content = await callOpenAICompatibleAPI(config, systemInstruction, userPrompt);
+
+    try {
+      return JSON.parse(content) as AIAnalysisResult;
+    } catch (e) {
+      throw new Error(`AI 返回了无效的 JSON: ${content}`);
+    }
+  }
+
+  throw new Error(`不支持的提供商: ${config.provider}`);
 };
 
 export const generateProjectPlan = async (goal: string, context: string, config: AIConfig, language: Language = 'zh-CN') => {
   const systemInstruction = getSystemInstruction(language);
   const userPrompt = getPlannerPrompt(goal, context, language);
 
+  // Gemini provider (using SDK for structured output)
   if (config.provider === 'gemini') {
+    const { GoogleGenAI, Type } = await import("@google/genai");
     const apiKey = config.apiKey || import.meta.env.VITE_API_KEY;
     if (!apiKey) {
       throw new Error(language === 'zh-TW' ? "未配置 AI API 密鑰" : "未配置 AI API 密钥");
     }
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: config.model || 'gemini-3-pro-preview',
+      model: config.model || 'gemini-2.5-pro-exp-03-25',
       contents: userPrompt,
       config: {
         systemInstruction,
@@ -153,6 +231,17 @@ export const generateProjectPlan = async (goal: string, context: string, config:
     }
     return JSON.parse(text);
   }
-  
-  throw new Error("AI provider not configured for planning.");
+
+  // OpenAI-compatible providers (OpenAI, DeepSeek, Custom)
+  if (config.provider === 'openai' || config.provider === 'deepseek' || config.provider === 'custom') {
+    const content = await callOpenAICompatibleAPI(config, systemInstruction, userPrompt);
+
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      throw new Error(`AI 返回了无效的 JSON: ${content}`);
+    }
+  }
+
+  throw new Error(`不支持的提供商: ${config.provider}`);
 };

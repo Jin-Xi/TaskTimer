@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Key, Globe, Server, CheckCircle2 } from 'lucide-react';
-import { TRANSLATIONS } from '../constants';
+import { X, Key, Globe, Server, CheckCircle2, ChevronDown } from 'lucide-react';
+import { TRANSLATIONS, AI_MODELS } from '../constants';
 import { Language, AIConfig, AIProvider } from '../types';
 import { Button } from './Button';
 
@@ -47,13 +47,11 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ language, onCl
   };
 
   const handleProviderChange = (provider: AIProvider) => {
+    const defaultModel = AI_MODELS[provider]?.[0]?.defaultModel || '';
     setConfig(prev => ({
       ...prev,
       provider,
-      // Set default model based on provider
-      model: provider === 'gemini' ? 'gemini-2.0-flash-exp' :
-             provider === 'openai' ? 'gpt-4o-mini' :
-             provider === 'deepseek' ? 'deepseek-chat' : ''
+      model: defaultModel
     }));
   };
 
@@ -133,18 +131,22 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ language, onCl
               <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
                 {t.modelName}
               </label>
-              <input
-                type="text"
-                value={config.model}
-                onChange={(e) => setConfig(prev => ({ ...prev, model: e.target.value }))}
-                placeholder={language === 'zh-TW' ? '模型名稱（可選）' : '模型名称（可选）'}
-                className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              />
-              <p className="text-xs text-slate-400 ml-1">
-                {config.provider === 'gemini' && '默认: gemini-2.0-flash-exp'}
-                {config.provider === 'openai' && '默认: gpt-4o-mini'}
-                {config.provider === 'deepseek' && '默认: deepseek-chat'}
-              </p>
+              <div className="relative">
+                <select
+                  value={config.model}
+                  onChange={(e) => setConfig(prev => ({ ...prev, model: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer pr-10"
+                >
+                  {AI_MODELS[config.provider]?.map(group => (
+                    <optgroup key={group.name} label={group.name}>
+                      {group.models.map(model => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
             </div>
 
             {/* Base URL (for custom provider) */}

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, BrainCircuit, Wand2 } from 'lucide-react';
 import { Button } from './Button';
-import { TRANSLATIONS } from '../constants';
+import { TRANSLATIONS, AI_MODELS } from '../constants';
 import { Language, AIConfig } from '../types';
 import { generateProjectPlan } from '../services/aiService';
 
@@ -23,10 +23,13 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({ language
   // Helper to load config safely
   const getAiConfig = (): AIConfig => {
     const saved = localStorage.getItem('chrono_ai_config');
-    return saved ? JSON.parse(saved) : {
-      provider: 'gemini', // Default to gemini for best results with schema
+    if (saved) return JSON.parse(saved);
+    // Use default from AI_MODELS
+    const firstGroup = AI_MODELS.gemini?.[0];
+    return {
+      provider: 'gemini',
       apiKey: '',
-      model: 'gemini-3-pro-preview',
+      model: firstGroup?.defaultModel || 'gemini-2.5-pro-exp-03-25',
       baseUrl: ''
     };
   };
