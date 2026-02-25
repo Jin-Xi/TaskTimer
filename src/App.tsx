@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, HelpCircle, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
 import { 
   subscribeToTasks, 
@@ -21,6 +21,7 @@ import { TaskTimer } from './components/TaskTimer';
 import { TaskList } from './components/TaskList';
 import { Stats } from './components/Stats';
 import { AIInsights } from './components/AIInsights';
+import { AIProjectGenerator } from './components/AIProjectGenerator';
 import { ProjectManager } from './components/ProjectManager';
 import { FullscreenFocus } from './components/FullscreenFocus';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
@@ -225,12 +226,44 @@ const App: React.FC = () => {
     // Delete the project
     const updatedProjects = await deleteProject(id);
     setProjects(updatedProjects);
-    
+
     // Clear focus if the focused task was in the deleted project
     if (activeFocusTask && activeFocusTask.projectId === id) {
       setIsFocusMode(false);
       setFocusTaskId(null);
     }
+  };
+
+  const handleAIPlanGenerated = async (projectData: any, tasksData: any[]) => {
+    // Create the project
+    const projectId = generateUUID();
+    const updatedProjects = await addProject({
+      id: projectId,
+      name: projectData.name,
+      description: projectData.description,
+      color: projectData.color,
+      createdAt: Date.now()
+    } as Project);
+    setProjects(updatedProjects);
+
+    // Create tasks with the project ID
+    const tasksWithProject = tasksData.map(task => ({
+      ...task,
+      id: generateUUID(),
+      projectId,
+      status: TaskStatus.IDLE,
+      totalTime: 0,
+      createdAt: Date.now(),
+      logs: [],
+      milestones: []
+    }));
+
+    for (const task of tasksWithProject) {
+      await addTask(task);
+    }
+
+    // Navigate to projects tab
+    setActiveTab('projects');
   };
 
   const getSuggestedTasks = () => {
@@ -323,22 +356,17 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-[#f8fafc] dark:bg-[#020617] font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative selection:bg-indigo-500/30">
       {/* PC Sidebar */}
-      <aside className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-100 dark:border-slate-800 md:flex flex-col z-20 shrink-0">
+      <aside className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-100 dark:border-slate-800 hidden md:flex flex-col z-20 shrink-0">
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
-      <div 
-        className={`fixed inset-0 z-[60] md:hidden bg-slate-950/40 backdrop-blur-md transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      <div
+        className={`fixed inset-0 z-[60] md:hidden bg-slate-950/40 backdrop-blur-sm transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
+        aria-hidden="true"
       />
-      <aside className={`fixed top-0 bottom-0 left-0 z-[70] md:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <button 
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 md:hidden"
-        >
-          <CloseIcon className="w-6 h-6" />
-        </button>
+      <aside className={`fixed top-0 bottom-0 left-0 z-[70] md:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarContent />
       </aside>
 
@@ -359,24 +387,30 @@ const App: React.FC = () => {
             {activeTab === 'tasks' && (
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-4 md:px-10">
                 <div className="w-full max-w-[1600px] py-6 md:py-12">
-                  <TaskTimer 
-                    language={language} 
-                    activeTasks={activeTimers} 
-                    onStart={handleStartTask} 
-                    onPause={handlePauseTask} 
+                  <TaskTimer
+                    language={language}
+                    activeTasks={activeTimers}
+                    onStart={handleStartTask}
+                    onPause={handlePauseTask}
                     onBreak={handleStartBreak}
-                    onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }} 
+                    onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }}
                     onAddTask={handleAddTask}
                     onAddMilestone={handleAddMilestoneWithDependency}
                     onEditMilestone={handleEditMilestone}
                     onDeleteMilestone={handleDeleteMilestone}
-                    onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }} 
+                    onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }}
                     onDismiss={handleDismissFocus}
                     suggestedTasks={getSuggestedTasks()}
                     categories={categories}
                   />
                 </div>
               </div>
+            )}
+            {activeTab === 'ai-planner' && (
+              <AIProjectGenerator
+                language={language}
+                onPlanGenerated={handleAIPlanGenerated}
+              />
             )}
             {activeTab === 'projects' && (
               <div className="flex-1 px-4 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
