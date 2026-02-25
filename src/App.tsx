@@ -332,10 +332,10 @@ const App: React.FC = () => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full py-8 md:py-10 px-6">
       <div className="flex items-center gap-4 px-2 shrink-0 mb-8 animate-in fade-in slide-in-from-left-2 duration-500">
-        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
+        <div className="w-12 h-12 bg-gradient-to-br from-terracotta-500 to-olive-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-terracotta-500/20">
           <TimerIcon className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase font-sans">{APP_NAME}</h1>
+        <h1 className="text-2xl font-black text-charcoal-400 dark:text-sand-100 tracking-tight uppercase font-sans">{APP_NAME}</h1>
       </div>
 
       <nav className="flex-1 flex flex-col space-y-3">
@@ -351,11 +351,11 @@ const App: React.FC = () => {
               }} 
               className={`w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 group relative overflow-hidden ${
                 isActive 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-terracotta-500 text-white shadow-lg shadow-terracotta-500/25 scale-[1.02]' 
+                  : 'text-clay-400 dark:text-clay-300 hover:bg-sand-50 dark:hover:bg-clay-800/50 hover:text-charcoal-400 dark:hover:text-sand-100'
               }`}
             >
-              <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-indigo-100' : 'text-slate-400 group-hover:text-indigo-500'}`} />
+              <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-terracotta-100' : 'text-clay-300 group-hover:text-terracotta-500'}`} />
               <span className="uppercase tracking-wider">{(t as any)[item.labelKey]}</span>
               {isActive && <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />}
             </button>
@@ -363,22 +363,22 @@ const App: React.FC = () => {
         })}
       </nav>
 
-      <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
+      <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-clay-200 dark:border-clay-700 mt-4">
         <button
           onClick={() => setShowAISettings(true)}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-all font-bold text-xs uppercase tracking-widest"
+          className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-terracotta-50 dark:bg-terracotta-900/20 text-terracotta-600 dark:text-terracotta-300 hover:bg-terracotta-100 dark:hover:bg-terracotta-900/40 transition-all font-bold text-xs uppercase tracking-widest"
         >
           <Key className="w-4 h-4" />
           {t.aiSettings}
         </button>
         <div className="flex gap-4">
-           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
-             {darkMode ? <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />}
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{darkMode ? t.lightMode : t.darkMode}</span>
+           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-sand-50/50 dark:bg-clay-800/50 border border-sand-200/50 dark:border-clay-700/50 hover:border-terracotta-500/50 hover:bg-sand-100 dark:hover:bg-clay-800 transition-all shadow-sm hover:shadow-md group">
+             {darkMode ? <Sun className="w-5 h-5 text-terracotta-400 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-olive-500 group-hover:scale-110 transition-transform" />}
+             <span className="text-[10px] font-black uppercase tracking-widest text-clay-300 group-hover:text-charcoal-300 dark:group-hover:text-clay-200">{darkMode ? t.lightMode : t.darkMode}</span>
            </button>
-           <button onClick={() => setLanguage(language === 'zh-CN' ? 'zh-TW' : 'zh-CN')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-md group">
-             <Languages className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">{t.langName}</span>
+           <button onClick={() => setLanguage(language === 'zh-CN' ? 'zh-TW' : 'zh-CN')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-sand-50/50 dark:bg-clay-800/50 border border-sand-200/50 dark:border-clay-700/50 hover:border-terracotta-500/50 hover:bg-sand-100 dark:hover:bg-clay-800 transition-all shadow-sm hover:shadow-md group">
+             <Languages className="w-5 h-5 text-olive-500 group-hover:scale-110 transition-transform" />
+             <span className="text-[10px] font-black uppercase tracking-widest text-clay-300 group-hover:text-charcoal-300 dark:group-hover:text-clay-200">{t.langName}</span>
            </button>
         </div>
       </div>
@@ -386,9 +386,9 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] dark:bg-[#020617] font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative selection:bg-indigo-500/30">
+    <div className="flex h-screen bg-[#FAF9F6] dark:bg-[#2A2622] font-sans text-charcoal-400 dark:text-[#EBE5D9] overflow-hidden relative selection:bg-[#C17767]/20">
       {/* PC Sidebar */}
-      <aside className="w-[300px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-100 dark:border-slate-800 hidden md:flex flex-col z-20 shrink-0">
+      <aside className="w-[300px] bg-sand-100/80 dark:bg-clay-900/80 backdrop-blur-xl border-r border-clay-200 dark:border-clay-700 hidden md:flex flex-col z-20 shrink-0">
         <SidebarContent />
       </aside>
 
@@ -404,9 +404,9 @@ const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-dot-pattern dark:bg-dot-pattern-dark">
-        <header className="md:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 z-30 shrink-0">
+        <header className="md:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-5 bg-sand-100/80 dark:bg-clay-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-clay-700 z-30 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg"><TimerIcon className="w-5 h-5" /></div>
+            <div className="w-10 h-10 bg-gradient-to-br from-terracotta-500 to-olive-600 rounded-xl flex items-center justify-center text-white shadow-lg"><TimerIcon className="w-5 h-5" /></div>
             <h1 className="font-black text-xl tracking-tight uppercase">{APP_NAME}</h1>
           </div>
           <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all active:scale-95 border border-slate-200 dark:border-slate-700">
@@ -488,16 +488,16 @@ const App: React.FC = () => {
 
           {/* Mobile bottom task list */}
           <div className={`
-            lg:hidden w-full custom-scrollbar border-t border-slate-100 dark:border-slate-800
-            bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]
+            lg:hidden w-full custom-scrollbar border-t border-clay-200 dark:border-clay-700
+            bg-sand-100/80 dark:bg-clay-900/80 backdrop-blur-xl shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]
             transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col
             ${isTaskListOpen ? 'max-h-[45vh]' : 'max-h-[60px]'}
           `}>
             <div
-              className="flex items-center justify-center px-6 md:px-10 py-4 sticky top-0 z-20 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+              className="flex items-center justify-center px-6 md:px-10 py-4 sticky top-0 z-20 cursor-pointer hover:bg-sand-50/50 dark:hover:bg-clay-800/50 transition-colors"
               onClick={() => setIsTaskListOpen(!isTaskListOpen)}
             >
-               <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 transition-colors">
+               <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-clay-300 hover:text-olive-500 transition-colors">
                  {isTaskListOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                </div>
             </div>
@@ -510,7 +510,7 @@ const App: React.FC = () => {
           {/* Desktop Sidebar Toggle Button */}
           <button
             onClick={() => setIsTaskListOpen(!isTaskListOpen)}
-            className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-50 p-1.5 bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-xl shadow-md text-slate-400 hover:text-indigo-500 transition-all hover:pr-3"
+            className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-50 p-1.5 bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-xl shadow-md text-clay-300 hover:text-olive-500 transition-all hover:pr-3"
             aria-label={isTaskListOpen ? "Close sidebar" : "Open sidebar"}
           >
             {isTaskListOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -520,7 +520,7 @@ const App: React.FC = () => {
 
       {/* PC Right Side Task List */}
       <aside className={`
-        bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-slate-800
+        bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-l border-slate-100 dark:border-clay-700
         hidden lg:flex flex-col z-20 shrink-0 h-full overflow-hidden transition-all duration-300 ease-in-out relative
         ${isTaskListOpen ? 'w-[30%] min-w-[420px] opacity-100' : 'w-0 min-w-0 opacity-0 border-l-0'}
       `}>

@@ -186,13 +186,13 @@ export const TaskList: React.FC<TaskListProps> = ({
           if (isSelectionMode) toggleSelection(task.id);
         }}
         className={`group relative transition-all duration-200 rounded-xl border overflow-hidden ${
-          isSelectionMode 
-            ? isSelected 
-              ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-500 shadow-sm z-10' 
+          isSelectionMode
+            ? isSelected
+              ? 'bg-terracotta-50 dark:bg-clay-900/10 border-terracotta-500 shadow-sm z-10'
               : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-300 cursor-pointer'
-            : isRunning 
-              ? 'bg-white dark:bg-slate-900 border-indigo-500 shadow-md shadow-indigo-500/10 z-10 ring-1 ring-indigo-500/20' 
-              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 hover:border-indigo-300/50 dark:hover:border-slate-700 hover:shadow-sm'
+            : isRunning
+              ? 'bg-white dark:bg-slate-900 border-terracotta-500 shadow-md shadow-terracotta-500/10 z-10 ring-1 ring-terracotta-500/20'
+              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800/50 hover:border-terracotta-300/50 dark:hover:border-slate-700 hover:shadow-sm'
         } ${isCompleted ? 'opacity-60 grayscale-[0.3]' : ''} ${!isSelectionMode && isLocked ? 'opacity-50 bg-slate-50 dark:bg-slate-900 pointer-events-none' : ''}`}
       >
         <div className="flex items-center gap-0 min-h-[3.5rem]">
@@ -212,16 +212,16 @@ export const TaskList: React.FC<TaskListProps> = ({
               }}
               className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm group/btn relative overflow-hidden ${
                 isSelectionMode
-                  ? isSelected 
-                    ? 'bg-indigo-500 text-white' 
-                    : 'bg-white dark:bg-slate-950 text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                  ? isSelected
+                    ? 'bg-terracotta-500 text-white'
+                    : 'bg-white dark:bg-slate-950 text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-terracotta-400'
                   : isCompleted
                     ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
                     : isRunning
-                    ? 'bg-indigo-600 text-white shadow-indigo-500/40'
+                    ? 'bg-terracotta-600 text-white shadow-terracotta-500/40'
                     : isLocked
                     ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
-                    : 'bg-slate-50 text-slate-400 hover:bg-indigo-500 hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-600'
+                    : 'bg-slate-50 text-slate-400 hover:bg-terracotta-500 hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-terracotta-600'
               }`}
             >
               <div className={`transition-transform duration-300 ${isRunning ? 'scale-100' : 'group-hover/btn:scale-110'}`}>
@@ -264,7 +264,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
             {/* Meta & Actions - Right Aligned */}
             <div className="flex items-center gap-2 pl-1 shrink-0">
-               <div className={`font-mono text-xs tabular-nums font-medium ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
+               <div className={`font-mono text-xs tabular-nums font-medium ${isRunning ? 'text-terracotta-600 dark:text-terracotta-400' : 'text-slate-400 dark:text-slate-500'}`}>
                  {showEstimated ? (
                    <span className="text-slate-300 dark:text-slate-600">Est: {formatDuration(task.estimatedTime || 0)}</span>
                  ) : (
@@ -274,9 +274,9 @@ export const TaskList: React.FC<TaskListProps> = ({
 
                {!isSelectionMode && (
                  <div className="flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-all sm:translate-x-2 group-hover:translate-x-0">
-                     <button 
+                     <button
                        onClick={(e) => { e.stopPropagation(); setTaskToTag(task.id); }}
-                       className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-300 hover:text-indigo-500 transition-colors hidden sm:block"
+                       className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-300 hover:text-terracotta-500 transition-colors hidden sm:block"
                      >
                        <TagIcon className="w-3.5 h-3.5" />
                      </button>
@@ -321,7 +321,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       <div className="flex flex-col gap-3 mb-2 shrink-0 px-3 pt-3 pb-2 sticky top-0 z-30 bg-[#f8fafc]/95 dark:bg-[#020617]/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-               <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+               <div className="w-1 h-4 bg-terracotta-500 rounded-full" />
                <h2 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">{t.taskExplorer}</h2>
             </div>
             
@@ -335,8 +335,8 @@ export const TaskList: React.FC<TaskListProps> = ({
                         onClick={() => setFilter(f)}
                         className={`
                           p-1.5 rounded-md transition-all duration-300
-                          ${filter === f 
-                            ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' 
+                          ${filter === f
+                            ? 'bg-white dark:bg-slate-900 text-terracotta-600 shadow-sm'
                             : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                           }
                         `}
@@ -357,16 +357,16 @@ export const TaskList: React.FC<TaskListProps> = ({
                   </button>
                ) : (
                   <>
-                    <button 
+                    <button
                       onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }}
-                      className={`p-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-500'}`}
+                      className={`p-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-terracotta-600 border-terracotta-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:text-terracotta-500'}`}
                       title="Select"
                     >
                       {isSelectionMode ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                     </button>
-                    <button 
+                    <button
                       onClick={() => setIsManagingTags(true)}
-                      className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-indigo-500 transition-all"
+                      className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-terracotta-500 transition-all"
                       title={t.manageCategories}
                     >
                       <TagIcon className="w-3.5 h-3.5" />

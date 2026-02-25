@@ -140,7 +140,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
       ${isHero ? 'min-h-[60vh] lg:h-[80vh]' : 'h-auto'}
     `}>
       {/* Background Decor */}
-      <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-br ${isRunning ? 'from-indigo-500/5 via-transparent to-violet-500/5' : 'from-slate-500/5 via-transparent to-gray-500/5'} pointer-events-none`} />
+      <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-br ${isRunning ? 'from-terracotta-500/5 via-transparent to-olive-500/5' : 'from-clay-500/5 via-transparent to-sand-600/5'} pointer-events-none`} />
       
       {/* LEFT SECTION: Timer Core */}
       <div
@@ -161,7 +161,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
            <div className="flex gap-2 shrink-0">
               <button 
                 onClick={onEnterFocusMode} 
-                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all active:scale-95"
+                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/50 text-slate-500 hover:text-olive-500 hover:bg-terracotta-50 dark:hover:bg-slate-700 transition-all active:scale-95"
                 title="Focus Mode"
               >
                 <Maximize2 className="w-4 h-4" />
@@ -189,7 +189,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
               <span className={`
                  font-mono font-bold tabular-nums tracking-tighter leading-none select-none
                  bg-clip-text text-transparent bg-gradient-to-b
-                 ${isBreak ? 'from-amber-400 to-amber-600' : isRunning ? 'from-indigo-500 to-violet-600 dark:from-indigo-400 dark:to-violet-400' : 'from-slate-400 to-slate-600'}
+                 ${isBreak ? 'from-amber-400 to-amber-600' : isRunning ? 'from-terracotta-500 to-olive-600 dark:from-terracotta-400 dark:to-olive-400' : 'from-slate-400 to-slate-600'}
                  text-[clamp(2rem,12vw,8rem)] sm:text-[clamp(2.5rem,10vw,9rem)] md:text-6xl lg:text-7xl xl:text-9xl 2xl:text-[10rem]
                  transition-all duration-300 drop-shadow-sm
               `}>
@@ -201,11 +201,11 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
            <div className="w-full max-w-[200px] md:max-w-xs mt-4 md:mt-8 space-y-2 opacity-80 hover:opacity-100 transition-opacity">
               <div className="flex justify-between px-1">
                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isBreak ? t.onBreak : t.sessionProgress}</span>
-                 <span className={`text-[10px] font-bold uppercase tracking-widest ${isBreak ? 'text-amber-500' : 'text-indigo-500'}`}>{Math.round(sessionProgress)}%</span>
+                 <span className={`text-[10px] font-bold uppercase tracking-widest ${isBreak ? 'text-terracotta-500' : 'text-olive-500'}`}>{Math.round(sessionProgress)}%</span>
               </div>
               <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-1000 ease-linear rounded-full ${isBreak ? 'bg-amber-500' : 'bg-indigo-500'}`}
+                <div
+                  className={`h-full transition-all duration-1000 ease-linear rounded-full ${isBreak ? 'bg-terracotta-500' : 'bg-olive-500'}`}
                   style={{ width: `${sessionProgress}%` }}
                 />
               </div>
@@ -225,15 +225,15 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover/btn:text-emerald-500 transition-colors hidden md:block">Done</span>
            </button>
 
-           <button 
-             onClick={() => isBreak ? onStart(task.id) : isRunning ? onPause(task.id) : onStart(task.id)} 
+           <button
+             onClick={() => isBreak ? onStart(task.id) : isRunning ? onPause(task.id) : onStart(task.id)}
              className={`
                relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-[2rem] transition-all duration-300 shadow-xl active:scale-95
-               ${isBreak 
-                 ? 'bg-amber-500 text-white shadow-amber-500/40 hover:bg-amber-400' 
-                 : isRunning 
-                   ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-indigo-500/10 border-4 border-indigo-50 dark:border-slate-700' 
-                   : 'bg-indigo-600 text-white shadow-indigo-500/40 hover:bg-indigo-500 hover:scale-105'}
+               ${isBreak
+                 ? 'bg-terracotta-500 text-white shadow-amber-500/40 hover:bg-amber-400'
+                 : isRunning
+                   ? 'bg-white dark:bg-slate-800 text-terracotta-600 dark:text-white shadow-terracotta-500/10 border-4 border-terracotta-50 dark:border-clay-700'
+                   : 'bg-terracotta-600 text-white shadow-terracotta-500/40 hover:bg-olive-600 hover:scale-105'}
              `}
            >
              {isRunning ? <Pause className="w-8 h-8 md:w-10 md:h-10 fill-current" /> : <Play className="w-8 h-8 md:w-10 md:h-10 fill-current ml-1" />}
@@ -245,21 +245,21 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
              className={`flex flex-col items-center gap-2 group/btn ${isBreak ? 'opacity-50 cursor-not-allowed' : ''}`}
              title="Take Break"
            >
-             <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-sm ${showBreakPrompt ? 'bg-amber-100 text-amber-600 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover/btn:bg-amber-500 group-hover/btn:text-white'}`}>
+             <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-sm ${showBreakPrompt ? 'bg-amber-100 text-amber-600 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover/btn:bg-terracotta-500 group-hover/btn:text-white'}`}>
                 <Coffee className="w-5 h-5 md:w-6 md:h-6" />
              </div>
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover/btn:text-amber-500 transition-colors hidden md:block">Break</span>
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover/btn:text-terracotta-500 transition-colors hidden md:block">Break</span>
            </button>
         </div>
       </div>
 
       {/* Resizable Split Handle (Desktop only) */}
       <div
-        className="hidden lg:block w-1 bg-slate-200 dark:bg-slate-700 hover:bg-indigo-500 transition-colors relative z-20 shrink-0 cursor-col-resize"
+        className="hidden lg:block w-1 bg-slate-200 dark:bg-slate-700 hover:bg-terracotta-500 transition-colors relative z-20 shrink-0 cursor-col-resize"
         onMouseDown={handleDragStart}
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-12 bg-white dark:bg-slate-800 border-2 border-indigo-500 rounded-lg shadow-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
-          <GripVertical className="w-3 h-3 text-indigo-500" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-12 bg-white dark:bg-slate-800 border-2 border-terracotta-500 rounded-lg shadow-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+          <GripVertical className="w-3 h-3 text-olive-500" />
         </div>
       </div>
 
@@ -273,7 +273,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                <Flag className="w-4 h-4 text-slate-400" />
                <h4 className="font-bold text-xs uppercase tracking-widest text-slate-500">{t.newMilestone}</h4>
             </div>
-            <span className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-black text-slate-400">{task.milestones?.length || 0}</span>
+            <span className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-clay-700 px-2 py-0.5 rounded-lg text-[10px] font-black text-slate-400">{task.milestones?.length || 0}</span>
          </div>
          
          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 min-h-[160px] max-h-[300px] lg:max-h-none lg:min-h-0 bg-slate-50/30 dark:bg-slate-900/10">
@@ -286,12 +286,12 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                </div>
             ) : (
                sortedMilestones.map((m) => (
-                  <div key={m.id} className="group/item relative bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-indigo-200 dark:hover:border-indigo-900 transition-all shadow-sm">
+                  <div key={m.id} className="group/item relative bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-terracotta-200 dark:hover:border-clay-900 transition-all shadow-sm">
                      <div className="flex justify-between items-start gap-3 mb-1">
                         {editingMilestoneId === m.id ? (
                            <input 
                               autoFocus
-                              className="w-full bg-transparent border-b-2 border-indigo-500 outline-none text-sm font-bold"
+                              className="w-full bg-transparent border-b-2 border-terracotta-500 outline-none text-sm font-bold"
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(m.id)}
@@ -308,7 +308,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                         </span>
                         
                         <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                           <button onClick={() => handleStartEdit(m)} className="p-1 text-slate-400 hover:text-indigo-500"><Pencil className="w-3 h-3" /></button>
+                           <button onClick={() => handleStartEdit(m)} className="p-1 text-slate-400 hover:text-olive-500"><Pencil className="w-3 h-3" /></button>
                            <button onClick={() => onDeleteMilestone(task.id, m.id)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
                         </div>
                      </div>
@@ -321,7 +321,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
             <form onSubmit={handleAddMilestone} className="relative group/input">
                 <input 
                   ref={milestoneInputRef}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-4 pr-10 py-3 outline-none text-xs font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-4 pr-10 py-3 outline-none text-xs font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:border-terracotta-500 focus:ring-4 focus:ring-terracotta-500/10 transition-all shadow-inner"
                   placeholder={language === 'zh-TW' ? '新增節點...' : '添加节点...'}
                   value={newMilestoneTitle}
                   onChange={(e) => setNewMilestoneTitle(e.target.value)}
@@ -329,7 +329,7 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                 <button 
                   type="submit"
                   disabled={!newMilestoneTitle.trim()}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${newMilestoneTitle.trim() ? 'bg-indigo-600 text-white shadow-md hover:scale-105' : 'text-slate-300'}`}
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${newMilestoneTitle.trim() ? 'bg-terracotta-600 text-white shadow-md hover:scale-105' : 'text-slate-300'}`}
                 >
                    <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -375,13 +375,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             className="relative mb-8 group cursor-pointer" 
             onClick={() => document.getElementById('quick-add-input')?.focus()}
         >
-            <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-slate-900 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-500/10 border border-slate-100 dark:border-slate-800 group-hover:scale-105 transition-all duration-500 relative z-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-[2rem]" />
-                <TimerIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500/80 group-hover:text-indigo-600 transition-colors" />
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-slate-900 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-terracotta-500/10 border border-slate-100 dark:border-slate-800 group-hover:scale-105 transition-all duration-500 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-terracotta-500/5 to-olive-500/5 rounded-[2rem]" />
+                <TimerIcon className="w-10 h-10 md:w-14 md:h-14 text-olive-500/80 group-hover:text-olive-500 transition-colors" />
             </div>
             {/* Decorative Pulse Rings */}
-            <div className="absolute inset-0 border-2 border-dashed border-indigo-200 dark:border-indigo-900 rounded-[2rem] animate-[spin_10s_linear_infinite] opacity-50 pointer-events-none scale-110" />
-            <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="absolute inset-0 border-2 border-dashed border-terracotta-200 dark:border-clay-900 rounded-[2rem] animate-[spin_10s_linear_infinite] opacity-50 pointer-events-none scale-110" />
+            <div className="absolute inset-0 bg-terracotta-500/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
         </div>
         
         <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
@@ -396,7 +396,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             <div className="flex items-center gap-4 justify-center">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-800" />
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-                <Sparkles className="w-3 h-3 text-amber-500" />
+                <Sparkles className="w-3 h-3 text-terracotta-500" />
                 {t.suggestedTasks}
               </div>
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-800" />
@@ -407,12 +407,12 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                  <button 
                   key={i} 
                   onClick={() => handleAddSuggestedTask(title)}
-                  className="group relative px-5 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 text-xs md:text-sm font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm hover:shadow-lg hover:-translate-y-0.5 overflow-hidden"
+                  className="group relative px-5 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-terracotta-500/30 text-xs md:text-sm font-bold text-slate-600 dark:text-slate-300 transition-all active:scale-95 shadow-sm hover:shadow-lg hover:-translate-y-0.5 overflow-hidden"
                  >
-                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-900 opacity-0 group-hover:opacity-100 transition-opacity" />
+                   <div className="absolute inset-0 bg-gradient-to-r from-terracotta-50 to-white dark:from-clay-900/20 dark:to-slate-900 opacity-0 group-hover:opacity-100 transition-opacity" />
                    <span className="relative z-10 flex items-center gap-2">
                      {title}
-                     <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all text-indigo-500" />
+                     <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all text-olive-500" />
                    </span>
                  </button>
                ))}

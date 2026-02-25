@@ -102,7 +102,7 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
         }}
       >
         {!backgroundImage && (
-           <div className="w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
+           <div className="w-full h-full bg-gradient-to-br from-clay-900 via-olive-950 to-clay-900" />
         )}
       </div>
 
@@ -111,11 +111,11 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
       {/* Top Left: Current Date & Time */}
       <div className="absolute top-8 left-8 z-30 flex flex-col items-start gap-1 animate-in fade-in slide-in-from-left-4 duration-700">
         <div className="flex items-center gap-2 px-4 py-2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
-          <Calendar className="w-4 h-4 text-indigo-400" />
+          <Calendar className="w-4 h-4 text-terracotta-300" />
           <span className="text-sm font-semibold tracking-wide opacity-90">{formattedDate}</span>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl ml-2">
-          <Clock className="w-4 h-4 text-indigo-400" />
+          <Clock className="w-4 h-4 text-terracotta-300" />
           <span className="text-xl font-mono font-bold tracking-widest">{formattedClock}</span>
         </div>
       </div>
@@ -142,7 +142,7 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
         <div className="flex items-center gap-6 animate-in slide-in-from-bottom-10 duration-700">
            <button 
              onClick={() => onToggleStatus(activeTask.id)}
-             className="group flex items-center justify-center w-20 h-20 rounded-full bg-white text-indigo-600 hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl active:scale-95"
+             className="group flex items-center justify-center w-20 h-20 rounded-full bg-white text-olive-500 hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl active:scale-95"
              title={activeTask.status === TaskStatus.RUNNING ? "Pause" : "Resume"}
            >
               {activeTask.status === TaskStatus.RUNNING ? (

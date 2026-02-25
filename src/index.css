@@ -1,19 +1,143 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 额外的点阵背景辅助类 */
+/* ========================================
+   自然手工配色 - Natural Earthy Palette
+   ======================================== */
+
+:root {
+  /* 背景色 (Sand) */
+  --color-bg-primary: #FAF9F6;
+  --color-bg-secondary: #EBE5D9;
+
+  /* 主文本 (Charcoal) */
+  --color-text-primary: #3A3F44;
+  --color-text-secondary: #6B7077;
+  --color-text-tertiary: #9CA3AF;
+
+  /* 强调色 */
+  --color-accent-terracotta: #C17767;  /* 陶土红 */
+  --color-accent-olive: #8B9A46;       /* 橄榄绿 */
+  --color-accent-warm: #D4A48B;        /* 暖沙色 */
+
+  /* 边框和分隔线 */
+  --color-border: rgba(58, 63, 68, 0.12);
+  --color-divider: rgba(58, 63, 68, 0.08);
+
+  /* 阴影 */
+  --shadow-soft: 0 2px 8px rgba(58, 63, 68, 0.08);
+  --shadow-soft-lg: 0 8px 24px rgba(58, 63, 68, 0.12);
+  --shadow-terracotta: 0 4px 12px rgba(193, 119, 103, 0.25);
+
+  /* 圆角 */
+  --radius-soft: 0.75rem;
+  --radius-softer: 1rem;
+}
+
+/* Dark mode - 温暖的深色版本 */
+.dark {
+  --color-bg-primary: #2A2622;
+  --color-bg-secondary: #36302B;
+
+  --color-text-primary: #EBE5D9;
+  --color-text-secondary: #A8A098;
+  --color-text-tertiary: #7D766F;
+
+  --color-accent-terracotta: #D4A48B;
+  --color-accent-olive: #A7B484;
+
+  --color-border: rgba(235, 229, 217, 0.12);
+  --color-divider: rgba(235, 229, 217, 0.08);
+
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-soft-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   基础样式覆盖
+   ======================================== */
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* 点阵背景 - 自然风格 */
 .bg-dots {
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-image: radial-gradient(var(--color-accent-terracotta) 0.5px, transparent 0.5px);
   background-size: 24px 24px;
 }
 
 .dark .bg-dots {
-  background-image: radial-gradient(#1e293b 1px, transparent 1px);
+  background-image: radial-gradient(var(--color-accent-olive) 0.5px, transparent 0.5px);
 }
 
-/* 确保 Focus Mode 等动画依然有效 */
+.bg-dot-pattern {
+  background-image: radial-gradient(var(--color-accent-terracotta) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+}
+
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(var(--color-accent-olive) 0.5px, transparent 0.5px);
+}
+
+/* ========================================
+   组件样式 - 自然手工风格
+   ======================================== */
+
+/* 按钮样式 */
+.btn-terracotta {
+  @apply px-4 py-2 rounded-lg font-medium text-white;
+  background-color: var(--color-accent-terracotta);
+  box-shadow: var(--shadow-terracotta);
+  transition: all 0.2s ease;
+}
+
+.btn-terracotta:hover {
+  background-color: #A85F4E;
+  transform: translateY(-1px);
+}
+
+.btn-olive {
+  @apply px-4 py-2 rounded-lg font-medium text-white;
+  background-color: var(--color-accent-olive);
+  box-shadow: var(--shadow-olive);
+  transition: all 0.2s ease;
+}
+
+.btn-olive:hover {
+  background-color: #96A676;
+  transform: translateY(-1px);
+}
+
+/* 卡片样式 */
+.card-natural {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-softer);
+  box-shadow: var(--shadow-soft);
+}
+
+/* 输入框样式 */
+.input-natural {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-soft);
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.input-natural:focus {
+  outline: none;
+  border-color: var(--color-accent-terracotta);
+  box-shadow: 0 0 0 3px rgba(193, 119, 103, 0.1);
+}
+
+/* ========================================
+   动画效果
+   ======================================== */
+
 @keyframes pulse-gentle {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
@@ -21,4 +145,110 @@
 
 .animate-pulse-gentle {
   animation: pulse-gentle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes float-organic {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float {
+  animation: float-organic 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.animate-breathe {
+  animation: breathe 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================
+   自定义滚动条
+   ======================================== */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-accent-terracotta);
+  border-radius: 3px;
+  opacity: 0.3;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  opacity: 0.5;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-accent-olive);
+}
+
+/* ========================================
+   实用类
+   ======================================== */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.bg-natural {
+  background-color: var(--color-bg-primary);
+}
+
+.bg-natural-secondary {
+  background-color: var(--color-bg-secondary);
+}
+
+.text-natural {
+  color: var(--color-text-primary);
+}
+
+.border-natural {
+  border-color: var(--color-border);
+}
+
+/* 手工质感边框 */
+.border-handmade {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-softer);
+  position: relative;
+}
+
+.border-handmade::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--radius-softer) + 2px);
+  background: linear-gradient(135deg, var(--color-accent-terracotta), var(--color-accent-olive));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.border-handmade:hover::before {
+  opacity: 0.1;
+}
+
+/* ========================================
+   渐变背景
+   ======================================== */
+
+.bg-gradient-warm {
+  background: linear-gradient(135deg, #FAF9F6 0%, #EBE5D9 100%);
+}
+
+.bg-gradient-terracotta {
+  background: linear-gradient(135deg, #C17767 0%, #A85F4E 100%);
+}
+
+.bg-gradient-olive {
+  background: linear-gradient(135deg, #A7B484 0%, #8B9A46 100%);
 }
