@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, X as CloseIcon, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Timer as TimerIcon, Moon, Sun, Languages, Menu, X as CloseIcon, HelpCircle, Key } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from '../types';
 import { 
   subscribeToTasks, 
@@ -25,6 +25,7 @@ import { ProjectManager } from './ProjectManager';
 import { AIProjectGenerator } from './AIProjectGenerator';
 import { FullscreenFocus } from './FullscreenFocus';
 import { GuideModal } from './GuideModal';
+import { AISettingsModal } from './AISettingsModal';
 import { DrawerHandle } from './DrawerHandle';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from '../constants';
 
@@ -48,7 +49,8 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  
+  const [showAISettings, setShowAISettings] = useState(false);
+
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem('chrono_lang');
     // 验证存储的值是否有效，否则使用默认值
@@ -372,7 +374,15 @@ const App: React.FC = () => {
 
       {/* Guide & Mode Switch */}
       <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-slate-100 dark:border-slate-800 mt-4">
-           <button 
+           <button
+             onClick={() => setShowAISettings(true)}
+             className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-all font-bold text-xs uppercase tracking-widest"
+           >
+             <Key className="w-4 h-4" />
+             {t.aiSettings}
+           </button>
+
+           <button
              onClick={() => setShowGuide(true)}
              className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all font-bold text-xs uppercase tracking-widest"
            >
@@ -453,7 +463,7 @@ const App: React.FC = () => {
               </div>
             )}
             {activeTab === 'ai-planner' && (
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
                 <AIProjectGenerator 
                   language={language} 
                   onPlanGenerated={handleAIPlanGenerated} 
@@ -536,7 +546,7 @@ const App: React.FC = () => {
             className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
             title={language === 'zh-TW' ? '隱藏' : '隐藏'}
           >
-            <X className="w-5 h-5" />
+            <CloseIcon className="w-5 h-5" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
@@ -559,7 +569,7 @@ const App: React.FC = () => {
             onClick={() => setIsTaskDrawerOpen(false)}
             className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
-            <X className="w-5 h-5" />
+            <CloseIcon className="w-5 h-5" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4">
@@ -588,6 +598,10 @@ const App: React.FC = () => {
 
       {showGuide && (
         <GuideModal language={language} onClose={() => setShowGuide(false)} />
+      )}
+
+      {showAISettings && (
+        <AISettingsModal language={language} onClose={() => setShowAISettings(false)} />
       )}
     </div>
   );

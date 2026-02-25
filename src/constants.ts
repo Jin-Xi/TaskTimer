@@ -275,3 +275,15 @@ export const DEFAULT_CATEGORIES: Category[] = [
 export const TAG_COLORS = [
   'indigo', 'emerald', 'slate', 'rose', 'amber', 'cyan', 'violet', 'fuchsia'
 ];
+
+// Color hex values for inline styles
+export const COLOR_HEX_MAP: Record<string, { main: string; light: string; lighter: string; dark: string; bg: string }> = {
+  indigo: { main: '#6366f1', light: '#818cf8', lighter: '#c7d2fe', dark: '#4f46e5', bg: '#eef2ff' },
+  emerald: { main: '#10b981', light: '#34d399', lighter: '#a7f3d0', dark: '#059669', bg: '#d1fae5' },
+  slate: { main: '#64748b', light: '#94a3b8', lighter: '#cbd5e1', dark: '#475569', bg: '#f1f5f9' },
+  rose: { main: '#f43f5e', light: '#fb7185', lighter: '#fecdd3', dark: '#e11d48', bg: '#ffe4e6' },
+  amber: { main: '#f59e0b', light: '#fbbf24', lighter: '#fde68a', dark: '#d97706', bg: '#fef3c7' },
+  cyan: { main: '#06b6d4', light: '#22d3ee', lighter: '#a5f3fc', dark: '#0891b2', bg: '#cffafe' },
+  violet: { main: '#8b5cf6', light: '#a78bfa', lighter: '#ddd6fe', dark: '#7c3aed', bg: '#ede9fe' },
+  fuchsia: { main: '#d946ef', light: '#e879f9', lighter: '#f5d0fe', dark: '#c026d3', bg: '#fae8ff' },
+};

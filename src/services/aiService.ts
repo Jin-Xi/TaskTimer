@@ -69,7 +69,11 @@ export const generateProductivityAnalysis = async (tasks: Task[], config: AIConf
   const userPrompt = getAnalysisPrompt(taskSummary, language);
 
   if (config.provider === 'gemini') {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = config.apiKey || import.meta.env.VITE_API_KEY;
+    if (!apiKey) {
+      throw new Error(language === 'zh-TW' ? "未配置 AI API 密鑰" : "未配置 AI API 密钥");
+    }
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: config.model || 'gemini-3-pro-preview',
       contents: userPrompt,
@@ -107,7 +111,11 @@ export const generateProjectPlan = async (goal: string, context: string, config:
   const userPrompt = getPlannerPrompt(goal, context, language);
 
   if (config.provider === 'gemini') {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = config.apiKey || import.meta.env.VITE_API_KEY;
+    if (!apiKey) {
+      throw new Error(language === 'zh-TW' ? "未配置 AI API 密鑰" : "未配置 AI API 密钥");
+    }
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: config.model || 'gemini-3-pro-preview',
       contents: userPrompt,

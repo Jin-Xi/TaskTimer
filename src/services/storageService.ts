@@ -82,9 +82,9 @@ const DEMO_DATA = {
 };
 
 const getLocal = <T>(key: string, fallback: T): T => {
-  const data = localStorage.getItem(key);
-  if (!data) return fallback;
   try {
+    const data = localStorage.getItem(key);
+    if (!data) return fallback;
     const parsed = JSON.parse(data);
     // Ensure we don't return null/undefined if storage is corrupted
     if (parsed === null || parsed === undefined) return fallback;
@@ -101,11 +101,12 @@ const saveLocal = (key: string, data: any) => {
 
 export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
   const localTasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
-  if (localTasks.length === 0) {
+  const tasks = Array.isArray(localTasks) ? localTasks : [];
+  if (tasks.length === 0) {
     callback(DEMO_DATA.tasks);
     saveLocal(STORAGE_KEYS.TASKS, DEMO_DATA.tasks);
   } else {
-    callback(localTasks);
+    callback(tasks);
   }
   return () => {};
 };
@@ -114,7 +115,7 @@ export const subscribeToCategories = (callback: (categories: Category[]) => void
   let localCats = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, defaults);
 
   // Data Recovery: If categories are empty (user deleted all or init issue), restore defaults
-  if (!localCats || localCats.length === 0) {
+  if (!localCats || !Array.isArray(localCats) || localCats.length === 0) {
     localCats = defaults;
     saveLocal(STORAGE_KEYS.CATEGORIES, localCats);
   }
@@ -125,11 +126,12 @@ export const subscribeToCategories = (callback: (categories: Category[]) => void
 
 export const subscribeToProjects = (callback: (projects: Project[]) => void) => {
   const localProjs = getLocal<Project[]>(STORAGE_KEYS.PROJECTS, []);
-  if (localProjs.length === 0) {
+  const projs = Array.isArray(localProjs) ? localProjs : [];
+  if (projs.length === 0) {
     callback(DEMO_DATA.projects);
     saveLocal(STORAGE_KEYS.PROJECTS, DEMO_DATA.projects);
   } else {
-    callback(localProjs);
+    callback(projs);
   }
   return () => {};
 };

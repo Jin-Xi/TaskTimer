@@ -10,11 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run test` - Run Vitest unit tests
 - `npm run test:ui` - Run tests with Vitest UI
 - `npm run test:coverage` - Generate test coverage report
-- `npm run server` - Start the Socket.IO sync server (port 3001)
 
 ## Architecture Overview
 
-ChronoFlow is a React 19 + TypeScript productivity application with AI-powered task analysis. The architecture follows a three-tier pattern:
+ChronoFlow is a React 19 + TypeScript productivity application with AI-powered task analysis. The architecture follows a client-side pattern with LocalStorage persistence.
 
 ### Frontend (React + Vite)
 - **Entry Point**: `src/main.tsx` → `src/App.tsx` (main application container)
@@ -31,7 +30,6 @@ ChronoFlow is a React 19 + TypeScript productivity application with AI-powered t
 ### State & Data Layer
 - **Storage Service** (`src/services/storageService.ts`):
   - Primary data persistence using LocalStorage
-  - Socket.IO client for real-time sync across tabs/devices
   - CRUD operations for Tasks, Categories, Projects
   - Includes demo data that initializes on first load
   - Key functions: `subscribeToTasks`, `addTask`, `updateTask`, `deleteTask`, etc.
@@ -48,13 +46,6 @@ ChronoFlow is a React 19 + TypeScript productivity application with AI-powered t
   - Task statuses: `IDLE`, `RUNNING`, `PAUSED`, `COMPLETED`, `BREAK`
   - Task dependencies via `parentTaskIds` array
   - Milestone system with Git-like branching (main branch + custom branches)
-
-### Backend (Socket.IO Server)
-- **Sync Server** (`server/index.js`):
-  - Express + Socket.IO server on port 3001
-  - Simple file-based DB (`server/db.json`)
-  - Broadcasts data changes to connected clients
-  - CORS-enabled for development
 
 ### Key Architectural Patterns
 
@@ -111,12 +102,13 @@ Based on git history, the project recently underwent:
 - Language setting optimizations
 - Enhanced translations and estimated time features
 - Improved category management
+- Removed Socket.IO sync server (now pure client-side LocalStorage)
 
 ## Data Flow
 
 1. User interacts with UI component
 2. Component calls handler function from `App.tsx`
-3. Handler updates data via `storageService` (LocalStorage + Socket emit)
-4. Socket server broadcasts update to all clients
+3. Handler updates data via `storageService` (LocalStorage)
+4. Storage service emits update event
 5. Subscribed components re-render with new data
 6. LocalStorage ensures persistence across sessions
