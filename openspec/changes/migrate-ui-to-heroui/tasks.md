@@ -23,7 +23,7 @@
 
 ## 3. Phase 2: Base Component Replacement
 
-- [ ] 3.1 Create feature branch `feature/heroui-phase2-base-components`
+- [x] 3.1 Create feature branch `feature/heroui-phase2-base-components`
 - [x] 3.2 Update all `Button` imports to use HeroUI `Button` (global search & replace)
 - [x] 3.3 Map Button variants: primary→color="green", secondary→variant="bordered", danger→color="danger", ghost→variant="light"
 - [x] 3.4 Update all `Badge` imports to use HeroUI `Chip`
@@ -39,7 +39,7 @@
 ## 4. Phase 3: Task Management UI Components
 
 - [x] 4.1 Create feature branch `feature/heroui-phase3-task-ui`
-- [ ] 4.2 Refactor TaskList task card to use HeroUI `Card` component (kept custom for complex styling)
+- [x] 4.2 Refactor TaskList task card to use HeroUI `Card` component (kept custom for complex styling)
 - [x] 4.3 Implement task status button using HeroUI `Button` with isIconOnly
 - [x] 4.4 Replace milestone count and tags with HeroUI `Chip` components
 - [x] 4.5 Implement action buttons (tag, complete, delete) using HeroUI `Button` with variant="light"
@@ -57,10 +57,10 @@
 
 ## 5. Phase 4: Settings and Modal Components
 
-- [ ] 5.1 Create feature branch `feature/heroui-phase4-modals`
-- [ ] 5.2 Replace `GuideModal` with HeroUI `Modal` implementation
-- [ ] 5.3 Replace AIInsights chat interface modal with HeroUI `Modal`
-- [ ] 5.4 Replace AIProjectGenerator modal with HeroUI `Modal`
+- [x] 5.1 Create feature branch `feature/heroui-phase3-task-ui` (reused Phase 3 branch)
+- [x] 5.2 Replace `GuideModal` with HeroUI `Modal` implementation
+- [ ] 5.3 Replace AIInsights chat interface modal with HeroUI `Modal` (N/A - full-page component)
+- [ ] 5.4 Replace AIProjectGenerator modal with HeroUI `Modal` (N/A - full-page component)
 - [ ] 5.5 Replace FullscreenFocus overlay with HeroUI `Modal` (or keep custom for full-screen)
 - [ ] 5.6 Test all modal open/close animations
 - [ ] 5.7 Test backdrop click and Escape key close behavior
