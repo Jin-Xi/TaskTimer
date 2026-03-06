@@ -28,7 +28,8 @@
       "Bash(mkdir -p .backup)",
       "Bash(cp src/components/Button.tsx .backup/Button.tsx.backup)",
       "Bash(cp src/components/Badge.tsx .backup/Badge.tsx.backup)",
-      "Bash(rm src/components/Button.tsx src/components/Badge.tsx)"
+      "Bash(rm src/components/Button.tsx src/components/Badge.tsx)",
+      "Bash(grep -l \"className.*fixed.*inset-0\\\\|className.*modal\\\\|backdrop-blur\" src/components/*.tsx)"
     ]
   }
 }

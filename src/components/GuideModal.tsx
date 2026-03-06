@@ -3,7 +3,7 @@ import React from 'react';
 import { X, Play, Plus, BarChart2 } from 'lucide-react';
 import { TRANSLATIONS } from '../constants';
 import { Language } from '../types';
-import { Button } from '@heroui/react';
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 
 interface GuideModalProps {
   language: Language;
@@ -14,30 +14,45 @@ export const GuideModal: React.FC<GuideModalProps> = ({ language, onClose }) => 
   const t = TRANSLATIONS[language];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-neutral-950/70 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-neutral-900 w-full max-w-2xl rounded-[3rem] shadow-2xl border border-neutral-100 dark:border-neutral-800 relative overflow-hidden animate-in zoom-in-95 duration-500">
-
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      size="2xl"
+      classNames={{
+        wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[100]",
+        base: "rounded-[3rem] shadow-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden",
+        backdrop: "bg-gradient-to-b from-neutral-950/60 to-neutral-950/80",
+      }}
+      motionProps={{
+        variants: {
+          enter: {
+            scale: 1,
+            opacity: 1,
+            transition: { duration: 0.3, ease: "easeOut" }
+          },
+          exit: {
+            scale: 0.95,
+            opacity: 0,
+            transition: { duration: 0.2, ease: "easeIn" }
+          }
+        }
+      }}
+    >
+      <ModalContent className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white">
         {/* Background Decor */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-green-400/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-green-300/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="p-10 md:p-14 relative z-10 flex flex-col h-full">
-          <button
-            onClick={onClose}
-            className="absolute top-8 right-8 p-2 rounded-2xl hover:bg-neutral-50 dark:hover:bg-neutral-800 text-slate-400 transition-all"
-          >
-            <X className="w-6 h-6" />
-          </button>
+        <ModalHeader className="flex-col items-center text-center pb-0 pt-10 relative z-10">
+          <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight">
+            {t.guide.title}
+          </h2>
+          <p className="text-neutral-500 dark:text-neutral-400 text-lg font-medium">
+            {t.guide.subtitle}
+          </p>
+        </ModalHeader>
 
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-black text-neutral-900 dark:text-white mb-4 tracking-tight">
-              {t.guide.title}
-            </h2>
-            <p className="text-neutral-500 dark:text-neutral-400 text-lg font-medium">
-              {t.guide.subtitle}
-            </p>
-          </div>
-
+        <ModalBody className="px-10 md:px-14 relative z-10">
           <div className="grid gap-8">
             {/* Step 1 */}
             <div className="flex items-start gap-6 group">
@@ -78,18 +93,18 @@ export const GuideModal: React.FC<GuideModalProps> = ({ language, onClose }) => 
               </div>
             </div>
           </div>
+        </ModalBody>
 
-          <div className="mt-12 text-center">
-            <Button
-              size="lg"
-              onClick={onClose}
-              className="rounded-[2rem] px-16 py-5 text-lg font-black shadow-xl shadow-green/20 bg-green-400 hover:bg-green-500 text-white"
-            >
-              {t.guide.getStarted}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <ModalFooter className="justify-center pb-10 relative z-10 pt-0">
+          <Button
+            size="lg"
+            onPress={onClose}
+            className="rounded-[2rem] px-16 py-5 text-lg font-black shadow-xl shadow-green/20 bg-green-400 hover:bg-green-500 text-white"
+          >
+            {t.guide.getStarted}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
