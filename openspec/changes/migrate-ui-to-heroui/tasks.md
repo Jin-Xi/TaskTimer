@@ -73,15 +73,15 @@
 - [ ] 6.2 Evaluate TaskTimer for HeroUI migration (keep custom splitter panel)
 - [ ] 6.3 If migrating TaskTimer: replace modal portions with HeroUI, keep custom panel
 - [ ] 6.4 Refactor ProjectManager with HeroUI `Card` for project items
-- [ ] 6.5 Replace ProjectManager modals with HeroUI `Modal`
+- [x] 6.5 Replace ProjectManager modals with HeroUI `Modal` (Add Task Modal + Edit Task Modal)
 - [ ] 6.6 Test project creation, editing, deletion workflows
 - [ ] 6.7 Create PR for Phase 5 review and merge
 
 ## 7. Final Cleanup and Documentation
 
 - [ ] 7.1 Remove any remaining custom component code that's been replaced
-- [ ] 7.2 Update `CLAUDE.md` with HeroUI component usage guidelines
-- [ ] 7.3 Update `README.md` with HeroUI dependency information
+- [x] 7.2 Update `CLAUDE.md` with HeroUI component usage guidelines
+- [x] 7.3 Update `README.md` with HeroUI dependency information
 - [ ] 7.4 Verify bundle size is acceptable (target: ~90KB gzipped)
 - [x] 7.5 Run production build and verify no build errors
 - [x] 7.6 Run full E2E test suite (if available) - 15 tests passed

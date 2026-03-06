@@ -17,6 +17,7 @@ ChronoFlow is a React 19 + TypeScript productivity application with AI-powered t
 
 ### Frontend (React + Vite)
 - **Entry Point**: `src/main.tsx` → `src/App.tsx` (main application container)
+- **UI Framework**: HeroUI v2 (`@heroui/react`) - Modern React component library with built-in animations
 - **UI Components**: Located in `src/components/`
   - `TaskTimer.tsx` - Main timer interface with milestone tracking
   - `TaskList.tsx` - Task explorer with CRUD operations
@@ -26,6 +27,7 @@ ChronoFlow is a React 19 + TypeScript productivity application with AI-powered t
   - `FullscreenFocus.tsx` - Immersive focus mode overlay
   - `Stats.tsx` - Data visualization with Recharts
   - `GuideModal.tsx` - Onboarding experience
+  - `AISettingsModal.tsx` - AI provider configuration
 
 ### State & Data Layer
 - **Storage Service** (`src/services/storageService.ts`):
@@ -64,13 +66,153 @@ ChronoFlow is a React 19 + TypeScript productivity application with AI-powered t
    - Uses `process.env.API_KEY` (must be set in `.env` as `VITE_API_KEY`)
    - Only sends anonymized data (title, tags, duration) to AI, never raw logs
 
+## HeroUI Component Usage
+
+This project uses HeroUI v2 as the primary UI component library. Key patterns:
+
+### Button Component
+
+```tsx
+import { Button } from '@heroui/react';
+
+// Basic button with color
+<Button color="primary" onPress={handleClick}>
+  Click me
+</Button>
+
+// With variants and states
+<Button
+  variant="solid"          // solid, bordered, flat, light, ghost, faded
+  color="success"          // default, primary, secondary, success, warning, danger
+  isDisabled={false}
+  isLoading={loading}
+  size="lg"                // sm, md, lg
+  className="rounded-2xl"
+>
+  Save
+</Button>
+
+// Icon-only button
+<Button isIconOnly variant="light" onPress={handleClose}>
+  <X className="w-5 h-5" />
+</Button>
+```
+
+### Chip Component (replaces Badge)
+
+```tsx
+import { Chip } from '@heroui/react';
+
+// Color mapping for ChronoFlow tags:
+// green (chronoflow) → success
+// ochre → warning
+// terracotta → danger
+// slate-river → default
+
+<Chip
+  color="success"
+  variant="flat"
+  className="rounded-2xl"
+>
+  {tagName}
+</Chip>
+```
+
+### Modal Component
+
+```tsx
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+
+<Modal
+  isOpen={isOpen}
+  onClose={onClose}
+  size="2xl"               // sm, md, lg, xl, 2xl, 5xl, full
+  classNames={{
+    wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[100]",
+    base: "rounded-[3rem] shadow-2xl border overflow-hidden",
+    backdrop: "bg-gradient-to-b from-neutral-950/60 to-neutral-950/80",
+  }}
+  motionProps={{
+    variants: {
+      enter: { scale: 1, opacity: 1, transition: { duration: 0.3 } },
+      exit: { scale: 0.95, opacity: 0, transition: { duration: 0.2 } }
+    }
+  }}
+>
+  <ModalContent className="bg-white dark:bg-neutral-900">
+    <ModalHeader className="flex-col pt-10">
+      <h2>Title</h2>
+    </ModalHeader>
+    <ModalBody>
+      Content here
+    </ModalBody>
+    <ModalFooter>
+      <Button variant="light" onPress={onClose}>Cancel</Button>
+      <Button color="primary" onPress={handleSave}>Save</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+```
+
+### Checkbox Component
+
+```tsx
+import { Checkbox } from '@heroui/react';
+
+<Checkbox
+  isSelected={checked}
+  onValueChange={setChecked}
+  color="success"
+  classNames={{
+    wrapper: "rounded-md",
+  }}
+>
+  Label text
+</Checkbox>
+```
+
+### Important API Differences
+
+- Button uses `onPress` instead of `onClick` (though `onClick` works too)
+- Button uses `isDisabled` instead of `disabled`
+- Button uses `isLoading` instead of `loading`
+- Chip uses `color` with HeroUI color names, not custom colors
+- Modal uses `isOpen` instead of `open`
+- Modal children are organized into `ModalContent`, `ModalHeader`, `ModalBody`, `ModalFooter`
+- HeroUI v2 uses `HeroUIProvider` (not `NextUIProvider` which was deprecated)
+
+### Color Mapping (Custom → HeroUI)
+
+| ChronoFlow Color | HeroUI Color | Usage |
+|-----------------|--------------|-------|
+| green | success | Primary actions, success states |
+| ochre | warning | Warning states, moderate priority |
+| terracotta | danger | Destructive actions, errors |
+| slate-river | default | Neutral, informational |
+
+### Helper Function for Tag Colors
+
+```tsx
+const getChipColor = (tagName: string): 'success' | 'warning' | 'danger' | 'default' => {
+  const category = categories.find(c => c.name === tagName);
+  if (!category) return 'default';
+
+  const color = category.color;
+  if (color === 'green') return 'success';
+  if (color === 'ochre') return 'warning';
+  if (color === 'terracotta') return 'danger';
+  return 'default';
+};
+```
+
 ## Important File Locations
 
 - `src/constants.ts` - Translations, navigation config, default categories
 - `src/utils/timeUtils.ts` - Time formatting utilities (`formatTime`, `formatDurationHuman`)
 - `vite.config.ts` - Vite + Vitest configuration
-- `tailwind.config.js` - Tailwind CSS customization
+- `tailwind.config.js` - Tailwind CSS customization (includes HeroUI content paths)
 - `postcss.config.js` - PostCSS with Tailwind + Autoprefixer
+- `src/main.tsx` - HeroUIProvider wrapper configuration
 
 ## Testing
 
@@ -89,20 +231,28 @@ VITE_API_KEY=your_google_gemini_api_key_here
 
 ## Deployment Notes
 
-- Build output: `dist/` directory
+- Build output: `dist/` directory (target: ~90KB gzipped)
 - Static site deployment (Vercel, Netlify, GitHub Pages supported)
 - Source maps enabled in production builds
 - Remember to set `VITE_API_KEY` in production environment variables
 - For SPA hosting, ensure 404s redirect to `index.html`
+- **HeroUI Bundle**: @heroui/react@^2.8.9 includes Framer Motion for animations
 
 ## Recent Changes
 
 Based on git history, the project recently underwent:
+- HeroUI v2 migration (Phases 0-4 completed)
+  - Phase 0: Setup and configuration
+  - Phase 1: AISettingsModal prototype (AISettingsModalHeroUI.tsx)
+  - Phase 2: Base component replacement (Button → HeroUI Button, Badge → HeroUI Chip)
+  - Phase 3: TaskList UI enhancements with HeroUI components
+  - Phase 4: GuideModal migrated to HeroUI Modal
 - Project structure refactoring
 - Language setting optimizations
 - Enhanced translations and estimated time features
 - Improved category management
 - Removed Socket.IO sync server (now pure client-side LocalStorage)
+- Deprecated custom Button and Badge components (replaced with HeroUI)
 
 ## Data Flow
 

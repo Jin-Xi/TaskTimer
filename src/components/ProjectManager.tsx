@@ -3,8 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Trash2, ChevronRight, ChevronLeft, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { Project, Task, TaskStatus, Category, DayOfWeek, Language } from '../types';
 import { TAG_COLORS, TRANSLATIONS, DEFAULT_CATEGORIES, COLOR_HEX_MAP } from '../constants';
-import { Button } from '@heroui/react';
-import { Chip } from '@heroui/react';
+import { Button, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox } from '@heroui/react';
 
 interface ProjectManagerProps {
   language: Language;
@@ -676,115 +675,273 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         
         {/* Detail View Modals */}
         {(isAddingTaskToProject || isAddingRoot) && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-neutral-950/60 backdrop-blur-xl animate-in fade-in">
-              <form onSubmit={(e) => { e.preventDefault(); if (newTask.title.trim() && selectedProjectId) { onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskIds, newTask.isTerminal); setIsAddingTaskToProject(null); setIsAddingRoot(false); setNewTask({title:'', description:'', parentTaskIds:[], isTerminal: false}); } }} className="bg-white dark:bg-neutral-900 w-full max-w-xl p-10 rounded-[3rem] shadow-2xl border border-neutral-200 dark:border-neutral-800 animate-in zoom-in-95">
-                  <div className="flex items-center justify-between mb-10"><h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight">{isAddingRoot ? (language === 'zh-TW' ? '新增起始節點' : '添加起始节点') : t.addStep}</h3><button type="button" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); setNewTask({title:'', description:'', parentTaskIds:[], isTerminal: false}); }} className="p-4 rounded-2xl hover:bg-slate-50 text-neutral-400 transition-all"><X className="w-7 h-7" /></button></div>
-                  <input autoFocus required className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-black text-lg" placeholder={t.stepName} value={newTask.title} onChange={(e) => setNewTask({...newTask, title: e.target.value})} />
-                  <div className="flex items-center gap-3 mt-6 px-2">
-                    <input
-                      type="checkbox"
-                      id="isTerminal"
-                      checked={newTask.isTerminal}
-                      onChange={(e) => setNewTask({...newTask, isTerminal: e.target.checked})}
-                      className="w-5 h-5 rounded border-neutral-300 text-green-600 focus:ring-green-500"
-                    />
-                    <label htmlFor="isTerminal" className="text-sm font-bold text-neutral-600 dark:text-neutral-400 cursor-pointer select-none">
-                      {language === 'zh-TW' ? '設為終止節點（所有任務完成後到達此節點，項目標記為已完成）' : '设为终止节点（所有任务完成后到达此节点，项目标记为已完成）'}
-                    </label>
-                  </div>
-                  <div className="flex justify-end gap-5 mt-12"><Button type="button" variant="ghost" className="rounded-2xl px-10 text-base" onClick={() => { setIsAddingTaskToProject(null); setIsAddingRoot(false); setNewTask({title:'', description:'', parentTaskIds:[], isTerminal: false}); }}>{t.cancel}</Button><Button type="submit" className="rounded-2xl px-14 font-black text-lg shadow-xl shadow-green-500/10">{t.add}</Button></div>
+          <Modal
+            isOpen={true}
+            onClose={() => {
+              setIsAddingTaskToProject(null);
+              setIsAddingRoot(false);
+              setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
+            }}
+            size="2xl"
+            classNames={{
+              wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[100]",
+              base: "rounded-[3rem] shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden",
+              backdrop: "bg-gradient-to-b from-neutral-950/60 to-neutral-950/80",
+            }}
+            motionProps={{
+              variants: {
+                enter: { scale: 1, opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
+                exit: { scale: 0.95, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
+              }
+            }}
+          >
+            <ModalContent className="bg-white dark:bg-neutral-900 max-w-xl">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (newTask.title.trim() && selectedProjectId) {
+                  onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskIds, newTask.isTerminal);
+                  setIsAddingTaskToProject(null);
+                  setIsAddingRoot(false);
+                  setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
+                }
+              }}>
+                <ModalHeader className="flex items-center justify-between pb-0">
+                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
+                    {isAddingRoot ? (language === 'zh-TW' ? '新增起始節點' : '添加起始节点') : t.addStep}
+                  </h3>
+                </ModalHeader>
+                <ModalBody className="gap-6">
+                  <input
+                    autoFocus
+                    required
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-black text-lg"
+                    placeholder={t.stepName}
+                    value={newTask.title}
+                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  />
+                  <Checkbox
+                    isSelected={newTask.isTerminal}
+                    onValueChange={(checked) => setNewTask({ ...newTask, isTerminal: checked })}
+                    color="success"
+                    classNames={{
+                      wrapper: "rounded-md",
+                    }}
+                  >
+                    {language === 'zh-TW' ? '設為終止節點（所有任務完成後到達此節點，項目標記為已完成）' : '设为终止节点（所有任务完成后到达此节点，项目标记为已完成）'}
+                  </Checkbox>
+                </ModalBody>
+                <ModalFooter className="justify-end gap-3">
+                  <Button
+                    variant="light"
+                    className="rounded-2xl px-10 text-base font-medium"
+                    onPress={() => {
+                      setIsAddingTaskToProject(null);
+                      setIsAddingRoot(false);
+                      setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
+                    }}
+                  >
+                    {t.cancel}
+                  </Button>
+                  <Button type="submit" color="success" className="rounded-2xl px-14 font-black text-lg shadow-xl shadow-green-500/10">
+                    {t.add}
+                  </Button>
+                </ModalFooter>
               </form>
-          </div>
+            </ModalContent>
+          </Modal>
         )}
 
         {editingTask && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-neutral-950/60 backdrop-blur-xl animate-in fade-in">
-              <form onSubmit={(e) => { e.preventDefault(); if (editingTask.title.trim()) { onUpdateTask(editingTask.id, editingTask); setEditingTask(null); } }} className="bg-white dark:bg-neutral-900 w-full max-w-2xl p-10 md:p-12 rounded-[3.5rem] shadow-2xl border border-neutral-200 dark:border-neutral-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                  <div className="flex items-center justify-between mb-8 shrink-0"><h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">{language === 'zh-TW' ? '管理任務' : '管理任务'}</h3><button type="button" onClick={() => setEditingTask(null)} className="p-4 rounded-2xl hover:bg-slate-50 text-neutral-400 transition-all"><X className="w-7 h-7" /></button></div>
-                  <div className="space-y-10 overflow-y-auto custom-scrollbar flex-1 pr-4">
-                      <div><label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.stepName}</label><input autoFocus required className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-black text-lg" value={editingTask.title} onChange={(e) => setEditingTask({...editingTask, title: e.target.value})} /></div>
-                      <div><label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.description}</label><textarea className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-medium text-base h-32 resize-none shadow-inner leading-relaxed" value={editingTask.description || ''} onChange={(e) => setEditingTask({...editingTask, description: e.target.value})} /></div>
-                      <div>
-                        <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh-TW' ? '標籤分類' : '标签分类'}</label>
-                        <div className="flex flex-wrap gap-3 mb-6 p-6 bg-neutral-50 dark:bg-neutral-800/30 rounded-[2rem] border-2 border-neutral-100 dark:border-neutral-800">
-                          {(editingTask.tags || []).length > 0 ? (editingTask.tags || []).map(tag => (
-                            <Chip key={tag} color={((categories.find(c => c.name === tag)?.color === 'terracotta' ? 'danger' : categories.find(c => c.name === tag)?.color === 'ochre' ? 'warning' : 'default') as "success" | "warning" | "danger" | "default")} onClick={() => setEditingTask({ ...editingTask, tags: editingTask.tags.filter(t => t !== tag) })} className="cursor-pointer hover:bg-red-500 hover:text-white transition-all py-2 px-5 rounded-2xl text-[11px]">{tag} <X className="w-4 h-4 ml-2" /></Chip>
-                          )) : <span className="text-xs text-neutral-300 font-bold uppercase tracking-widest">No tags</span>}
-                        </div>
-                        <div className="flex flex-wrap gap-3 px-2">
-                          {categories.filter(c => !(editingTask.tags || []).includes(c.name)).map(c => (
-                            <button key={c.id} type="button" onClick={() => setEditingTask({ ...editingTask, tags: [...(editingTask.tags || []), c.name] })} className="px-5 py-2.5 rounded-2xl border-2 border-neutral-100 dark:border-neutral-800 text-[11px] font-black uppercase tracking-widest text-neutral-400 hover:bg-neutral-100 dark:hover:bg-slate-800 transition-all">{c.name}</button>
-                          ))}
-                        </div>
-                        
-                        <div className="mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-800/50">
-                            <label className="block text-[10px] font-black text-neutral-300 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh-TW' ? '新建標籤' : '新建标签'}</label>
-                            <div className="flex items-center gap-3">
-                                <div className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl p-1.5 pl-4 flex items-center gap-3 focus-within:border-green-500/50 transition-colors">
-                                    <div className={`w-3 h-3 rounded-full bg-${newTagColor}-500 shadow-sm shrink-0`} />
-                                    <input 
-                                        value={newTagName}
-                                        onChange={(e) => setNewTagName(e.target.value)}
-                                        placeholder={language === 'zh-TW' ? '標籤名稱...' : '标签名称...'}
-                                        className="bg-transparent border-none outline-none text-sm font-bold w-full text-slate-700 dark:text-slate-200 placeholder:text-neutral-300"
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                if (newTagName.trim()) {
-                                                    onAddCategory(newTagName.trim(), newTagColor);
-                                                    setNewTagName('');
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <Button 
-                                    type="button" 
-                                    disabled={!newTagName.trim()}
-                                    onClick={() => {
-                                        if (newTagName.trim()) {
-                                            onAddCategory(newTagName.trim(), newTagColor);
-                                            setNewTagName('');
-                                        }
-                                    }}
-                                    className="rounded-2xl w-12 h-12 flex items-center justify-center p-0 shrink-0"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                </Button>
-                            </div>
-                            <div className="flex flex-wrap gap-3 mt-4 px-1">
-                                {TAG_COLORS.map(c => (
-                                    <button 
-                                    key={c}
-                                    type="button"
-                                    onClick={() => setNewTagColor(c)}
-                                    className={`w-8 h-8 rounded-xl bg-${c}-500 transition-all duration-300 ${newTagColor === c ? 'ring-4 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900 ring-slate-200 dark:ring-slate-700 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{language === 'zh-TW' ? 'WBS 里程碑' : 'WBS 里程碑'}</label>
-                        <div className="space-y-3 mb-6">
-                          {(editingTask.milestones || []).map(m => (
-                            <div key={m.id} className="flex items-center justify-between p-6 bg-neutral-50 dark:bg-neutral-800/50 rounded-[2rem] border-2 border-neutral-100 dark:border-neutral-800 group/mile">
-                              <div className="flex items-center gap-4">
-                                <Flag className="w-4.5 h-4.5 text-green-400" />
-                                <span className="text-base font-bold text-slate-700 dark:text-neutral-300">{m.title}</span>
-                              </div>
-                              <button type="button" onClick={() => setEditingTask({ ...editingTask, milestones: editingTask.milestones.filter(x => x.id !== m.id) })} className="p-2.5 text-neutral-300 hover:text-red-500 transition-all opacity-0 group-hover/mile:opacity-100"><Trash2 className="w-5 h-5" /></button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="relative">
-                          <input className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-[1.75rem] px-8 py-5 outline-none text-base font-bold focus:border-green-500 transition-all shadow-inner" placeholder={language === 'zh-TW' ? '輸入關鍵節點標題並回車...' : '输入关键节点标题并回车...'} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const val = (e.target as HTMLInputElement).value.trim(); if (val) { setEditingTask({ ...editingTask, milestones: [...(editingTask.milestones || []), { id: Math.random().toString(36).substr(2, 9), title: val, timestamp: Date.now(), branch: 'main' }] }); (e.target as HTMLInputElement).value = ''; } } }} />
-                        </div>
-                      </div>
+          <Modal
+            isOpen={true}
+            onClose={() => setEditingTask(null)}
+            size="3xl"
+            classNames={{
+              wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[110]",
+              base: "rounded-[3.5rem] shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden",
+              backdrop: "bg-gradient-to-b from-neutral-950/60 to-neutral-950/80",
+            }}
+            motionProps={{
+              variants: {
+                enter: { scale: 1, opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
+                exit: { scale: 0.95, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
+              }
+            }}
+          >
+            <ModalContent className="bg-white dark:bg-neutral-900 max-w-2xl max-h-[90vh] flex flex-col">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (editingTask.title.trim()) {
+                  onUpdateTask(editingTask.id, editingTask);
+                  setEditingTask(null);
+                }
+              }}>
+                <ModalHeader className="flex items-center justify-between pb-2">
+                  <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">
+                    {language === 'zh-TW' ? '管理任務' : '管理任务'}
+                  </h3>
+                </ModalHeader>
+                <ModalBody className="space-y-8 overflow-y-auto custom-scrollbar flex-1">
+                  <div>
+                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.stepName}</label>
+                    <input
+                      autoFocus
+                      required
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-black text-lg"
+                      value={editingTask.title}
+                      onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                    />
                   </div>
-                  <div className="flex justify-end gap-5 mt-10 pt-10 border-t-2 border-neutral-100 dark:border-neutral-800 shrink-0"><Button type="button" variant="ghost" className="rounded-2xl px-10 text-base" onClick={() => setEditingTask(null)}>{t.cancel}</Button><Button type="submit" className="rounded-2xl px-14 md:px-18 font-black text-base md:text-lg shadow-xl shadow-green-500/10">{language === 'zh-TW' ? '保存更新' : '保存更新'}</Button></div>
+                  <div>
+                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.description}</label>
+                    <textarea
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-medium text-base h-32 resize-none shadow-inner leading-relaxed"
+                      value={editingTask.description || ''}
+                      onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">
+                      {language === 'zh-TW' ? '標籤分類' : '标签分类'}
+                    </label>
+                    <div className="flex flex-wrap gap-3 mb-6 p-6 bg-neutral-50 dark:bg-neutral-800/30 rounded-[2rem] border-2 border-neutral-100 dark:border-neutral-800">
+                      {(editingTask.tags || []).length > 0 ? (editingTask.tags || []).map(tag => (
+                        <Chip
+                          key={tag}
+                          color={((categories.find(c => c.name === tag)?.color === 'terracotta' ? 'danger' : categories.find(c => c.name === tag)?.color === 'ochre' ? 'warning' : 'default') as "success" | "warning" | "danger" | "default")}
+                          onClose={() => setEditingTask({ ...editingTask, tags: editingTask.tags.filter(t => t !== tag) })}
+                          className="rounded-2xl text-[11px]"
+                        >
+                          {tag}
+                        </Chip>
+                      )) : <span className="text-xs text-neutral-300 font-bold uppercase tracking-widest">No tags</span>}
+                    </div>
+                    <div className="flex flex-wrap gap-3 px-2">
+                      {categories.filter(c => !(editingTask.tags || []).includes(c.name)).map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setEditingTask({ ...editingTask, tags: [...(editingTask.tags || []), c.name] })}
+                          className="px-5 py-2.5 rounded-2xl border-2 border-neutral-100 dark:border-neutral-800 text-[11px] font-black uppercase tracking-widest text-neutral-400 hover:bg-neutral-100 dark:hover:bg-slate-800 transition-all"
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-800/50">
+                      <label className="block text-[10px] font-black text-neutral-300 uppercase tracking-[0.2em] mb-4 ml-2">
+                        {language === 'zh-TW' ? '新建標籤' : '新建标签'}
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl p-1.5 pl-4 flex items-center gap-3 focus-within:border-green-500/50 transition-colors">
+                          <div className={`w-3 h-3 rounded-full bg-${newTagColor}-500 shadow-sm shrink-0`} />
+                          <input
+                            value={newTagName}
+                            onChange={(e) => setNewTagName(e.target.value)}
+                            placeholder={language === 'zh-TW' ? '標籤名稱...' : '标签名称...'}
+                            className="bg-transparent border-none outline-none text-sm font-bold w-full text-slate-700 dark:text-slate-200 placeholder:text-neutral-300"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (newTagName.trim()) {
+                                  onAddCategory(newTagName.trim(), newTagColor);
+                                  setNewTagName('');
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          isDisabled={!newTagName.trim()}
+                          onPress={() => {
+                            if (newTagName.trim()) {
+                              onAddCategory(newTagName.trim(), newTagColor);
+                              setNewTagName('');
+                            }
+                          }}
+                          className="rounded-2xl w-12 h-12 flex items-center justify-center p-0 shrink-0"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-3 mt-4 px-1">
+                        {TAG_COLORS.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setNewTagColor(c)}
+                            className={`w-8 h-8 rounded-xl bg-${c}-500 transition-all duration-300 ${newTagColor === c ? 'ring-4 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900 ring-slate-200 dark:ring-slate-700 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">WBS 里程碑</label>
+                    <div className="space-y-3 mb-6">
+                      {(editingTask.milestones || []).map(m => (
+                        <div key={m.id} className="flex items-center justify-between p-6 bg-neutral-50 dark:bg-neutral-800/50 rounded-[2rem] border-2 border-neutral-100 dark:border-neutral-800 group/mile">
+                          <div className="flex items-center gap-4">
+                            <Flag className="w-4.5 h-4.5 text-green-400" />
+                            <span className="text-base font-bold text-slate-700 dark:text-neutral-300">{m.title}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditingTask({ ...editingTask, milestones: editingTask.milestones.filter(x => x.id !== m.id) })}
+                            className="p-2.5 text-neutral-300 hover:text-red-500 transition-all opacity-0 group-hover/mile:opacity-100"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="relative">
+                      <input
+                        className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-[1.75rem] px-8 py-5 outline-none text-base font-bold focus:border-green-500 transition-all shadow-inner"
+                        placeholder={language === 'zh-TW' ? '輸入關鍵節點標題並回車...' : '输入关键节点标题并回车...'}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (val) {
+                              setEditingTask({
+                                ...editingTask,
+                                milestones: [...(editingTask.milestones || []), {
+                                  id: Math.random().toString(36).substr(2, 9),
+                                  title: val,
+                                  timestamp: Date.now(),
+                                  branch: 'main'
+                                }]
+                              });
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </ModalBody>
+                <ModalFooter className="justify-end gap-3 border-t-2 border-neutral-100 dark:border-neutral-800">
+                  <Button
+                    variant="light"
+                    className="rounded-2xl px-10 text-base font-medium"
+                    onPress={() => setEditingTask(null)}
+                  >
+                    {t.cancel}
+                  </Button>
+                  <Button
+                    type="submit"
+                    color="success"
+                    className="rounded-2xl px-14 font-black text-base md:text-lg shadow-xl shadow-green-500/10"
+                  >
+                    {language === 'zh-TW' ? '保存更新' : '保存更新'}
+                  </Button>
+                </ModalFooter>
               </form>
-          </div>
+            </ModalContent>
+          </Modal>
         )}
       </div>
     );

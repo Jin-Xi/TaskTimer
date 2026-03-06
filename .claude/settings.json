@@ -29,7 +29,14 @@
       "Bash(cp src/components/Button.tsx .backup/Button.tsx.backup)",
       "Bash(cp src/components/Badge.tsx .backup/Badge.tsx.backup)",
       "Bash(rm src/components/Button.tsx src/components/Badge.tsx)",
-      "Bash(grep -l \"className.*fixed.*inset-0\\\\|className.*modal\\\\|backdrop-blur\" src/components/*.tsx)"
+      "Bash(grep -l \"className.*fixed.*inset-0\\\\|className.*modal\\\\|backdrop-blur\" src/components/*.tsx)",
+      "Read(*)",
+      "Edit(*)",
+      "Write(*)",
+      "Search(*)",
+      "Bash(*)",
+      "Bash(sed -n '1,753p' \"E:/Code/TaskTimer/src/components/ProjectManager.tsx\")",
+      "Bash(\"E:/Code/TaskTimer/.temp_part1.tsx\")"
     ]
   }
 }
