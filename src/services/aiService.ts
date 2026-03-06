@@ -47,7 +47,7 @@ const getPlannerPrompt = (goal: string, context: string, lang: Language) => `
     {
       "projectName": "String",
       "description": "String",
-      "color": "String (one of: indigo, emerald, slate, rose, amber, cyan, violet, fuchsia)",
+      "color": "String (one of: green, ochre, slate-river, amber, cyan)",
       "tasks": [
         {
           "id": "String (use temporary simple IDs like 't1', 't2')",

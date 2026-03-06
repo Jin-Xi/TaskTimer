@@ -1,0 +1,15 @@
+<svg width="180" height="50" viewBox="0 0 180 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green Circle -->
+  <circle cx="25" cy="25" r="22" fill="#4ade80" />
+
+  <!-- Simple Hourglass -->
+  <path
+    d="M18 17L32 17L25 25L32 33L18 33L25 25Z"
+    fill="white"
+  />
+
+  <!-- Text -->
+  <text x="55" y="33" font-family="'Inter', -apple-system, sans-serif" font-size="20" font-weight="700" fill="#2C3628">
+    Chrono<tspan fill="#4ade80">Flow</tspan>
+  </text>
+</svg>

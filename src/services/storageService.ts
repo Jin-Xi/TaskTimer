@@ -69,14 +69,14 @@ const DEMO_DATA = {
       name: '健康生活',
       description: '保持身心健康的日常习惯。',
       createdAt: minsAgo(1000),
-      color: 'emerald'
+      color: 'green'
     },
     {
       id: 'project-demo-work',
       name: '日常工作流',
       description: '高效处理日常办公事务。',
       createdAt: minsAgo(800),
-      color: 'indigo'
+      color: 'green'
     }
   ] as Project[]
 };

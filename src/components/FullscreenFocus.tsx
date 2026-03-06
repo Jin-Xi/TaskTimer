@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Play, Pause, X, Image as ImageIcon, Calendar, Clock } from 'lucide-react';
 import { Task, TaskStatus, Language } from '../types';
-import { Button } from './Button';
 
 interface FullscreenFocusProps {
   language: Language;
@@ -93,7 +92,7 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
   if (!activeTask) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center text-white overflow-hidden bg-slate-900">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center text-white overflow-hidden bg-neutral-900">
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-700"
         style={{ 
@@ -102,7 +101,7 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
         }}
       >
         {!backgroundImage && (
-           <div className="w-full h-full bg-gradient-to-br from-clay-900 via-olive-950 to-clay-900" />
+           <div className="w-full h-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900" />
         )}
       </div>
 
@@ -142,7 +141,7 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
         <div className="flex items-center gap-6 animate-in slide-in-from-bottom-10 duration-700">
            <button 
              onClick={() => onToggleStatus(activeTask.id)}
-             className="group flex items-center justify-center w-20 h-20 rounded-full bg-white text-olive-500 hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl active:scale-95"
+             className="group flex items-center justify-center w-20 h-20 rounded-full bg-white text-olive-500 hover:bg-green-50 transition-all shadow-lg hover:shadow-xl active:scale-95"
              title={activeTask.status === TaskStatus.RUNNING ? "Pause" : "Resume"}
            >
               {activeTask.status === TaskStatus.RUNNING ? (

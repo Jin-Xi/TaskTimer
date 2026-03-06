@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, BrainCircuit, Wand2 } from 'lucide-react';
-import { Button } from './Button';
+import { Button } from '@heroui/react';
 import { TRANSLATIONS, AI_MODELS } from '../constants';
 import { Language, AIConfig } from '../types';
 import { generateProjectPlan } from '../services/aiService';
@@ -105,42 +105,42 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({ language
   return (
     <div className="flex-1 min-h-full overflow-y-auto overflow-x-hidden flex flex-col items-center justify-center p-4 sm:p-6 md:p-10 lg:p-12 relative animate-in fade-in duration-500">
       {/* Background Ambience - responsive sizes */}
-      <div className="absolute top-[-10%] right-[-5%] w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] bg-indigo-500/10 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-5%] w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] bg-violet-500/10 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none" />
+      <div className="absolute top-[-10%] right-[-5%] w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] bg-slate-river-500/10 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] bg-slate-river-400/10 rounded-full blur-[80px] sm:blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] shadow-2xl shadow-indigo-500/10 border border-slate-100 dark:border-slate-800 p-6 sm:p-8 md:p-12 lg:p-16 relative z-10 my-4">
+      <div className="w-full max-w-3xl bg-white/80 dark:bg-neutral-900/80 backdrop-blur-2xl rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] shadow-2xl shadow-slate-river/10 border border-neutral-100 dark:border-neutral-800 p-6 sm:p-8 md:p-12 lg:p-16 relative z-10 my-4">
 
         <div className="text-center mb-8 md:mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-[1.5rem] sm:rounded-[1.75rem] md:rounded-[2rem] bg-gradient-to-br from-indigo-500 to-violet-600 mb-4 md:mb-8 shadow-xl shadow-indigo-500/30">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-[1.5rem] sm:rounded-[1.75rem] md:rounded-[2rem] bg-gradient-to-br from-slate-river-400 to-slate-river-500 mb-4 md:mb-8 shadow-xl shadow-slate-river/30">
             <BrainCircuit className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 text-white" />
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-3 md:mb-4">{t.aiPlannerTitle}</h2>
-          <p className="text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl mx-auto px-2">{t.aiPlannerDesc}</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-neutral-900 dark:text-white tracking-tight mb-3 md:mb-4">{t.aiPlannerTitle}</h2>
+          <p className="text-sm sm:text-base md:text-lg text-neutral-500 dark:text-neutral-400 font-medium max-w-xl mx-auto px-2">{t.aiPlannerDesc}</p>
         </div>
 
         <div className="space-y-5 md:space-y-8">
           <div className="space-y-2 md:space-y-3">
-            <label className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-400 ml-1 sm:ml-2">{t.goalInputLabel}</label>
+            <label className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-neutral-400 ml-1 sm:ml-2">{t.goalInputLabel}</label>
             <input
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder={t.goalInputPlaceholder}
-              className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-[1.25rem] sm:rounded-[1.5rem] md:rounded-[2rem] px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-6 text-base sm:text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 sm:focus:ring-6 md:focus:ring-8 focus:ring-indigo-500/10 transition-all shadow-inner"
+              className="w-full bg-neutral-50 dark:bg-neutral-950/50 border-2 border-neutral-100 dark:border-neutral-800 rounded-[1.25rem] sm:rounded-[1.5rem] md:rounded-[2rem] px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-6 text-base sm:text-lg md:text-xl font-bold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-300 dark:placeholder:text-neutral-700 outline-none focus:border-slate-river-500 focus:ring-4 sm:focus:ring-6 md:focus:ring-8 focus:ring-slate-river-500/10 transition-all shadow-inner"
             />
           </div>
 
           <div className="space-y-2 md:space-y-3">
-            <label className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-400 ml-1 sm:ml-2">{t.contextInputLabel}</label>
+            <label className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-neutral-400 ml-1 sm:ml-2">{t.contextInputLabel}</label>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
               placeholder={t.contextInputPlaceholder}
-              className="w-full h-24 sm:h-28 md:h-32 bg-slate-50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-[1.25rem] sm:rounded-[1.5rem] md:rounded-[2rem] px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-6 text-sm sm:text-base md:text-base font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 sm:focus:ring-6 md:focus:ring-8 focus:ring-indigo-500/10 transition-all shadow-inner resize-none leading-relaxed"
+              className="w-full h-24 sm:h-28 md:h-32 bg-neutral-50 dark:bg-neutral-950/50 border-2 border-neutral-100 dark:border-neutral-800 rounded-[1.25rem] sm:rounded-[1.5rem] md:rounded-[2rem] px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-6 text-sm sm:text-base md:text-base font-medium text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-300 dark:placeholder:text-neutral-700 outline-none focus:border-slate-river-500 focus:ring-4 sm:focus:ring-6 md:focus:ring-8 focus:ring-slate-river-500/10 transition-all shadow-inner resize-none leading-relaxed"
             />
           </div>
 
           {error && (
-            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs sm:text-sm font-bold text-center">
+            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-terracotta-50 dark:bg-terracotta-900/20 text-terracotta-600 dark:text-terracotta-400 text-xs sm:text-sm font-bold text-center">
               {error}
             </div>
           )}
@@ -149,15 +149,11 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({ language
             <Button
               size="lg"
               onClick={handleGenerate}
-              disabled={isLoading || !goal.trim()}
-              className={`w-full py-4 sm:py-5 md:py-6 rounded-[1.25rem] sm:rounded-[1.5rem] md:rounded-[2rem] text-base sm:text-lg md:text-xl font-black shadow-xl transition-all duration-500 ${isLoading ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/30 hover:scale-[1.01] sm:hover:scale-[1.02] hover:-translate-y-0.5 sm:hover:-translate-y-1'}`}
+              isDisabled={isLoading || !goal.trim()}
+              isLoading={isLoading}
+              className={`w-full py-4 sm:py-5 md:py-6 rounded-[1.25rem] sm:rounded-[1.5rem] md:rounded-[2rem] text-base sm:text-lg md:text-xl font-black shadow-xl transition-all duration-500 ${!isLoading ? 'bg-slate-river-500 hover:bg-slate-river-400 shadow-slate-river/30 hover:scale-[1.01] sm:hover:scale-[1.02] hover:-translate-y-0.5 sm:hover:-translate-y-1' : ''}`}
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-3 sm:border-4 border-slate-300 border-t-indigo-500 rounded-full animate-spin" />
-                  <span className="text-sm sm:text-base">{loadingTexts[loadingStep]}</span>
-                </div>
-              ) : (
+              {!isLoading && (
                 <div className="flex items-center gap-2 sm:gap-3">
                   <Wand2 className="w-5 h-5 sm:w-6 sm:h-6" />
                   <span>{t.generatePlan}</span>

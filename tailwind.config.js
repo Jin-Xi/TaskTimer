@@ -3,115 +3,122 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{ts,tsx}",
+    // HeroUI components
+    "./node_modules/@heroui/react/dist/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // 自然手工配色 - Natural Earthy Palette
-        sand: {
-          50: '#FAF9F6',   // 背景色 (Sand)
-          100: '#F5F3F0',
-          200: '#EBE5D9',  // 次要背景 (Clay)
-          300: '#E0D9CC',
-          400: '#D5CDBF',
-          500: '#C9C2B5',
-          600: '#BDB6AD',
-          700: '#B1AAA5',
-          800: '#A59E9D',
-          900: '#999295',
+        // ChronoFlow 品牌核心色 - Green Theme
+        green: {
+          50: '#F4F8F2',   // 极浅背景
+          100: '#E8F5BD',  // Accent Light - 时间块底色
+          200: '#C7EABB',  // Surface Green - 选中卡片背景
+          300: '#A2CB8B',  // Secondary Green - 进度条、次要按钮
+          400: '#84B179',  // Primary Green - 核心操作按钮
+          500: '#6A9662',  // 悬停状态
+          600: '#507B4A',  // 按下状态
+          700: '#366032',  // 深色模式文本
+          800: '#2C3628',  // Ink Text - 墨绿灰
+          900: '#1C2B1D',  // 深色模式背景
         },
-        clay: {
-          50: '#EBE5D9',   // 燕麦色
-          100: '#DED6C7',
-          200: '#D1C7B5',
-          300: '#C4B8A3',
-          400: '#B7A991',
-          500: '#AA9A7F',
-          600: '#9D8B6D',
-          700: '#907C5B',
-          800: '#836D49',
-          900: '#765E37',
+
+        // 中性色 - 带植被温度的灰色
+        neutral: {
+          50: '#FBFDF9',   // App Base - SPA 底层背景
+          100: '#F0F3EC',  // Component Surface - 任务列表、看板列背景
+          200: '#E0E8DE',  // 边框、分割线
+          300: '#CDD9CC',  // 禁用状态边框
+          400: '#B3C5AF',  // 占位符图标
+          500: '#99B192',
+          600: '#7F9D75',
+          700: '#658958',
+          800: '#5C6B57',  // Muted Text - 次要文本、时间戳
+          900: '#2C3628',  // Ink Text - 主标题、正文
+          950: '#1A2419',  // 深色模式深层背景
         },
-        charcoal: {
-          50: '#7D8289',
-          100: '#6B7077',
-          200: '#595E65',
-          300: '#4A4F55',
-          400: '#3A3F44',  // 主文本
-          500: '#2D3136',
-          600: '#212428',
-          700: '#16181B',
-          800: '#0C0D0F',
-          900: '#030405',
+
+        // 进行中状态 - Ochre (赭土黄)
+        ochre: {
+          50: '#FDF6EB',
+          100: '#FAEBD6',
+          200: '#E5D6A8',
+          300: '#E5A952',  // 主色 - 进行中、聚焦计时
+          400: '#D4943D',
+          500: '#C27F28',
+          600: '#A0651D',
+          700: '#7E4B12',
+          800: '#5C3107',
+          900: '#3A1700',
         },
+
+        // 阻塞/危险状态 - Terracotta (陶土红)
         terracotta: {
-          50: '#F5E6DD',
-          100: '#EAD0C3',
-          200: '#DFBAA7',
-          300: '#D4A48B',
-          400: '#C98E6F',
-          500: '#C17767',  // 陶土红/砖红
-          600: '#A85F4E',
-          700: '#8B4735',
-          800: '#6E2F1C',
-          900: '#511703',
+          50: '#FDF2F0',
+          100: '#FBE6E1',
+          200: '#F0CDC4',
+          300: '#E5B4A7',
+          400: '#D27D67',  // 主色 - 阻塞、逾期、危险操作
+          500: '#BC6250',
+          600: '#A14739',
+          700: '#862C22',
+          800: '#6B1112',
+          900: '#4F060A',
         },
-        olive: {
-          50: '#F2F4E8',
-          100: '#E3E8D4',
-          200: '#D4DBC0',
-          300: '#C5CEAC',
-          400: '#B6C198',
-          500: '#A7B484',  // 橄榄绿
-          600: '#96A676',
-          700: '#859868',
-          800: '#748A5A',
-          900: '#637C4C',
+
+        // AI 交互色 - Slate River (石板溪蓝)
+        'slate-river': {
+          50: '#F1F5F6',
+          100: '#E3EBED',
+          200: '#C7D5D9',
+          300: '#9DBABF',
+          400: '#6B8E9B',  // 主色 - AI 聊天气泡、AI 建议
+          500: '#567580',
+          600: '#415C65',
+          700: '#2C434A',
+          800: '#172A30',
+          900: '#021116',
         },
 
         // 别名 - 方便使用
-        'sand-100': '#F5F3F0',
-        'sand-200': '#EBE5D9',
-        'clay-100': '#DED6C7',
-        'clay-200': '#D1C7B5',
-        'clay-300': '#C4B8A3',
-        'clay-400': '#B7A991',
-        'clay-800': '#836D49',
-        'clay-900': '#765E37',
-        'charcoal-100': '#6B7077',
-        'charcoal-200': '#595E65',
-        'charcoal-300': '#4A4F55',
-        'charcoal-400': '#3A3F44',
-        'terracotta-50': '#F5E6DD',
-        'terracotta-100': '#EAD0C3',
-        'terracotta-200': '#DFBAA7',
-        'terracotta-300': '#D4A48B',
-        'terracotta-400': '#C98E6F',
-        'terracotta-600': '#A85F4E',
-        'terracotta-900': '#511703',
-        'olive-400': '#B6C198',
-        'olive-500': '#A7B484',
-        'olive-600': '#96A676',
-        'olive-900': '#637C4C',
-        'amber-400': '#D4A48B',
-        'violet-50': '#f5f3ff',
-        'violet-100': '#ede9fe',
-        'violet-900': '#4c1d95',
-        'slate-100': '#f1f5f9',
-        'slate-200': '#e2e8f0',
-        'slate-300': '#cbd5e1',
-        'slate-400': '#94a3b8',
-        'slate-500': '#64748b',
-        'slate-600': '#475569',
-        'slate-700': '#334155',
-        'slate-800': '#1e293b',
-        'slate-900': '#0f172a',
-        'slate-950': '#020617',
+        'green-50': '#F4F8F2',
+        'green-100': '#E8F5BD',
+        'green-200': '#C7EABB',
+        'green-300': '#A2CB8B',
+        'green-400': '#84B179',
+        'green-500': '#6A9662',
+        'green-600': '#507B4A',
+        'green-700': '#366032',
+        'green-800': '#2C3628',
+        'green-900': '#1C2B1D',
+        'neutral-50': '#FBFDF9',
+        'neutral-100': '#F0F3EC',
+        'neutral-200': '#E0E8DE',
+        'neutral-300': '#CDD9CC',
+        'neutral-400': '#B3C5AF',
+        'neutral-500': '#99B192',
+        'neutral-600': '#7F9D75',
+        'neutral-700': '#658958',
+        'neutral-800': '#5C6B57',
+        'neutral-900': '#2C3628',
+        'neutral-950': '#1A2419',
+        'ochre-300': '#E5A952',
+        'terracotta-400': '#D27D67',
+        'slate-river-400': '#6B8E9B',
 
-        // 保留原有颜色作为兼容
+        // 兼容颜色 - 保留部分原有颜色
         slate: {
-          850: '#1e293b',
+          50: '#f1f5f9',
+          100: '#e2e8f0',
+          200: '#cbd5e1',
+          300: '#94a3b8',
+          400: '#64748b',
+          500: '#475569',
+          600: '#334155',
+          700: '#1e293b',
+          800: '#0f172a',
+          900: '#020617',
           950: '#020617',
         },
         indigo: {
@@ -126,6 +133,18 @@ export default {
           800: '#3730a3',
           900: '#312e81',
         },
+        emerald: {
+          50: '#d1fae5',
+          100: '#a7f3d0',
+          200: '#6ee7b7',
+          300: '#34d399',
+          400: '#10b981',
+          500: '#059669',
+          600: '#047857',
+          700: '#065f46',
+          800: '#064e3b',
+          900: '#022c22',
+        },
         violet: {
           50: '#f5f3ff',
           100: '#ede9fe',
@@ -138,18 +157,56 @@ export default {
           800: '#5b21b6',
           900: '#4c1d95',
         },
+        fuchsia: {
+          50: '#fae8ff',
+          100: '#f5d0fe',
+          200: '#f0abfc',
+          300: '#e879f9',
+          400: '#d946ef',
+          500: '#c026d3',
+          600: '#a21caf',
+          700: '#86198f',
+          800: '#701a75',
+          900: '#4a044e',
+        },
+        amber: {
+          50: '#fef3c7',
+          100: '#fde68a',
+          200: '#fcd34d',
+          300: '#fbbf24',
+          400: '#f59e0b',
+          500: '#d97706',
+          600: '#b45309',
+          700: '#92400e',
+          800: '#78350f',
+          900: '#451a03',
+        },
+        cyan: {
+          50: '#cffafe',
+          100: '#a5f3fc',
+          200: '#67e8f9',
+          300: '#22d3ee',
+          400: '#06b6d4',
+          500: '#0891b2',
+          600: '#0e7490',
+          700: '#155e75',
+          800: '#164e63',
+          900: '#083344',
+        },
       },
       backgroundImage: {
-        'dot-pattern': "radial-gradient(#C17767 0.5px, transparent 0.5px)",
-        'dot-pattern-subtle': "radial-gradient(#C17767 0.3px, transparent 0.3px)",
-        'dot-pattern-dark': "radial-gradient(#8B9A46 0.5px, transparent 0.5px)",
-        'organic-pattern': "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI0MxNzc2NyIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')",
+        'dot-pattern': "radial-gradient(#84B179 0.5px, transparent 0.5px)",
+        'dot-pattern-subtle': "radial-gradient(#84B179 0.3px, transparent 0.3px)",
+        'dot-pattern-dark': "radial-gradient(#6A9662 0.5px, transparent 0.5px)",
+        'organic-pattern': "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzg0QjE3OSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')",
       },
       boxShadow: {
-        'soft': '0 2px 8px rgba(58, 63, 68, 0.08)',
-        'soft-lg': '0 8px 24px rgba(58, 63, 68, 0.12)',
-        'terracotta': '0 4px 12px rgba(193, 119, 103, 0.25)',
-        'olive': '0 4px 12px rgba(167, 180, 132, 0.25)',
+        'soft': '0 2px 8px rgba(44, 54, 40, 0.08)',
+        'soft-lg': '0 8px 24px rgba(44, 54, 40, 0.12)',
+        'green': '0 4px 12px rgba(132, 177, 121, 0.25)',
+        'ochre': '0 4px 12px rgba(229, 169, 82, 0.25)',
+        'terracotta': '0 4px 12px rgba(210, 125, 103, 0.25)',
+        'slate-river': '0 4px 12px rgba(107, 142, 155, 0.25)',
       },
       borderRadius: {
         'soft': '0.75rem',

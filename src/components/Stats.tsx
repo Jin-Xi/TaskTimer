@@ -54,20 +54,21 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
     return acc;
   }, [] as { name: string; value: number }[]).sort((a, b) => b.value - a.value).slice(0, 5);
 
-  const COLORS = ['#6366f1', '#10b981', '#64748b', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899'];
+  // 新配色方案：绿色系为主
+  const COLORS = ['#84B179', '#A2CB8B', '#E5A952', '#D27D67', '#6B8E9B', '#C7EABB', '#507B4A', '#E8F5BD'];
   const totalHours = (completedTasks.reduce((acc, t) => acc + t.totalTime, 0) / 1000 / 3600).toFixed(1);
 
   if (completedTasks.length === 0) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-10 animate-in fade-in">
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3.5rem] p-12 md:p-20 text-center shadow-sm flex flex-col items-center max-w-lg">
-          <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-8">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-[3.5rem] p-12 md:p-20 text-center shadow-sm flex flex-col items-center max-w-lg">
+          <div className="w-20 h-20 bg-neutral-50 dark:bg-neutral-800/50 rounded-full flex items-center justify-center mb-8">
             <span className="text-4xl grayscale opacity-50">📊</span>
           </div>
-          <h3 className="text-xl font-black text-slate-800 dark:text-white mb-3">
+          <h3 className="text-xl font-black text-neutral-900 dark:text-white mb-3">
              {language === 'zh-TW' ? '暫無數據' : '暂无数据'}
           </h3>
-          <p className="text-slate-500 font-medium leading-relaxed">
+          <p className="text-neutral-500 font-medium leading-relaxed">
             {language === 'zh-TW' ? '請先完成一些任務，統計數據將在此顯示。' : '请先完成一些任务，统计数据将在此显示。'}
           </p>
         </div>
@@ -77,69 +78,69 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
 
   return (
     <div className="w-full animate-in fade-in duration-700 px-2 pb-20">
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-slate-200/50 dark:border-slate-800/50 shadow-[0_20px_80px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.3)] rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 flex flex-col gap-6">
-        
-        <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
+      <div className="bg-white/80 dark:bg-neutral-900/80 backdrop-blur-3xl border border-neutral-200/50 dark:border-neutral-800/50 shadow-[0_20px_80px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.3)] rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 flex flex-col gap-6">
+
+        <div className="flex items-end justify-between border-b border-neutral-100 dark:border-neutral-800 pb-6">
            <div>
-              <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-black text-neutral-900 dark:text-white tracking-tight">
                 {t.analytics}
               </h2>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
+              <p className="text-[10px] text-neutral-400 font-black uppercase tracking-[0.2em] mt-2">
                 {language === 'zh-TW' ? '專注效率統計' : '专注效率统计'}
               </p>
            </div>
            <div className="flex gap-6">
               <div className="text-right">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.totalTime}</p>
-                <p className="text-2xl font-black text-indigo-600 tracking-tight">{totalHours}h</p>
+                <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest mb-1">{t.totalTime}</p>
+                <p className="text-2xl font-black text-green-600 tracking-tight">{totalHours}h</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.tasksCompleted}</p>
-                <p className="text-2xl font-black text-emerald-600 tracking-tight">{tasks.filter(t => t.status === TaskStatus.COMPLETED).length}</p>
+                <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest mb-1">{t.tasksCompleted}</p>
+                <p className="text-2xl font-black text-green-600 tracking-tight">{tasks.filter(t => t.status === TaskStatus.COMPLETED).length}</p>
               </div>
            </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-3xl border border-slate-100 dark:border-slate-800/50">
-            <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-2">{t.avgTaskTime}</p>
-            <p className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">
+          <div className="bg-neutral-50/50 dark:bg-neutral-800/30 p-5 rounded-3xl border border-neutral-100 dark:border-neutral-800/50">
+            <p className="text-[8px] text-neutral-400 uppercase font-black tracking-widest mb-2">{t.avgTaskTime}</p>
+            <p className="text-xl font-black text-neutral-700 dark:text-neutral-200 tabular-nums">
               {completedTasks.length ? Math.round((completedTasks.reduce((a, b) => a + b.totalTime, 0) / 1000 / 60) / completedTasks.length) : 0}m
             </p>
           </div>
-          <div className="bg-slate-50/50 dark:bg-slate-800/30 p-5 rounded-3xl border border-slate-100 dark:border-slate-800/50">
-            <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-2">{t.mostActiveTag}</p>
-            <p className="text-sm font-black text-slate-700 dark:text-slate-200 truncate">{categoryData[0]?.name || 'N/A'}</p>
+          <div className="bg-neutral-50/50 dark:bg-neutral-800/30 p-5 rounded-3xl border border-neutral-100 dark:border-neutral-800/50">
+            <p className="text-[8px] text-neutral-400 uppercase font-black tracking-widest mb-2">{t.mostActiveTag}</p>
+            <p className="text-sm font-black text-neutral-700 dark:text-neutral-200 truncate">{categoryData[0]?.name || 'N/A'}</p>
           </div>
-          <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-5 rounded-3xl border border-indigo-100/50 dark:border-indigo-900/30">
-            <p className="text-[8px] text-indigo-500/70 uppercase font-black tracking-widest mb-2">专注时长</p>
-            <p className="text-xl font-black text-indigo-600">{(weeklyDurationData.reduce((a,b) => a + b.duration, 0) / 60).toFixed(1)}h</p>
+          <div className="bg-green-50/50 dark:bg-green-900/10 p-5 rounded-3xl border border-green-100/50 dark:border-green-900/30">
+            <p className="text-[8px] text-green-500/70 uppercase font-black tracking-widest mb-2">专注时长</p>
+            <p className="text-xl font-black text-green-600">{(weeklyDurationData.reduce((a,b) => a + b.duration, 0) / 60).toFixed(1)}h</p>
           </div>
-           <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-3xl border border-emerald-100/50 dark:border-emerald-900/30">
-            <p className="text-[8px] text-emerald-500/70 uppercase font-black tracking-widest mb-2">标达成数</p>
-            <p className="text-xl font-black text-emerald-600">{completedTasks.filter(t => t.logs.some(l => l.start > weekAgo)).length}</p>
+           <div className="bg-green-50/50 dark:bg-green-900/10 p-5 rounded-3xl border border-green-100/50 dark:border-green-900/30">
+            <p className="text-[8px] text-green-500/70 uppercase font-black tracking-widest mb-2">标达成数</p>
+            <p className="text-xl font-black text-green-600">{completedTasks.filter(t => t.logs.some(l => l.start > weekAgo)).length}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-slate-50/30 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50">
+          <div className="bg-neutral-50/30 dark:bg-neutral-800/20 p-6 rounded-3xl border border-neutral-100 dark:border-neutral-800/50">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-4 bg-indigo-500 rounded-full" />
-              <h3 className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">{t.weeklyDist}</h3>
+              <div className="w-1 h-4 bg-green-500 rounded-full" />
+              <h3 className="text-xs font-black text-neutral-700 dark:text-neutral-200 uppercase tracking-widest">{t.weeklyDist}</h3>
             </div>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyDurationData} layout="vertical" margin={{ left: 10, right: 10 }}>
                   <XAxis type="number" hide />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    width={90} 
-                    tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }} 
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={90}
+                    tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '0.75rem', fontSize: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
@@ -151,24 +152,24 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
             </div>
           </div>
 
-          <div className="bg-slate-50/30 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50">
+          <div className="bg-neutral-50/30 dark:bg-neutral-800/20 p-6 rounded-3xl border border-neutral-100 dark:border-neutral-800/50">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-              <h3 className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">{t.totalDist}</h3>
+              <div className="w-1 h-4 bg-green-500 rounded-full" />
+              <h3 className="text-xs font-black text-neutral-700 dark:text-neutral-200 uppercase tracking-widest">{t.totalDist}</h3>
             </div>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={totalDurationData} layout="vertical" margin={{ left: 10, right: 10 }}>
                   <XAxis type="number" hide />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    width={90} 
-                    tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }} 
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={90}
+                    tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '0.75rem', fontSize: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
@@ -181,10 +182,10 @@ export const Stats: React.FC<StatsProps> = ({ language, tasks }) => {
           </div>
         </div>
 
-        <div className="bg-slate-50/30 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50">
+        <div className="bg-neutral-50/30 dark:bg-neutral-800/20 p-6 rounded-3xl border border-neutral-100 dark:border-neutral-800/50">
            <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-4 bg-rose-500 rounded-full" />
-              <h3 className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">{t.timeByTag}</h3>
+              <div className="w-1 h-4 bg-terracotta-400 rounded-full" />
+              <h3 className="text-xs font-black text-neutral-700 dark:text-neutral-200 uppercase tracking-widest">{t.timeByTag}</h3>
            </div>
            <div className="h-32 w-full">
               <ResponsiveContainer width="100%" height="100%">

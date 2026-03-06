@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec instructions design --change \"migrate-ui-to-heroui\" --json)",
+      "Bash(openspec instructions specs --change \"migrate-ui-to-heroui\" --json)",
+      "Bash(openspec instructions tasks --change \"migrate-ui-to-heroui\" --json)",
+      "Bash(openspec status --change \"migrate-ui-to-heroui\")",
+      "Bash(openspec instructions apply --change \"migrate-ui-to-heroui\" --json)",
+      "Bash(npm install @nextui-org/react framer-motion --save)",
+      "Bash(npm uninstall @nextui-org/react)",
+      "Bash(npm install @heroui/react --save)",
+      "Bash(grep -A5 '\"\"dependencies\"\"' package.json)",
+      "Bash(grep -r \"CSS Variable\\\\|--.*-color\" node_modules/@heroui/button/dist/*.css)",
+      "Bash(grep -n \"variant=\" src/components/*.tsx)",
+      "Read(//e/which/e/Code/**)",
+      "Bash(sed -i '6,7s/import { Button } from ''''\\\\.\\\\/Button'''';$/import { Button } from ''''@heroui\\\\/react'''';/' src/components/ProjectManager.tsx)",
+      "Bash(sed -i '7s/import { Badge } from ''''\\\\.\\\\/Badge'''';$/import { Chip } from ''''@heroui\\\\/react'''';/' src/components/ProjectManager.tsx)",
+      "Bash(sed -i '711s/<Badge /<Chip /' src/components/ProjectManager.tsx)",
+      "Bash(sed -i '711s/color={categories\\\\.find\\(c => c\\\\.name === tag\\)\\\\?\\\\.color || ''''slate''''}/color={categories.find\\(c => c.name === tag\\)?.color === ''''terracotta'''' ? ''''danger'''' : categories.find\\(c => c.name === tag\\)?.color === ''''ochre'''' ? ''''warning'''' : ''''default''''}/' src/components/ProjectManager.tsx)",
+      "Bash(grep -l \"from ''\\\\./Button''\\\\|from ''./Badge''\" src/components/*.tsx)",
+      "Bash(sed -n '1,10p' src/components/AISettingsModal.tsx)",
+      "Bash(sed -n '170,180p' src/components/AISettingsModal.tsx)",
+      "Bash(grep -r \"from ''\\\\./Button''\\\\|from ''./Badge''\" src/components/)",
+      "Bash(perl -i -pe 's/color={categories\\\\.find\\\\\\(c => c\\\\.name === tag\\\\\\)\\\\?\\\\.color \\\\|\\\\| ''''slate''''}/color={\\(\\(categories.find\\(c => c.name === tag\\)?.color === ''''terracotta'''' ? ''''danger'''' : categories.find\\(c => c.name === tag\\)?.color === ''''ochre'''' ? ''''warning'''' : ''''default''''\\) as \"\"success\"\" | \"\"warning\"\" | \"\"danger\"\" | \"\"default\"\"\\)}/g' src/components/ProjectManager.tsx)",
+      "Bash(grep -rn \"isLoading\\\\|isDisabled\" src/components/*.tsx)",
+      "Bash(grep -r \"import.*Button\\\\|import.*Badge\" src/components/*.tsx)",
+      "Bash(npm run test)",
+      "Bash(mkdir -p .backup)",
+      "Bash(cp src/components/Button.tsx .backup/Button.tsx.backup)",
+      "Bash(cp src/components/Badge.tsx .backup/Badge.tsx.backup)",
+      "Bash(rm src/components/Button.tsx src/components/Badge.tsx)"
+    ]
+  }
+}

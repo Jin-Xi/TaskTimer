@@ -287,24 +287,23 @@ export const AI_MODELS: Record<string, { name: string; models: string[]; default
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'c1', name: '学习', color: 'indigo' },
-  { id: 'c2', name: '工作', color: 'slate' },
-  { id: 'c3', name: '运动', color: 'emerald' },
-  { id: 'c4', name: '创意', color: 'rose' }
+  { id: 'c1', name: '学习', color: 'green' },
+  { id: 'c2', name: '工作', color: 'ochre' },
+  { id: 'c3', name: '计划', color: 'slate-river' },
+  { id: 'c4', name: '健康', color: 'green' }
 ];
 
 export const TAG_COLORS = [
-  'indigo', 'emerald', 'slate', 'rose', 'amber', 'cyan', 'violet', 'fuchsia'
+  'green', 'ochre', 'slate-river', 'amber', 'cyan'
 ];
 
 // Color hex values for inline styles
 export const COLOR_HEX_MAP: Record<string, { main: string; light: string; lighter: string; dark: string; bg: string }> = {
+  green: { main: '#84B179', light: '#A2CB8B', lighter: '#C7EABB', dark: '#507B4A', bg: '#F4F8F2' },
+  ochre: { main: '#E5A952', light: '#E5D6A8', lighter: '#FAEBD6', dark: '#C27F28', bg: '#FDF6EB' },
+  'slate-river': { main: '#6B8E9B', light: '#9DBABF', lighter: '#E3EBED', dark: '#415C65', bg: '#F1F5F6' },
+  terracotta: { main: '#D27D67', light: '#E5B4A7', lighter: '#FBE6E1', dark: '#BC6250', bg: '#FDF2F0' },
   indigo: { main: '#6366f1', light: '#818cf8', lighter: '#c7d2fe', dark: '#4f46e5', bg: '#eef2ff' },
-  emerald: { main: '#10b981', light: '#34d399', lighter: '#a7f3d0', dark: '#059669', bg: '#d1fae5' },
-  slate: { main: '#64748b', light: '#94a3b8', lighter: '#cbd5e1', dark: '#475569', bg: '#f1f5f9' },
-  rose: { main: '#f43f5e', light: '#fb7185', lighter: '#fecdd3', dark: '#e11d48', bg: '#ffe4e6' },
   amber: { main: '#f59e0b', light: '#fbbf24', lighter: '#fde68a', dark: '#d97706', bg: '#fef3c7' },
   cyan: { main: '#06b6d4', light: '#22d3ee', lighter: '#a5f3fc', dark: '#0891b2', bg: '#cffafe' },
-  violet: { main: '#8b5cf6', light: '#a78bfa', lighter: '#ddd6fe', dark: '#7c3aed', bg: '#ede9fe' },
-  fuchsia: { main: '#d946ef', light: '#e879f9', lighter: '#f5d0fe', dark: '#c026d3', bg: '#fae8ff' },
 };

@@ -1,0 +1,20 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green Circle -->
+  <circle cx="100" cy="80" r="60" fill="#4ade80" />
+
+  <!-- Simple Hourglass -->
+  <path
+    d="M75 55L125 55L100 80L125 105L75 105L100 80Z"
+    fill="white"
+  />
+
+  <!-- Text -->
+  <text x="100" y="165" text-anchor="middle" font-family="'Inter', -apple-system, sans-serif" font-size="28" font-weight="800" fill="#2C3628">
+    Chrono<tspan fill="#4ade80">Flow</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="100" y="188" text-anchor="middle" font-family="'Inter', -apple-system, sans-serif" font-size="11" font-weight="500" fill="#5C6B57" letter-spacing="2">
+    AI TASK TIMER
+  </text>
+</svg>

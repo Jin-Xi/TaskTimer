@@ -60,6 +60,7 @@ export interface Task {
   milestones: Milestone[];
   projectId?: string;
   parentTaskIds: string[];
+  isTerminal?: boolean; // 是否为终止节点
 }
 
 export interface AIAnalysisResult {

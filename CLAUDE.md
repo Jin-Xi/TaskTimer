@@ -112,3 +112,6 @@ Based on git history, the project recently underwent:
 4. Storage service emits update event
 5. Subscribed components re-render with new data
 6. LocalStorage ensures persistence across sessions
+
+# 行为规范
+- 你可以随时使用 npm run dev 启动服务来验证你的修改。但是，在你完成任务并向我输出最终结果之前，你必须终止该开发服务器的进程。绝对不能让它在后台持续运行。
