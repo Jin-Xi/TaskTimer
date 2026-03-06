@@ -2,8 +2,7 @@
 import React, { useState, useId } from 'react';
 import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, PlusCircle, CheckCircle2, Circle, Layers, Zap, Clock, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from '../types';
-import { Button } from '@heroui/react';
-import { Chip } from '@heroui/react';
+import { Button, Chip, Checkbox, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { TRANSLATIONS, TAG_COLORS } from '../constants';
 
 interface TaskListProps {
@@ -163,6 +162,14 @@ export const TaskList: React.FC<TaskListProps> = ({
       return cat ? cat.color : 'slate';
   };
 
+  const getChipColor = (tagName: string): 'success' | 'warning' | 'danger' | 'default' => {
+    const color = getTagColor(tagName);
+    if (color === 'green') return 'success';
+    if (color === 'ochre') return 'warning';
+    if (color === 'terracotta') return 'danger';
+    return 'default';
+  };
+
   const activeTaskForTagging = tasks.find(t => t.id === taskToTag);
 
   const filterIcons = {
@@ -202,36 +209,40 @@ export const TaskList: React.FC<TaskListProps> = ({
            )}
 
            <div className="flex-1 flex items-center p-2 gap-3 overflow-hidden">
-            {/* Status Button / Checkbox - Compact Size */}
-            <button
-              disabled={!isSelectionMode && isLocked}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isSelectionMode) toggleSelection(task.id);
-                else onSelect(task.id);
-              }}
-              className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm group/btn relative overflow-hidden ${
-                isSelectionMode
-                  ? isSelected
-                    ? 'bg-green-400 text-white'
-                    : 'bg-white dark:bg-neutral-950 text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-green-400'
-                  : isCompleted
+            {/* Status Button / Checkbox - Using HeroUI Checkbox for selection mode */}
+            {isSelectionMode ? (
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                <Checkbox
+                  isSelected={isSelected}
+                  onValueChange={() => toggleSelection(task.id)}
+                  isDisabled={isLocked}
+                  classNames={{
+                    wrapper: 'w-8 h-8 rounded-lg',
+                  }}
+                />
+              </div>
+            ) : (
+              <Button
+                isDisabled={isLocked}
+                isIconOnly
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(task.id);
+                }}
+                className={`shrink-0 w-8 h-8 min-w-0 rounded-lg shadow-sm group/btn ${
+                  isCompleted
                     ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
                     : isRunning
-                    ? 'bg-ochre-300 text-white shadow-ochre/40'
+                    ? 'bg-ochre-300 text-white'
                     : isLocked
-                    ? 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-600 cursor-not-allowed'
+                    ? 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-600'
                     : 'bg-neutral-50 text-neutral-400 hover:bg-green-500 hover:text-white dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-green-600'
-              }`}
-            >
-              <div className={`transition-transform duration-300 ${isRunning ? 'scale-100' : 'group-hover/btn:scale-110'}`}>
-                 {isSelectionMode ? (
-                    isSelected ? <Check className="w-4 h-4" /> : <div className="w-4 h-4" />
-                 ) : (
-                    isCompleted ? <RotateCcw className="w-3.5 h-3.5" /> : isRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : isLocked ? <Lock className="w-3 h-3" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                 )}
-              </div>
-            </button>
+                }`}
+              >
+                {isCompleted ? <RotateCcw className="w-3.5 h-3.5" /> : isRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : isLocked ? <Lock className="w-3 h-3" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+              </Button>
+            )}
 
             {/* Task Info - Compact Layout */}
             <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
@@ -254,9 +265,9 @@ export const TaskList: React.FC<TaskListProps> = ({
                     )}
 
                     {(task.tags || []).map(tag => (
-                      <span key={tag} className={`text-[9px] px-1.5 rounded-sm bg-slate-100 dark:bg-slate-800 text-neutral-500 dark:text-neutral-400`}>
+                      <Chip key={tag} color={getChipColor(tag)} size="sm" className="h-5 text-[9px] px-1.5 min-h-0">
                         {tag}
-                      </span>
+                      </Chip>
                     ))}
                  </div>
                )}
@@ -274,28 +285,38 @@ export const TaskList: React.FC<TaskListProps> = ({
 
                {!isSelectionMode && (
                  <div className="flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-all sm:translate-x-2 group-hover:translate-x-0">
-                     <button
+                     <Button
+                       isIconOnly
+                       size="sm"
+                       variant="light"
                        onClick={(e) => { e.stopPropagation(); setTaskToTag(task.id); }}
-                       className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-green-500 transition-colors hidden sm:block"
+                       className="hidden sm:block"
                      >
                        <TagIcon className="w-3.5 h-3.5" />
-                     </button>
+                     </Button>
 
-                     <button
+                     <Button
+                       isIconOnly
+                       size="sm"
+                       variant={isCompleted ? "solid" : "light"}
+                       color={isCompleted ? "success" : "default"}
                        onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { status: isCompleted ? TaskStatus.IDLE : TaskStatus.COMPLETED }); }}
-                       className={`p-1.5 rounded-lg transition-all ${isCompleted ? 'text-green-500 bg-green-50 dark:bg-green-900/20' : 'text-neutral-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
                        title={isCompleted ? "Mark as Incomplete" : "Mark as Done"}
                      >
                        {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                     </button>
+                     </Button>
 
-                     <button
-                        onClick={(e) => { e.stopPropagation(); if(window.confirm('Delete this task?')) onDelete(task.id); }}
-                        className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all hidden sm:block"
-                        title="Delete Task"
+                     <Button
+                       isIconOnly
+                       size="sm"
+                       color="danger"
+                       variant="light"
+                       onClick={(e) => { e.stopPropagation(); if(window.confirm('Delete this task?')) onDelete(task.id); }}
+                       className="hidden sm:block"
+                       title="Delete Task"
                      >
                        <Trash2 className="w-3.5 h-3.5" />
-                     </button>
+                     </Button>
                  </div>
                )}
             </div>
@@ -349,28 +370,36 @@ export const TaskList: React.FC<TaskListProps> = ({
                </div>
 
                {isSelectionMode && selectedIds.size > 0 ? (
-                  <button
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    color="danger"
                     onClick={handleBulkDelete}
-                    className="p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all shadow-sm animate-in zoom-in"
+                    className="animate-in zoom-in"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
                ) : (
                   <>
-                    <button
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant={isSelectionMode ? "solid" : "bordered"}
+                      color={isSelectionMode ? "success" : "default"}
                       onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }}
-                      className={`p-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-green-500 border-green-500 text-white' : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-800 hover:text-terracotta-500'}`}
                       title="Select"
                     >
                       {isSelectionMode ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="bordered"
                       onClick={() => setIsManagingTags(true)}
-                      className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-neutral-800 hover:text-terracotta-500 transition-all"
                       title={t.manageCategories}
                     >
                       <TagIcon className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   </>
                )}
             </div>
@@ -392,12 +421,15 @@ export const TaskList: React.FC<TaskListProps> = ({
                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-8 py-2.5 text-sm outline-none focus:border-green-500/50 focus:ring-2 focus:ring-green-500/10 transition-all font-medium text-neutral-900 dark:text-neutral-200 placeholder:text-neutral-800 shadow-sm"
               />
               {newTitle && (
-                  <button
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    color="success"
                     onClick={() => handleSubmitTask()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors shadow-md animate-in fade-in zoom-in"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 animate-in fade-in zoom-in"
                   >
                       <ChevronRight className="w-3 h-3" />
-                  </button>
+                  </Button>
               )}
            </div>
          )}
@@ -449,100 +481,147 @@ export const TaskList: React.FC<TaskListProps> = ({
          )}
       </div>
 
-      {/* Tagging Modal */}
-      {taskToTag && activeTaskForTagging && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-neutral-950/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl p-5 border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
-               <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-black uppercase tracking-widest text-xs">{t.manageCategories}</h3>
-                  <button onClick={() => setTaskToTag(null)} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800"><X className="w-4 h-4" /></button>
-               </div>
-
-               <div className="flex flex-wrap gap-2 mb-5">
-                  {categories?.map(cat => (
-                     <Chip
-                       key={cat.id}
-                       color={getTagColor(cat.name) === 'green' ? 'success' : getTagColor(cat.name) === 'ochre' ? 'warning' : getTagColor(cat.name) === 'terracotta' ? 'danger' : 'default'}
-                       onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
-                       className={`px-2.5 py-1 cursor-pointer transition-all text-[10px] ${
-                         (activeTaskForTagging.tags || []).includes(cat.name)
-                           ? 'border-2 border-green-500 dark:border-green-400'
-                           : 'opacity-60 hover:opacity-100'
-                       }`}
-                     >
-                       {cat.name}
-                     </Chip>
-                  ))}
-               </div>
-               <div className="text-center">
-                  <Button
-                    variant="flat"
-                    onClick={() => setTaskToTag(null)}
-                    className="w-full rounded-xl py-2 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700"
+      {/* Tagging Modal - Using HeroUI Modal */}
+      <Modal
+        isOpen={!!taskToTag}
+        onClose={() => setTaskToTag(null)}
+        size="sm"
+        classNames={{
+          wrapper: "bg-neutral-950/60 backdrop-blur-sm",
+          base: "rounded-2xl",
+        }}
+        motionProps={{
+          variants: {
+            enter: {
+              scale: 1,
+              opacity: 1,
+              transition: { duration: 0.2 }
+            },
+            exit: {
+              scale: 0.95,
+              opacity: 0,
+              transition: { duration: 0.15 }
+            }
+          }
+        }}
+      >
+        <ModalContent className="bg-white dark:bg-slate-900 text-neutral-900 dark:text-white">
+          <ModalHeader className="flex items-center justify-between pb-0">
+            <h3 className="font-black uppercase tracking-widest text-xs">{t.manageCategories}</h3>
+          </ModalHeader>
+          <ModalBody>
+            {activeTaskForTagging && (
+              <div className="flex flex-wrap gap-2">
+                {categories?.map(cat => (
+                  <Chip
+                    key={cat.id}
+                    color={getChipColor(cat.name)}
+                    onClick={() => toggleTaskTag(activeTaskForTagging, cat.name)}
+                    className={`px-2.5 py-1 cursor-pointer transition-all text-[10px] ${
+                      (activeTaskForTagging.tags || []).includes(cat.name)
+                        ? 'border-2 border-green-500 dark:border-green-400'
+                        : 'opacity-60 hover:opacity-100'
+                    }`}
                   >
-                    {t.saveConfig}
+                    {cat.name}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              onPress={() => setTaskToTag(null)}
+              className="w-full rounded-xl"
+            >
+              {t.saveConfig}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Manage Global Tags Modal - Using HeroUI Modal */}
+      <Modal
+        isOpen={isManagingTags}
+        onClose={() => setIsManagingTags(false)}
+        size="sm"
+        classNames={{
+          wrapper: "bg-neutral-950/60 backdrop-blur-sm",
+          base: "rounded-3xl",
+        }}
+        motionProps={{
+          variants: {
+            enter: {
+              scale: 1,
+              opacity: 1,
+              transition: { duration: 0.2 }
+            },
+            exit: {
+              scale: 0.95,
+              opacity: 0,
+              transition: { duration: 0.15 }
+            }
+          }
+        }}
+      >
+        <ModalContent className="bg-white dark:bg-slate-900 text-neutral-900 dark:text-white">
+          <ModalHeader className="flex items-center justify-between">
+            <h3 className="font-black uppercase tracking-tight text-lg">{t.manageCategories}</h3>
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-2 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
+              {categories?.map(cat => (
+                <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-slate-100 dark:border-slate-800">
+                  <Chip color={getChipColor(cat.name)} className="px-2.5 py-0.5 text-[10px]">
+                    {cat.name}
+                  </Chip>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    color="danger"
+                    variant="light"
+                    onClick={() => { if(window.confirm(t.deleteCategoryConfirm)) onDeleteCategory(cat.id); }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-               </div>
+                </div>
+              ))}
             </div>
-         </div>
-      )}
 
-      {/* Manage Global Tags Modal */}
-      {isManagingTags && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-neutral-950/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl p-6 border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
-               <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-black uppercase tracking-tight text-lg">{t.manageCategories}</h3>
-                  <button onClick={() => setIsManagingTags(false)} className="p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800"><X className="w-5 h-5" /></button>
-               </div>
-
-               <div className="space-y-2 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
-                  {categories?.map(cat => (
-                     <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-slate-100 dark:border-slate-800">
-                        <Chip
-                          color={getTagColor(cat.name) === 'green' ? 'success' : getTagColor(cat.name) === 'ochre' ? 'warning' : getTagColor(cat.name) === 'terracotta' ? 'danger' : 'default'}
-                          className="px-2.5 py-0.5 text-[10px]"
-                        >
-                          {cat.name}
-                        </Chip>
-                        <button onClick={() => { if(window.confirm(t.deleteCategoryConfirm)) onDeleteCategory(cat.id); }} className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                     </div>
-                  ))}
-               </div>
-
-               <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-neutral-800 mb-2 block">{t.newCategory}</label>
-                  <div className="flex items-center gap-2 mb-3">
-                     <div className="flex-1 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-xl p-2.5 flex items-center gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full bg-${newTagColor}-500 shrink-0`} />
-                        <input
-                           className="bg-transparent border-none outline-none text-xs font-bold w-full text-neutral-900 dark:text-neutral-200"
-                           placeholder={t.categoryName}
-                           value={newTagName}
-                           onChange={(e) => setNewTagName(e.target.value)}
-                        />
-                     </div>
-                     <Button
-                       isDisabled={!newTagName.trim()}
-                       onPress={() => { if(newTagName.trim()) { onAddCategory(newTagName.trim(), newTagColor); setNewTagName(''); } }}
-                       className="rounded-xl w-10 h-10 p-0 flex items-center justify-center shrink-0 bg-green-400 text-white"
-                     >
-                       <Plus className="w-4 h-4" />
-                     </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                     {TAG_COLORS.map(c => (
-                        <button
-                           key={c}
-                           onClick={() => setNewTagColor(c)}
-                           className={`w-5 h-5 rounded-md bg-${c}-500 transition-all ${newTagColor === c ? 'ring-2 ring-offset-2 ring-neutral-300 dark:ring-neutral-600 dark:ring-offset-neutral-900 scale-110' : 'opacity-40 hover:opacity-100'}`}
-                        />
-                     ))}
-                  </div>
-               </div>
+            <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
+              <label className="text-[9px] font-black uppercase tracking-widest text-neutral-800 mb-2 block">{t.newCategory}</label>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800/50 rounded-xl p-2.5 flex items-center gap-2">
+                  <div className={`w-2.5 h-2.5 rounded-full bg-${newTagColor}-500 shrink-0`} />
+                  <input
+                    className="bg-transparent border-none outline-none text-xs font-bold w-full text-neutral-900 dark:text-neutral-200"
+                    placeholder={t.categoryName}
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                  />
+                </div>
+                <Button
+                  isDisabled={!newTagName.trim()}
+                  onPress={() => { if(newTagName.trim()) { onAddCategory(newTagName.trim(), newTagColor); setNewTagName(''); } }}
+                  className="rounded-xl w-10 h-10 p-0 bg-green-400 text-white"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {TAG_COLORS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setNewTagColor(c)}
+                    className={`w-5 h-5 rounded-md bg-${c}-500 transition-all ${newTagColor === c ? 'ring-2 ring-offset-2 ring-neutral-300 dark:ring-neutral-600 dark:ring-offset-neutral-900 scale-110' : 'opacity-40 hover:opacity-100'}`}
+                  />
+                ))}
+              </div>
             </div>
-         </div>
-      )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };

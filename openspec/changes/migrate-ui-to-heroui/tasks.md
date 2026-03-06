@@ -34,24 +34,24 @@
 - [x] 3.9 Delete `src/components/Button.tsx` (backup first)
 - [x] 3.10 Delete `src/components/Badge.tsx` (backup first)
 - [x] 3.11 Run full test suite to verify no regressions (15 tests passed)
-- [ ] 3.12 Create PR for Phase 2 review and merge
+- [x] 3.12 Create PR for Phase 2 review and merge (commit feaff11)
 
 ## 4. Phase 3: Task Management UI Components
 
-- [ ] 4.1 Create feature branch `feature/heroui-phase3-task-ui`
-- [ ] 4.2 Refactor TaskList task card to use HeroUI `Card` component
-- [ ] 4.3 Implement task status button using HeroUI `Button` with isIconOnly
-- [ ] 4.4 Replace milestone count and tags with HeroUI `Chip` components
-- [ ] 4.5 Implement action buttons (tag, complete, delete) using HeroUI `Button` with variant="light"
-- [ ] 4.6 Implement selection mode with HeroUI `Checkbox` component
-- [ ] 4.7 Add hover effects and transitions using Framer Motion or HeroUI's motion props
+- [x] 4.1 Create feature branch `feature/heroui-phase3-task-ui`
+- [ ] 4.2 Refactor TaskList task card to use HeroUI `Card` component (kept custom for complex styling)
+- [x] 4.3 Implement task status button using HeroUI `Button` with isIconOnly
+- [x] 4.4 Replace milestone count and tags with HeroUI `Chip` components
+- [x] 4.5 Implement action buttons (tag, complete, delete) using HeroUI `Button` with variant="light"
+- [x] 4.6 Implement selection mode with HeroUI `Checkbox` component
+- [x] 4.7 Add hover effects and transitions using Framer Motion or HeroUI's motion props
 - [ ] 4.8 Test all task states: idle, running, completed, locked
 - [ ] 4.9 Test selection mode: single select, bulk select, bulk delete
 - [ ] 4.10 Verify responsive layout on mobile and desktop
 - [ ] 4.11 Test dark mode for all task card states
 - [ ] 4.12 Refactor `CollapsibleGroup` component (consider HeroUI `Accordion` or keep custom)
-- [ ] 4.13 Replace tagging modal with HeroUI `Modal` if not already done
-- [ ] 4.14 Replace tag management modal with HeroUI `Modal`
+- [x] 4.13 Replace tagging modal with HeroUI `Modal`
+- [x] 4.14 Replace tag management modal with HeroUI `Modal`
 - [ ] 4.15 Run full test suite for TaskList functionality
 - [ ] 4.16 Create PR for Phase 3 review and merge
 
