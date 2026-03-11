@@ -195,10 +195,7 @@ export default {
         },
       },
       backgroundImage: {
-        'dot-pattern': "radial-gradient(#84B179 0.5px, transparent 0.5px)",
-        'dot-pattern-subtle': "radial-gradient(#84B179 0.3px, transparent 0.3px)",
-        'dot-pattern-dark': "radial-gradient(#6A9662 0.5px, transparent 0.5px)",
-        'organic-pattern': "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzg0QjE3OSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')",
+        // Removed: dot-pattern, dot-pattern-subtle, dot-pattern-dark, organic-pattern (Phase 9: clean UI)
       },
       boxShadow: {
         'soft': '0 2px 8px rgba(44, 54, 40, 0.08)',

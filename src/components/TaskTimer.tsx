@@ -197,7 +197,12 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
                  font-mono font-bold tabular-nums tracking-tighter leading-none select-none
                  bg-clip-text text-transparent bg-gradient-to-b
                  ${isBreak ? 'from-ochre-300 to-ochre-400' : isRunning ? 'from-green-400 to-green-600 dark:from-green-300 dark:to-green-500' : 'from-neutral-400 to-neutral-600'}
-                 text-[clamp(2rem,12vw,8rem)] sm:text-[clamp(2.5rem,10vw,9rem)] md:text-6xl lg:text-7xl xl:text-9xl 2xl:text-[10rem]
+                 text-[length:clamp(1.5rem,6vw,3.5rem)]
+                 sm:text-[length:clamp(2rem,5vw,4rem)]
+                 md:text-5xl
+                 lg:text-6xl
+                 xl:text-7xl
+                 max-w-full overflow-hidden
                  transition-all duration-300 drop-shadow-sm
               `}>
                 {formatTime(isBreak ? (POMODORO_BREAK_MS - sessionElapsed) : elapsed)}

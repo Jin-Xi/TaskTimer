@@ -63,25 +63,6 @@ body {
   color: var(--color-text-primary);
 }
 
-/* 点阵背景 - 自然风格 */
-.bg-dots {
-  background-image: radial-gradient(var(--color-accent-terracotta) 0.5px, transparent 0.5px);
-  background-size: 24px 24px;
-}
-
-.dark .bg-dots {
-  background-image: radial-gradient(var(--color-accent-olive) 0.5px, transparent 0.5px);
-}
-
-.bg-dot-pattern {
-  background-image: radial-gradient(var(--color-accent-terracotta) 0.5px, transparent 0.5px);
-  background-size: 24px 24px;
-}
-
-.dark .bg-dot-pattern {
-  background-image: radial-gradient(var(--color-accent-olive) 0.5px, transparent 0.5px);
-}
-
 /* ========================================
    组件样式 - 自然手工风格
    ======================================== */
@@ -251,4 +232,70 @@ body {
 
 .bg-gradient-olive {
   background: linear-gradient(135deg, #A7B484 0%, #8B9A46 100%);
+}
+
+/* ========================================
+   Motion Polish - Button Animations
+   ======================================== */
+
+/* Button press animation for tactile feedback */
+button.motion-press,
+.motion-press button {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button.motion-press:active,
+.motion-press button:active {
+  transform: scale(0.95);
+}
+
+/* Button hover animation for visual feedback */
+button.motion-hover,
+.motion-hover button {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button.motion-hover:hover,
+.motion-hover button:hover {
+  transform: scale(1.02);
+}
+
+/* Combined press and hover animation */
+button.motion-animate,
+.motion-animate button {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button.motion-animate:hover,
+.motion-animate button:hover {
+  transform: scale(1.02);
+}
+
+button.motion-animate:active,
+.motion-animate button:active {
+  transform: scale(0.95);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  button.motion-press,
+  .motion-press button,
+  button.motion-hover,
+  .motion-hover button,
+  button.motion-animate,
+  .motion-animate button {
+    transition: none;
+    transform: none;
+  }
+
+  button.motion-press:active,
+  .motion-press button:active,
+  button.motion-hover:hover,
+  .motion-hover button:hover,
+  button.motion-animate:hover,
+  .motion-animate button:hover,
+  button.motion-animate:active,
+  .motion-animate button:active {
+    transform: none;
+  }
 }

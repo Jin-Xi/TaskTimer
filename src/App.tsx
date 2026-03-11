@@ -2,17 +2,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
-import { 
-  subscribeToTasks, 
-  subscribeToCategories, 
-  subscribeToProjects, 
-  addTask, 
-  updateTask, 
-  deleteTask, 
+import {
+  subscribeToTasks,
+  subscribeToCategories,
+  subscribeToProjects,
+  addTask,
+  updateTask,
+  deleteTask,
   deleteTasks,
-  addCategory, 
-  deleteCategory, 
-  addProject, 
+  addCategory,
+  deleteCategory,
+  addProject,
   updateProject,
   deleteProject,
   deleteTasksByProjectId,
@@ -26,6 +26,11 @@ import { AIProjectGenerator } from './components/AIProjectGenerator';
 import { ProjectManager } from './components/ProjectManager';
 import { FullscreenFocus } from './components/FullscreenFocus';
 import { AISettingsModal } from './components/AISettingsModal';
+import { Drawer } from './components/Drawer';
+import { TimerToast } from './components/TimerToast';
+import { AnimatePresence } from 'framer-motion';
+import { AnimatedPage } from './animations';
+import { GlobalTimerIndicator } from './components/GlobalTimerIndicator';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
 
 const generateUUID = () => {
@@ -44,10 +49,24 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
+  const [tabDirection, setTabDirection] = useState(1);
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isTaskListOpen, setIsTaskListOpen] = useState(true);
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isTaskListOpen, setIsTaskListOpen] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+
+  // Drawer exclusive logic
+  const handleOpenNav = () => {
+    setIsNavOpen(true);
+    setIsTaskListOpen(false);
+  };
+
+  const handleOpenTaskList = () => {
+    setIsTaskListOpen(true);
+    setIsNavOpen(false);
+  };
 
   const [language, setLanguage] = useState<'zh-CN' | 'zh-TW'>(() => {
     return (localStorage.getItem('chrono_lang') as 'zh-CN' | 'zh-TW') || 'zh-CN';
@@ -77,6 +96,41 @@ const App: React.FC = () => {
     const unsubProjs = subscribeToProjects(setProjects);
     return () => { unsubTasks(); unsubCats(); unsubProjs(); };
   }, []);
+
+  // Space key shortcut for timer control
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Check if user is typing in an input field
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement?.getAttribute('contenteditable') === 'true'
+      ) {
+        return;
+      }
+
+      // Only trigger on Space key when there's an active task
+      if (e.code === 'Space' && focusTaskId) {
+        e.preventDefault();
+        const activeTask = tasks.find(t => t.id === focusTaskId);
+        if (activeTask) {
+          if (activeTask.status === TaskStatus.RUNNING || activeTask.status === TaskStatus.BREAK) {
+            handlePauseTask(focusTaskId);
+            setToastMessage('⏸ 已暂停');
+            setShowToast(true);
+          } else {
+            handleStartTask(focusTaskId);
+            setToastMessage('▶️ 继续专注');
+            setShowToast(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [focusTaskId, tasks]);
 
   const activeTimers = tasks
     .filter(t => t.id === focusTaskId && (t.status === TaskStatus.RUNNING || t.status === TaskStatus.PAUSED || t.status === TaskStatus.BREAK))
@@ -345,15 +399,18 @@ const App: React.FC = () => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
-            <button 
-              key={item.id} 
+            <button
+              key={item.id}
               onClick={() => {
+                const currentIndex = NAV_ITEMS.findIndex(nav => nav.id === activeTab);
+                const newIndex = NAV_ITEMS.findIndex(nav => nav.id === item.id);
+                setTabDirection(newIndex > currentIndex ? 1 : -1);
                 setActiveTab(item.id);
-                setIsMobileMenuOpen(false);
-              }} 
+                setIsNavOpen(false);
+              }}
               className={`w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 group relative overflow-hidden ${
-                isActive 
-                  ? 'bg-green-400 text-white shadow-lg shadow-green/25 scale-[1.02]' 
+                isActive
+                  ? 'bg-green-400 text-white shadow-lg shadow-green/25 scale-[1.02]'
                   : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900/50 hover:text-neutral-900 dark:hover:text-neutral-100'
               }`}
             >
@@ -389,144 +446,163 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 overflow-hidden relative selection:bg-green-400/20">
-      {/* PC Sidebar */}
-      <aside className="w-[300px] bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-r border-neutral-200 dark:border-neutral-700 hidden md:flex flex-col z-20 shrink-0">
+      {/* Navigation Drawer */}
+      <Drawer
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+        ariaLabel="导航菜单"
+      >
         <SidebarContent />
-      </aside>
-
-      {/* Mobile Sidebar Overlay */}
-      <div
-        className={`fixed inset-0 z-[60] md:hidden bg-slate-950/40 backdrop-blur-sm transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setIsMobileMenuOpen(false)}
-        aria-hidden="true"
-      />
-      <aside className={`fixed top-0 bottom-0 left-0 z-[70] md:hidden w-[300px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <SidebarContent />
-      </aside>
+      </Drawer>
 
       {/* Main Container */}
-      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-dot-pattern dark:bg-dot-pattern-dark">
-        <header className="md:hidden sticky top-0 left-0 right-0 flex items-center justify-between p-4 bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700 z-30 shrink-0">
+      <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-neutral-50 dark:bg-neutral-900">
+        {/* Hamburger Button - Fixed on left edge, vertically centered */}
+        <button
+          onClick={handleOpenNav}
+          className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all motion-press border border-slate-200 dark:border-slate-700 shadow-lg"
+          aria-label="打开导航菜单"
+          aria-expanded={isNavOpen}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        {/* Task List Button - Fixed on right edge, vertically centered */}
+        <button
+          onClick={handleOpenTaskList}
+          className="fixed right-4 top-1/2 -translate-y-1/2 z-40 p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all motion-press border border-slate-200 dark:border-slate-700 shadow-lg"
+          aria-label="打开任务清单"
+          aria-expanded={isTaskListOpen}
+        >
+          <ListTodo className="w-6 h-6" />
+        </button>
+
+        <header className="sticky top-0 left-0 right-0 flex items-center justify-center p-4 bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700 z-30 shrink-0">
           <Logo variant="horizontal" size={28} />
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all active:scale-95 border border-slate-200 dark:border-slate-700">
-            <Menu className="w-6 h-6" />
-          </button>
         </header>
 
         <div className="flex-1 flex flex-col min-h-0 relative">
           <section className="flex-1 flex flex-col overflow-hidden">
-            {activeTab === 'tasks' && (
-              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center justify-center p-4 md:px-10">
-                <div className="w-full max-w-[1600px] py-6 md:py-12">
-                  <TaskTimer
+            {/* Bottom spacer for GlobalTimerIndicator to prevent content overlap */}
+            <div
+              className="shrink-0 transition-all duration-300 ease-out"
+              style={{ height: activeFocusTask ? '56px' : '0px' }}
+            />
+            <AnimatePresence mode="wait" initial={false}>
+              {activeTab === 'tasks' && (
+                <AnimatedPage key="tasks" direction={tabDirection}>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col p-4 md:px-10">
+                    {/* Timer card container - centered in available canvas space */}
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                      <div className="w-full max-w-[1600px] py-6 md:py-12">
+                        <TaskTimer
+                          language={language}
+                          activeTasks={activeTimers}
+                          onStart={handleStartTask}
+                          onPause={handlePauseTask}
+                          onBreak={handleStartBreak}
+                          onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }}
+                          onAddTask={handleAddTask}
+                          onAddMilestone={handleAddMilestoneWithDependency}
+                          onEditMilestone={handleEditMilestone}
+                          onDeleteMilestone={handleDeleteMilestone}
+                          onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }}
+                          onDismiss={handleDismissFocus}
+                          suggestedTasks={getSuggestedTasks()}
+                          categories={categories}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedPage>
+              )}
+              {activeTab === 'ai-planner' && (
+                <AnimatedPage key="ai-planner" direction={tabDirection}>
+                  <AIProjectGenerator
                     language={language}
-                    activeTasks={activeTimers}
-                    onStart={handleStartTask}
-                    onPause={handlePauseTask}
-                    onBreak={handleStartBreak}
-                    onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }}
-                    onAddTask={handleAddTask}
-                    onAddMilestone={handleAddMilestoneWithDependency}
-                    onEditMilestone={handleEditMilestone}
-                    onDeleteMilestone={handleDeleteMilestone}
-                    onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }}
-                    onDismiss={handleDismissFocus}
-                    suggestedTasks={getSuggestedTasks()}
-                    categories={categories}
+                    onPlanGenerated={handleAIPlanGenerated}
                   />
-                </div>
-              </div>
-            )}
-            {activeTab === 'ai-planner' && (
-              <AIProjectGenerator
-                language={language}
-                onPlanGenerated={handleAIPlanGenerated}
-              />
-            )}
-            {activeTab === 'projects' && (
-              <div className="flex-1 px-4 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
-                <ProjectManager 
-                  language={language} 
-                  projects={projects} 
-                  tasks={tasks} 
-                  onAddProject={async (data) => { 
-                    const updated = await addProject({
-                      ...data,
-                      id: generateUUID(), 
-                      createdAt: Date.now()
-                    } as Project); 
-                    setProjects(updated); 
-                  }} 
-                  onUpdateProject={async (id, data) => {
-                    const updated = await updateProject(id, data);
-                    setProjects(updated);
-                  }}
-                  onDeleteProject={handleDeleteProject}
-                  onAddTask={handleAddTask} 
-                  onDeleteTask={handleDeleteTask} 
-                  onUpdateTask={handleUpdateTask} 
-                  categories={categories} 
-                  onAddCategory={async (n, c) => { 
-                    const updated = await addCategory({id: generateUUID(), name: n, color: c}); 
-                    setCategories(updated); 
-                  }}
-                />
-              </div>
-            )}
-            {activeTab === 'dashboard' && (
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
-                <Stats language={language} tasks={tasks} />
-              </div>
-            )}
-            {activeTab === 'ai-insights' && (
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
-                <AIInsights language={language} tasks={tasks} />
-              </div>
-            )}
+                </AnimatedPage>
+              )}
+              {activeTab === 'projects' && (
+                <AnimatedPage key="projects" direction={tabDirection}>
+                  <div className="flex-1 px-4 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
+                    <ProjectManager
+                      language={language}
+                      projects={projects}
+                      tasks={tasks}
+                      onAddProject={async (data) => {
+                        const updated = await addProject({
+                          ...data,
+                          id: generateUUID(),
+                          createdAt: Date.now()
+                        } as Project);
+                        setProjects(updated);
+                      }}
+                      onUpdateProject={async (id, data) => {
+                        const updated = await updateProject(id, data);
+                        setProjects(updated);
+                      }}
+                      onDeleteProject={handleDeleteProject}
+                      onAddTask={handleAddTask}
+                      onDeleteTask={handleDeleteTask}
+                      onUpdateTask={handleUpdateTask}
+                      categories={categories}
+                      onAddCategory={async (n, c) => {
+                        const updated = await addCategory({id: generateUUID(), name: n, color: c});
+                        setCategories(updated);
+                      }}
+                    />
+                  </div>
+                </AnimatedPage>
+              )}
+              {activeTab === 'dashboard' && (
+                <AnimatedPage key="dashboard" direction={tabDirection}>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
+                    <Stats language={language} tasks={tasks} />
+                  </div>
+                </AnimatedPage>
+              )}
+              {activeTab === 'ai-insights' && (
+                <AnimatedPage key="ai-insights" direction={tabDirection}>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
+                    <AIInsights language={language} tasks={tasks} />
+                  </div>
+                </AnimatedPage>
+              )}
+            </AnimatePresence>
           </section>
 
-          {/* Mobile bottom task list */}
-          <div className={`
-            lg:hidden w-full custom-scrollbar border-t border-neutral-200 dark:border-neutral-700
-            bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]
-            transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col
-            ${isTaskListOpen ? 'max-h-[45vh]' : 'max-h-[60px]'}
-          `}>
-            <div
-              className="flex items-center justify-center px-6 md:px-10 py-4 sticky top-0 z-20 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors"
-              onClick={() => setIsTaskListOpen(!isTaskListOpen)}
-            >
-               <div className="p-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-400 hover:text-green-500 transition-colors">
-                 {isTaskListOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-               </div>
-            </div>
+          {/* Mobile bottom task list - REMOVED */}
 
-            <div className={`flex-1 overflow-y-auto custom-scrollbar px-6 md:px-10 pb-8 transition-opacity duration-300 delay-100 ${isTaskListOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-               <SharedTaskList />
-            </div>
-          </div>
-
-          {/* Desktop Sidebar Toggle Button */}
-          <button
-            onClick={() => setIsTaskListOpen(!isTaskListOpen)}
-            className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-50 p-1.5 bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-xl shadow-md text-neutral-400 hover:text-green-500 transition-all hover:pr-3"
-            aria-label={isTaskListOpen ? "Close sidebar" : "Open sidebar"}
-          >
-            {isTaskListOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
+          {/* Global Timer Indicator - now in document flow */}
+          {activeFocusTask && (
+            <GlobalTimerIndicator
+              activeTask={activeFocusTask}
+              onToggleTimer={() => {
+                if (activeFocusTask.status === TaskStatus.RUNNING || activeFocusTask.status === TaskStatus.BREAK) {
+                  handlePauseTask(activeFocusTask.id);
+                } else {
+                  handleStartTask(activeFocusTask.id);
+                }
+              }}
+            />
+          )}
         </div>
       </main>
 
-      {/* PC Right Side Task List */}
-      <aside className={`
-        bg-neutral-100/60 dark:bg-neutral-900/60 backdrop-blur-xl border-l border-neutral-100 dark:border-neutral-700
-        hidden lg:flex flex-col z-20 shrink-0 h-full overflow-hidden transition-all duration-300 ease-in-out relative
-        ${isTaskListOpen ? 'w-[30%] min-w-[420px] opacity-100' : 'w-0 min-w-0 opacity-0 border-l-0'}
-      `}>
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-10 py-12 force-scrollbar">
-            <SharedTaskList />
+      {/* Task List Drawer */}
+      <Drawer
+        isOpen={isTaskListOpen}
+        onClose={() => setIsTaskListOpen(false)}
+        position="right"
+        ariaLabel="任务清单"
+      >
+        <div className="p-6">
+          <h2 className="text-xl font-black text-neutral-900 dark:text-white mb-4">{t.taskExplorer}</h2>
+          <SharedTaskList />
         </div>
-      </aside>
+      </Drawer>
 
       {isFocusMode && activeFocusTask && (
         <FullscreenFocus
@@ -542,6 +618,9 @@ const App: React.FC = () => {
       {showAISettings && (
         <AISettingsModal language={language} onClose={() => setShowAISettings(false)} />
       )}
+
+      {/* Timer Toast */}
+      <TimerToast message={toastMessage} isVisible={showToast} />
     </div>
   );
 };

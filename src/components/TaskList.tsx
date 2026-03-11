@@ -2,8 +2,9 @@
 import React, { useState, useId } from 'react';
 import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, PlusCircle, CheckCircle2, Circle, Layers, Zap, Clock, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from '../types';
-import { Button, Chip, Checkbox, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { Button, Chip, Checkbox, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Card } from '@heroui/react';
 import { TRANSLATIONS, TAG_COLORS } from '../constants';
+import { StaggeredList } from '../animations/components/StaggeredList';
 
 interface TaskListProps {
   language: Language;
@@ -28,7 +29,9 @@ interface CollapsibleGroupProps {
   count: number;
   progress?: number;
   children: React.ReactNode;
-  defaultOpen?: boolean
+  defaultOpen?: boolean;
+  stagger?: boolean;
+  staggerDisabled?: boolean;
 }
 
 const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
@@ -37,10 +40,18 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
   count,
   progress,
   children,
-  defaultOpen = true
+  defaultOpen = true,
+  stagger = false,
+  staggerDisabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentId = useId();
+
+  const content = stagger ? (
+    <StaggeredList staggerDelay={0.03} disabled={staggerDisabled}>
+      {children}
+    </StaggeredList>
+  ) : children;
 
   return (
     <div className="mb-4 last:mb-20">
@@ -77,7 +88,7 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
         role="region"
         className={`space-y-1.5 transition-all duration-300 origin-top ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 h-0 overflow-hidden'}`}
       >
-           {children}
+           {content}
       </div>
     </div>
   );
@@ -187,20 +198,24 @@ export const TaskList: React.FC<TaskListProps> = ({
     const showEstimated = task.totalTime === 0 && task.estimatedTime && task.estimatedTime > 0;
 
     return (
-      <div
+      <Card
         key={task.id}
-        onClick={() => {
+        isPressable={!isLocked}
+        isDisabled={isLocked}
+        onPress={() => {
           if (isSelectionMode) toggleSelection(task.id);
         }}
-        className={`group relative transition-all duration-200 rounded-xl border overflow-hidden ${
-          isSelectionMode
-            ? isSelected
-              ? 'bg-green-50 dark:bg-green-900/10 border-green-500 shadow-sm z-10'
-              : 'bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 cursor-pointer'
-            : isRunning
-              ? 'bg-white dark:bg-slate-900 border-green-500 shadow-md shadow-green/10 z-10 ring-1 ring-terracotta-500/20'
-              : 'bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800/50 hover:border-green-300/50 dark:hover:border-slate-700 hover:shadow-sm'
-        } ${isCompleted ? 'opacity-60 grayscale-[0.3]' : ''} ${!isSelectionMode && isLocked ? 'opacity-50 bg-neutral-50 dark:bg-neutral-900 pointer-events-none' : ''}`}
+        classNames={{
+          base: `group relative transition-all duration-200 overflow-hidden shadow-sm rounded-2xl ${
+            isSelectionMode
+              ? isSelected
+                ? 'bg-green-50 dark:bg-green-900/10 border-2 border-green-500 shadow-md z-10'
+                : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+              : isRunning
+                ? 'bg-white dark:bg-slate-900 border-2 border-l-4 border-l-green-500 border-neutral-300 dark:border-neutral-600 shadow-md z-10'
+                : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:shadow-md hover:border-neutral-300 dark:hover:border-neutral-600'
+          } ${isCompleted ? 'opacity-60 grayscale-[0.3]' : ''} ${!isSelectionMode && isLocked ? 'opacity-50 bg-neutral-50 dark:bg-neutral-900 pointer-events-none' : ''}`,
+        }}
       >
         <div className="flex items-center gap-0 min-h-[3.5rem]">
            {/* Color Strip for Projects */}
@@ -230,7 +245,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                   e.stopPropagation();
                   onSelect(task.id);
                 }}
-                className={`shrink-0 w-8 h-8 min-w-0 rounded-lg shadow-sm group/btn ${
+                className={`motion-animate shrink-0 w-8 h-8 min-w-0 rounded-lg shadow-sm group/btn ${
                   isCompleted
                     ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
                     : isRunning
@@ -322,7 +337,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             </div>
            </div>
         </div>
-      </div>
+      </Card>
     );
   };
 
@@ -337,9 +352,9 @@ export const TaskList: React.FC<TaskListProps> = ({
   const completedTasks = filteredTasks.filter(t => t.status === TaskStatus.COMPLETED && !t.projectId);
 
   return (
-    <div className="h-full flex flex-col relative bg-[#f8fafc] dark:bg-[#020617]">
+    <div className="h-full flex flex-col relative bg-neutral-50 dark:bg-neutral-950">
       {/* Header & Controls - Compact & Sticky */}
-      <div className="flex flex-col gap-3 mb-2 shrink-0 px-3 pt-3 pb-2 sticky top-0 z-30 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-100 dark:border-neutral-800">
+      <div className="flex flex-col gap-3 mb-2 shrink-0 px-3 pt-3 pb-2 sticky top-0 z-30 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur-md">
          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
                <div className="w-1 h-4 bg-green-500 rounded-full" />
@@ -375,7 +390,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     size="sm"
                     color="danger"
                     onClick={handleBulkDelete}
-                    className="animate-in zoom-in"
+                    className="motion-animate animate-in zoom-in"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -426,7 +441,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     size="sm"
                     color="success"
                     onClick={() => handleSubmitTask()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 animate-in fade-in zoom-in"
+                    className="motion-animate absolute right-2 top-1/2 -translate-y-1/2 animate-in fade-in zoom-in"
                   >
                       <ChevronRight className="w-3 h-3" />
                   </Button>
@@ -447,7 +462,7 @@ export const TaskList: React.FC<TaskListProps> = ({
          ) : (
            <>
              {activeTasks.length > 0 && (
-               <CollapsibleGroup title={t.active} color="indigo" count={activeTasks.length}>
+               <CollapsibleGroup title={t.active} color="indigo" count={activeTasks.length} stagger staggerDisabled={activeTasks.length > 100}>
                   {activeTasks.map(task => renderTask(task))}
                </CollapsibleGroup>
              )}
@@ -460,20 +475,20 @@ export const TaskList: React.FC<TaskListProps> = ({
                 const progress = Math.round((completedCount / pTasks.length) * 100);
 
                 return (
-                  <CollapsibleGroup key={project.id} title={project.name} color={project.color} count={pTasks.length} progress={progress}>
+                  <CollapsibleGroup key={project.id} title={project.name} color={project.color} count={pTasks.length} progress={progress} stagger staggerDisabled={pTasks.length > 100}>
                      {pTasks.map(task => renderTask(task, true, project.color))}
                   </CollapsibleGroup>
                 );
              })}
 
              {todoTasks.length > 0 && (
-               <CollapsibleGroup title={t.standaloneTasks} color="slate" count={todoTasks.length}>
+               <CollapsibleGroup title={t.standaloneTasks} color="slate" count={todoTasks.length} stagger staggerDisabled={todoTasks.length > 100}>
                   {todoTasks.map(task => renderTask(task))}
                </CollapsibleGroup>
              )}
 
              {completedTasks.length > 0 && (
-               <CollapsibleGroup title={t.done} color="green" count={completedTasks.length} defaultOpen={false}>
+               <CollapsibleGroup title={t.done} color="green" count={completedTasks.length} defaultOpen={false} stagger staggerDisabled={completedTasks.length > 100}>
                   {completedTasks.map(task => renderTask(task))}
                </CollapsibleGroup>
              )}

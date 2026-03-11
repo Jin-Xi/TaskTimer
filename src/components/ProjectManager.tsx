@@ -3,7 +3,10 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Trash2, ChevronRight, ChevronLeft, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { Project, Task, TaskStatus, Category, DayOfWeek, Language } from '../types';
 import { TAG_COLORS, TRANSLATIONS, DEFAULT_CATEGORIES, COLOR_HEX_MAP } from '../constants';
-import { Button, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox } from '@heroui/react';
+import { Button, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox, Tooltip, Card } from '@heroui/react';
+import { StaggeredList } from '../animations/components/StaggeredList';
+import { motion } from 'framer-motion';
+import { listItemVariants } from '../animations/variants';
 
 interface ProjectManagerProps {
   language: Language;
@@ -201,7 +204,7 @@ const ProjectForm = ({
               <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mt-2">{mode === 'create' ? t.projectPlanner : (data?.name || 'Project Detail')}</p>
             </div>
          </div>
-         <Button onClick={onSubmit} className="rounded-2xl px-8 md:px-10 py-4 shadow-xl shadow-green/20 font-black text-sm md:text-base uppercase tracking-wider shrink-0 hover:shadow-green/30 transition-shadow">
+         <Button onClick={onSubmit} className="motion-animate rounded-2xl px-8 md:px-10 py-4 shadow-xl shadow-green/20 font-black text-sm md:text-base uppercase tracking-wider shrink-0 hover:shadow-green/30 transition-shadow">
             {mode === 'create' ? t.createProject : 'Save Changes'}
          </Button>
       </div>
@@ -398,19 +401,26 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
     return (
       <div className="flex items-center shrink-0">
-        <div className={`
-          w-[280px] sm:w-[300px] h-[260px] p-4 sm:p-5 rounded-[2rem] bg-white dark:bg-neutral-900 border transition-all duration-300 relative flex flex-col group/card
-          ${isCompleted
-            ? 'border-green-200/50 bg-green-50/[0.1] dark:border-green-900/30'
-            : isLocked
-              ? 'opacity-60 grayscale border-neutral-200/50 dark:border-neutral-800'
-              : 'border-slate-200/60 dark:border-slate-800 hover:shadow-2xl hover:-translate-y-1.5 shadow-md shadow-slate-200/50 dark:shadow-black/20'
-          }
-          ${isTerminal && !isCompleted ? 'ring-2 ring-terracotta-300 dark:ring-terracotta-600' : ''}
+        <Card
+          isPressable={!isLocked}
+          isDisabled={isLocked}
+          className={`
+            w-[280px] sm:w-[300px] h-[300px] p-4 sm:p-5 rounded-2xl transition-all duration-300 relative flex flex-col group/card shadow-md
+            ${isTerminal && !isCompleted ? 'ring-2 ring-terracotta-300 dark:ring-terracotta-600' : ''}
           `}
+          classNames={{
+            base: `
+              ${isCompleted
+                ? 'bg-green-50/80 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                : isLocked
+                  ? 'opacity-60 grayscale border-neutral-200 dark:border-neutral-800'
+                  : 'hover:shadow-2xl hover:-translate-y-1.5 hover:border-neutral-300 dark:hover:border-neutral-600'
+              }
+            `,
+          }}
           style={isCompleted || isLocked ? undefined : {
-            borderColor: `${colors.light}40`,
-            '--hover-shadow': `${colors.main}1a`
+            borderColor: isRunning ? `${colors.main}CC` : `${colors.light}CC`,
+            borderWidth: '1.5px'
           } as React.CSSProperties}
         >
           {/* Terminal Node Badge */}
@@ -434,8 +444,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
           </div>
 
-          <h5 className="text-xs sm:text-sm md:text-base font-black text-neutral-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.25rem]">{task.title}</h5>
-          <p className="text-neutral-400 text-[11px] sm:text-xs leading-snug line-clamp-3 sm:line-clamp-4 flex-1 overflow-hidden">{task.description || ''}</p>
+          <Tooltip content={task.title} showArrow>
+            <h5 className="text-xs sm:text-sm md:text-base font-black text-neutral-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.25rem] truncate max-w-[200px]">{task.title}</h5>
+          </Tooltip>
 
           {task.tags && task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-3">
@@ -447,11 +458,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 text-[8px] sm:text-[9px] font-black text-neutral-400 uppercase tracking-wider mt-auto pt-1.5 sm:pt-2 border-t border-neutral-100 dark:border-neutral-800/50 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 text-xs sm:text-sm font-black text-neutral-400 uppercase tracking-wider mt-auto pt-1.5 sm:pt-2 border-t border-neutral-100 dark:border-neutral-800/50 overflow-hidden">
              <div className="flex items-center gap-1 min-w-0"><Flag className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" style={{ color: colors.main }} /><span className="truncate">{task.milestones?.length || 0}</span></div>
-             <div className="flex items-center gap-1 min-w-0"><Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" /><span className="truncate">{Math.floor(task.totalTime / 60000)}m</span></div>
+             <div className="flex items-center gap-1 min-w-0 font-mono"><Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" /><span className="truncate">{Math.floor(task.totalTime / 60000)}m</span></div>
           </div>
-        </div>
+        </Card>
         {!isLast && !task.isTerminal ? (
           <div className="flex items-center justify-center px-1 shrink-0 relative">
              {/* Arrow line */}
@@ -575,6 +586,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     const pColor = selectedProject.color || 'green';
     const colors = COLOR_HEX_MAP[themeColor] || COLOR_HEX_MAP.green;
     const themeColors = colors; // Alias for backward compatibility
+    const totalCards = projectTracks.flat().length;
+    const enableStagger = totalCards <= 50;
 
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden animate-in fade-in bg-white dark:bg-neutral-900 rounded-[2.5rem] shadow-2xl shadow-neutral-200/40 dark:shadow-black/40 border border-neutral-100 dark:border-neutral-800">
@@ -588,8 +601,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
-              <Button onClick={() => handleExportProject(selectedProject)} className="rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"><Download className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.exportProject}</span></Button>
-              <Button onClick={() => handleEditProject(selectedProject)} className="rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"><Pencil className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.projectName}</span></Button>
+              <Button onClick={() => handleExportProject(selectedProject)} className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"><Download className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.exportProject}</span></Button>
+              <Button onClick={() => handleEditProject(selectedProject)} className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"><Pencil className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.projectName}</span></Button>
               <Button
                   color="danger"
                   onClick={() => {
@@ -598,7 +611,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                       setView('list');
                     }
                   }}
-                  className="rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"
+                  className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"
               >
                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.deleteProject}</span>
               </Button>
@@ -628,7 +641,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                         </button>
                      </div>
                    ) : (
-                     projectTracks.map((track, trackIdx) => (
+                     projectTracks.map((track, trackIdx) => {
+                       let cardIndex = 0;
+                       return (
                        <div key={trackIdx} className={trackIdx > 0 ? "pt-16 border-t-2 border-neutral-100/80 dark:border-neutral-800/80" : ""}>
                          <div className="flex flex-col gap-6">
                             <div className="flex items-center gap-4 px-6">
@@ -639,19 +654,34 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                                <h4 className="text-xs font-black text-neutral-400 uppercase tracking-[0.3em]">{language === 'zh-TW' ? `工作流支線 ${trackIdx + 1}` : `工作流支线 ${trackIdx + 1}`}</h4>
                             </div>
                             <div className="flex items-center px-6">
-                              {track.map((task, stepIdx) => (
-                                <TaskCard
+                              {track.map((task, stepIdx) => {
+                                const currentIndex = cardIndex++;
+                                return (
+                                <motion.div
                                   key={task.id}
-                                  task={task}
-                                  isFirst={stepIdx === 0}
-                                  isLast={stepIdx === track.length - 1}
-                                  projectColor={pColor}
-                                />
-                              ))}
+                                  custom={currentIndex * 0.03}
+                                  variants={listItemVariants}
+                                  initial="initial"
+                                  animate="animate"
+                                  exit="exit"
+                                  transition={{
+                                    delay: enableStagger ? currentIndex * 0.03 : 0,
+                                  }}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    isFirst={stepIdx === 0}
+                                    isLast={stepIdx === track.length - 1}
+                                    projectColor={pColor}
+                                  />
+                                </motion.div>
+                              );
+                              })}
                             </div>
                          </div>
                        </div>
-                     ))
+                     );
+                     })
                    )}
                    {projectTracks.length > 0 && projectTracks.length < 5 && (
                      <div className="px-6 mt-10 pt-16 border-t-2 border-neutral-100/80 dark:border-neutral-800/80">
@@ -742,7 +772,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   >
                     {t.cancel}
                   </Button>
-                  <Button type="submit" color="success" className="rounded-2xl px-14 font-black text-lg shadow-xl shadow-green-500/10">
+                  <Button type="submit" color="success" className="motion-animate rounded-2xl px-14 font-black text-lg shadow-xl shadow-green-500/10">
                     {t.add}
                   </Button>
                 </ModalFooter>
@@ -954,7 +984,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           <h2 className="text-4xl md:text-5xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight">{t.projectPlanner}</h2>
           <p className="text-sm font-black text-neutral-400 uppercase tracking-[0.4em] mt-3">{t.projectPlannerDesc}</p>
         </div>
-        <Button onClick={handleCreateProject} className="rounded-2xl px-10 py-5 text-sm font-black shadow-2xl shadow-green/20 hover:-translate-y-1 transition-all">
+        <Button onClick={handleCreateProject} className="motion-animate rounded-2xl px-10 py-5 text-sm font-black shadow-2xl shadow-green/20 hover:-translate-y-1 transition-all">
           <GitBranchPlus className="w-5 h-5 mr-3" />
           {t.newProject}
         </Button>
@@ -968,7 +998,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
             <h3 className="text-2xl font-black text-neutral-900 dark:text-white mb-2">{t.noProjectsYet}</h3>
             <p className="text-neutral-400 font-bold max-w-sm mx-auto leading-relaxed mb-8">{t.createProjectHint}</p>
-            <Button onClick={handleCreateProject} size="lg" className="rounded-2xl px-12 py-4 shadow-xl">
+            <Button onClick={handleCreateProject} size="lg" className="motion-animate rounded-2xl px-12 py-4 shadow-xl">
                {t.newProject}
             </Button>
           </div>

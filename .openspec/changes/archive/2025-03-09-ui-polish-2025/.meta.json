@@ -1,0 +1,64 @@
+{
+  "id": "ui-polish-2025",
+  "title": "UI Polish 2025",
+  "status": "completed",
+  "createdAt": "2025-03-08",
+  "completedAt": "2025-03-09",
+  "description": "系统性地优化 ChronoFlow 的用户界面，提升视觉一致性、交互体验和核心功能的易用性",
+  "tags": ["ui", "ux", "accessibility", "refactor", "heroui"],
+  "priority": "high",
+  "estimatedHours": 10,
+  "actualHours": 5,
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "抽屉式导航栏改造",
+      "tasks": 2
+    },
+    {
+      "id": "phase-2",
+      "name": "抽屉式任务清单栏改造",
+      "tasks": 2
+    },
+    {
+      "id": "phase-3",
+      "name": "计时器数字修复",
+      "tasks": 1
+    },
+    {
+      "id": "phase-4",
+      "name": "空格键快捷键",
+      "tasks": 2
+    },
+    {
+      "id": "phase-5",
+      "name": "全局计时状态指示器",
+      "tasks": 2
+    },
+    {
+      "id": "phase-6",
+      "name": "项目任务卡片优化",
+      "tasks": 4
+    },
+    {
+      "id": "phase-7",
+      "name": "无障碍支持",
+      "tasks": 2
+    },
+    {
+      "id": "phase-8",
+      "name": "样式统一和测试",
+      "tasks": 3
+    },
+    {
+      "id": "phase-9",
+      "name": "移除点阵背景（纯净界面）",
+      "tasks": 3
+    },
+    {
+      "id": "phase-10",
+      "name": "卡片组件迁移到 HeroUI Card",
+      "tasks": 3
+    }
+  ]
+}
