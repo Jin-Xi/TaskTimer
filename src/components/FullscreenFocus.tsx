@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Play, Pause, X, Image as ImageIcon, Calendar, Clock } from 'lucide-react';
+import { Button, Chip } from '@heroui/react';
 import { Task, TaskStatus, Language } from '../types';
 
 interface FullscreenFocusProps {
@@ -91,30 +92,29 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
 
   if (!activeTask) return null;
 
+  // Default background image
+  const defaultBackground = 'https://maas-log-prod.cn-wlcb.ufileos.com/anthropic/4208719f-c914-4c8b-afeb-e28943ecbf24/3385c9091a480268cc83801560f5aae5.jpg?UCloudPublicKey=TOKEN_e15ba47a-d098-4fbd-9afc-a0dcf0e4e621&Expires=1773577487&Signature=DG31DLYvXyC37qOawKHeBoh4psc=';
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center text-white overflow-hidden bg-neutral-900">
-      <div 
+      <div
         className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-700"
-        style={{ 
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
-          filter: backgroundImage ? 'blur(0px)' : 'none'
+        style={{
+          backgroundImage: `url(${backgroundImage || defaultBackground})`,
+          filter: 'blur(0px)'
         }}
-      >
-        {!backgroundImage && (
-           <div className="w-full h-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900" />
-        )}
-      </div>
+      />
 
-      <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 z-10 bg-black/30 backdrop-blur-[2px]" />
 
       {/* Top Left: Current Date & Time */}
       <div className="absolute top-8 left-8 z-30 flex flex-col items-start gap-1 animate-in fade-in slide-in-from-left-4 duration-700">
-        <div className="flex items-center gap-2 px-4 py-2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
-          <Calendar className="w-4 h-4 text-terracotta-300" />
-          <span className="text-sm font-semibold tracking-wide opacity-90">{formattedDate}</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-2xl border-0 shadow-xl text-neutral-900">
+          <Calendar className="w-4 h-4 text-green-600" />
+          <span className="text-sm font-semibold tracking-wide">{formattedDate}</span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl ml-2">
-          <Clock className="w-4 h-4 text-terracotta-300" />
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-2xl border-0 shadow-xl text-neutral-900 ml-2">
+          <Clock className="w-4 h-4 text-green-600" />
           <span className="text-xl font-mono font-bold tracking-widest">{formattedClock}</span>
         </div>
       </div>
@@ -124,9 +124,14 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
         <div className="mb-8 animate-in slide-in-from-top-10 duration-700">
            <div className="flex justify-center gap-2 mb-4">
              {(activeTask.tags || []).map(tag => (
-               <span key={tag} className="inline-block px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium">
+               <Chip
+                 key={tag}
+                 color="default"
+                 variant="solid"
+                 className="bg-white/90 hover:bg-white border-0 shadow-md"
+               >
                   {tag}
-               </span>
+               </Chip>
              ))}
            </div>
            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg leading-tight">
@@ -138,38 +143,47 @@ export const FullscreenFocus: React.FC<FullscreenFocusProps> = ({
           {formatTime(elapsed)}
         </div>
 
-        <div className="flex items-center gap-6 animate-in slide-in-from-bottom-10 duration-700">
-           <button 
-             onClick={() => onToggleStatus(activeTask.id)}
-             className="group flex items-center justify-center w-20 h-20 rounded-full bg-white text-olive-500 hover:bg-green-50 transition-all shadow-lg hover:shadow-xl active:scale-95"
-             title={activeTask.status === TaskStatus.RUNNING ? "Pause" : "Resume"}
+        <div className="flex items-center gap-6 animate-in slide-in slide-in-from-bottom-10 duration-700">
+           <Button
+             isIconOnly
+             size="lg"
+             color="success"
+             variant="solid"
+             className="w-20 h-20 rounded-full shadow-lg hover:shadow-xl min-w-unit-20 h-unit-20 bg-green-500 hover:bg-green-600 text-white"
+             onPress={() => onToggleStatus(activeTask.id)}
            >
               {activeTask.status === TaskStatus.RUNNING ? (
-                 <Pause className="w-8 h-8 fill-current" />
+                 <Pause className="w-8 h-8" />
               ) : (
-                 <Play className="w-8 h-8 fill-current ml-1" />
+                 <Play className="w-8 h-8 ml-1" />
               )}
-           </button>
+           </Button>
 
-           <button 
-             onClick={onExit}
-             className="group flex items-center justify-center w-16 h-16 rounded-full bg-white/10 border-2 border-white/20 hover:bg-white/20 backdrop-blur-md transition-all active:scale-95"
-             title="Exit Fullscreen"
+           <Button
+             isIconOnly
+             size="lg"
+             color="default"
+             variant="solid"
+             className="w-16 h-16 rounded-full bg-white/90 hover:bg-white min-w-unit-16 h-unit-16 shadow-lg"
+             onPress={onExit}
            >
-              <X className="w-6 h-6" />
-           </button>
+              <X className="w-6 h-6 text-neutral-900" />
+           </Button>
         </div>
 
       </div>
 
       <div className="absolute bottom-6 right-6 z-20">
-         <button 
-           onClick={() => fileInputRef.current?.click()}
-           className="p-3 rounded-full bg-black/30 hover:bg-black/50 text-white/70 hover:text-white backdrop-blur-md transition-all"
-           title="Change Background Image"
+         <Button
+           isIconOnly
+           size="sm"
+           color="default"
+           variant="solid"
+           className="p-3 rounded-full bg-white/90 hover:bg-white shadow-lg"
+           onPress={() => fileInputRef.current?.click()}
          >
-            <ImageIcon className="w-5 h-5" />
-         </button>
+            <ImageIcon className="w-5 h-5 text-neutral-900" />
+         </Button>
          <input 
             type="file" 
             ref={fileInputRef} 

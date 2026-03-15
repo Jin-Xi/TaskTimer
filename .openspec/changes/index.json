@@ -1,10 +1,11 @@
 {
   "changes": [
     {
-      "id": "ui-polish-2025",
-      "title": "UI Polish 2025",
+      "name": "ui-polish",
+      "path": "openspec/changes/ui-polish",
       "status": "proposed",
-      "createdAt": "2025-03-08"
+      "schema": "standard-workflow",
+      "createdAt": "2026-03-15"
     }
   ]
 }

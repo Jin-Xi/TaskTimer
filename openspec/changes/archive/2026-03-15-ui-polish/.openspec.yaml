@@ -1,0 +1,7 @@
+schema: standard-workflow
+version: 1.0.0
+title: UI Polish - FullscreenFocus HeroUI Migration
+status: proposed
+createdAt: 2026-03-15
+authors:
+  - claude

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, ListTodo, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
+import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button } from '@heroui/react';
 import {
   subscribeToTasks,
   subscribeToCategories,
@@ -56,6 +57,7 @@ const App: React.FC = () => {
   const [showAISettings, setShowAISettings] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [todayCompletedCount, setTodayCompletedCount] = useState(0);
 
   // Drawer exclusive logic
   const handleOpenNav = () => {
@@ -95,6 +97,24 @@ const App: React.FC = () => {
     const unsubCats = subscribeToCategories(setCategories, DEFAULT_CATEGORIES);
     const unsubProjs = subscribeToProjects(setProjects);
     return () => { unsubTasks(); unsubCats(); unsubProjs(); };
+  }, []);
+
+  // Calculate today's completed tasks
+  useEffect(() => {
+    const unsubscribe = subscribeToTasks((tasks) => {
+      const today = new Date().toDateString();
+      const completedToday = tasks.filter(task => {
+        if (task.status !== 'COMPLETED') return false;
+        // Check milestones for completion timestamp
+        const completedMilestone = task.milestones.find(m => m.branch === 'completed');
+        const completedTime = completedMilestone
+          ? completedMilestone.timestamp
+          : task.createdAt;
+        return new Date(completedTime).toDateString() === today;
+      });
+      setTodayCompletedCount(completedToday.length);
+    });
+    return unsubscribe;
   }, []);
 
   // Space key shortcut for timer control
@@ -457,62 +477,165 @@ const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 relative flex flex-col h-screen overflow-hidden min-w-0 bg-neutral-50 dark:bg-neutral-900">
-        {/* Hamburger Button - Fixed on left edge, vertically centered */}
+        {/* Top Navigation Bar using HeroUI Navbar */}
+        <Navbar
+          maxWidth="full"
+          isBordered
+          classNames={{
+            base: "bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700",
+            wrapper: "px-4",
+          }}
+        >
+          {/* Mobile: Navigation Menu Button */}
+          <NavbarContent className="flex sm:hidden">
+            <Button
+              isIconOnly
+              size="sm"
+              color="default"
+              variant="light"
+              onPress={handleOpenNav}
+              aria-label="打开导航菜单"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </NavbarContent>
+
+          {/* Left: Logo + System Name */}
+          <NavbarBrand className="gap-3">
+            <Logo variant="icon" size={32} />
+            <span className="font-bold text-xl text-neutral-900 dark:text-neutral-100">
+              {APP_NAME}
+            </span>
+          </NavbarBrand>
+
+          {/* Center: Tabs for navigation */}
+          <NavbarContent className="hidden sm:flex gap-4" justify="center">
+            <Tabs
+              selectedKey={activeTab}
+              onSelectionChange={(key) => {
+                const currentIndex = NAV_ITEMS.findIndex(nav => nav.id === activeTab);
+                const newIndex = NAV_ITEMS.findIndex(nav => nav.id === key);
+                setTabDirection(newIndex > currentIndex ? 1 : -1);
+                setActiveTab(key as string);
+              }}
+              variant="underlined"
+              color="success"
+              classNames={{
+                base: "gap-6",
+                tabList: "gap-6",
+                cursor: "bg-green-400",
+                tab: "px-0 py-2 h-auto",
+                tabContent: "group-data-[selected=true]:text-green-500 font-semibold text-neutral-500 dark:text-neutral-400",
+              }}
+            >
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Tab
+                    key={item.id}
+                    title={
+                      <span className="flex items-center gap-2">
+                        <Icon className="w-4 h-4" />
+                        <span>{(t as any)[item.labelKey]}</span>
+                      </span>
+                    }
+                  />
+                );
+              })}
+            </Tabs>
+          </NavbarContent>
+
+          {/* Right: Settings, Dark Mode, Today's Count, GitHub */}
+          <NavbarContent justify="end" className="gap-3">
+            {/* AI Settings Button */}
+            <Button
+              isIconOnly
+              size="sm"
+              color="default"
+              variant="light"
+              onPress={() => setShowAISettings(true)}
+              aria-label="AI 设置"
+            >
+              <Key className="w-4 h-4" />
+            </Button>
+
+            {/* Dark Mode Toggle */}
+            <Button
+              isIconOnly
+              size="sm"
+              color="default"
+              variant="light"
+              onPress={() => {
+                const newMode = !darkMode;
+                setDarkMode(newMode);
+                localStorage.setItem('chrono_dark_mode', JSON.stringify(newMode));
+                if (newMode) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              }}
+              aria-label="切换深色模式"
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+
+            {/* Today's Completed Count */}
+            <div className="hidden sm:flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+              <span>今日完成: {todayCompletedCount}</span>
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            </div>
+
+            {/* GitHub Link */}
+            <a
+              href="https://github.com/Jin-Xi/TaskTimer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+              aria-label="GitHub Repository"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+          </NavbarContent>
+        </Navbar>
+
+        {/* Task List Hamburger Button - 水滴状紧贴右侧边框 */}
+        {/* Task List Hamburger Button - 水滴状紧贴右侧边框 */}
         <button
-          onClick={handleOpenNav}
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all motion-press border border-slate-200 dark:border-slate-700 shadow-lg"
-          aria-label="打开导航菜单"
-          aria-expanded={isNavOpen}
+          onClick={handleOpenTaskList}
+          className="absolute right-0 top-1/2 -translate-y-1/2 p-4 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-l-full rounded-r-lg transition-all motion-press border-l border-t border-b border-slate-200 dark:border-slate-700 shadow-lg z-40 hover:pr-5"
+          aria-label="打开任务清单"
+          aria-expanded={isTaskListOpen}
+          data-testid="task-list-hamburger-button"
         >
           <Menu className="w-6 h-6" />
         </button>
 
-        {/* Task List Button - Fixed on right edge, vertically centered */}
-        <button
-          onClick={handleOpenTaskList}
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-40 p-3 text-slate-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all motion-press border border-slate-200 dark:border-slate-700 shadow-lg"
-          aria-label="打开任务清单"
-          aria-expanded={isTaskListOpen}
-        >
-          <ListTodo className="w-6 h-6" />
-        </button>
-
-        <header className="sticky top-0 left-0 right-0 flex items-center justify-center p-4 bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700 z-30 shrink-0">
-          <Logo variant="horizontal" size={28} />
-        </header>
-
-        <div className="flex-1 flex flex-col min-h-0 relative">
-          <section className="flex-1 flex flex-col overflow-hidden">
-            {/* Bottom spacer for GlobalTimerIndicator to prevent content overlap */}
-            <div
-              className="shrink-0 transition-all duration-300 ease-out"
-              style={{ height: activeFocusTask ? '56px' : '0px' }}
-            />
+        {/* Main Content Area Wrapper */}
+        <div className="flex-1 flex flex-col min-h-0 relative" data-testid="main-content-wrapper">
+          {/* Tab Content Section */}
+          <section className="flex-1 flex flex-col overflow-hidden" data-testid="tab-content-section">
             <AnimatePresence mode="wait" initial={false}>
               {activeTab === 'tasks' && (
-                <AnimatedPage key="tasks" direction={tabDirection}>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col p-4 md:px-10">
-                    {/* Timer card container - centered in available canvas space */}
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                      <div className="w-full max-w-[1600px] py-6 md:py-12">
-                        <TaskTimer
-                          language={language}
-                          activeTasks={activeTimers}
-                          onStart={handleStartTask}
-                          onPause={handlePauseTask}
-                          onBreak={handleStartBreak}
-                          onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }}
-                          onAddTask={handleAddTask}
-                          onAddMilestone={handleAddMilestoneWithDependency}
-                          onEditMilestone={handleEditMilestone}
-                          onDeleteMilestone={handleDeleteMilestone}
-                          onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }}
-                          onDismiss={handleDismissFocus}
-                          suggestedTasks={getSuggestedTasks()}
-                          categories={categories}
-                        />
-                      </div>
-                    </div>
+                <AnimatedPage key="tasks" direction={tabDirection} className="flex-1 flex items-center justify-center p-4 md:px-10">
+                  {/* Task Timer Container */}
+                  <div className="w-full max-w-[1600px] mx-auto" data-testid="task-timer-container">
+                    <TaskTimer
+                      language={language}
+                      activeTasks={activeTimers}
+                      onStart={handleStartTask}
+                      onPause={handlePauseTask}
+                      onBreak={handleStartBreak}
+                      onComplete={async (id) => { await handleUpdateTask(id, {status: TaskStatus.COMPLETED}); if(focusTaskId===id)setFocusTaskId(null); }}
+                      onAddTask={handleAddTask}
+                      onAddMilestone={handleAddMilestoneWithDependency}
+                      onEditMilestone={handleEditMilestone}
+                      onDeleteMilestone={handleDeleteMilestone}
+                      onEnterFocusMode={(id) => { setFocusTaskId(id); setIsFocusMode(true); }}
+                      onDismiss={handleDismissFocus}
+                      suggestedTasks={getSuggestedTasks()}
+                      categories={categories}
+                    />
                   </div>
                 </AnimatedPage>
               )}
@@ -525,8 +648,8 @@ const App: React.FC = () => {
                 </AnimatedPage>
               )}
               {activeTab === 'projects' && (
-                <AnimatedPage key="projects" direction={tabDirection}>
-                  <div className="flex-1 px-4 md:px-10 md:py-12 overflow-hidden flex flex-col min-h-0">
+                <AnimatedPage key="projects" direction={tabDirection} className="flex-1 flex items-stretch justify-center p-4 md:px-10">
+                  <div className="w-full max-w-[1600px] mx-auto">
                     <ProjectManager
                       language={language}
                       projects={projects}
@@ -557,8 +680,8 @@ const App: React.FC = () => {
                 </AnimatedPage>
               )}
               {activeTab === 'dashboard' && (
-                <AnimatedPage key="dashboard" direction={tabDirection}>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
+                <AnimatedPage key="dashboard" direction={tabDirection} className="flex-1 flex items-center justify-center p-4 md:px-10">
+                  <div className="w-full max-w-[1600px] mx-auto">
                     <Stats language={language} tasks={tasks} />
                   </div>
                 </AnimatedPage>
@@ -573,20 +696,20 @@ const App: React.FC = () => {
             </AnimatePresence>
           </section>
 
-          {/* Mobile bottom task list - REMOVED */}
-
-          {/* Global Timer Indicator - now in document flow */}
+          {/* Global Timer Indicator - 正常布局流，贴在底部 */}
           {activeFocusTask && (
-            <GlobalTimerIndicator
-              activeTask={activeFocusTask}
-              onToggleTimer={() => {
-                if (activeFocusTask.status === TaskStatus.RUNNING || activeFocusTask.status === TaskStatus.BREAK) {
-                  handlePauseTask(activeFocusTask.id);
-                } else {
-                  handleStartTask(activeFocusTask.id);
-                }
-              }}
-            />
+            <div data-testid="global-timer-indicator-wrapper">
+              <GlobalTimerIndicator
+                activeTask={activeFocusTask}
+                onToggleTimer={() => {
+                  if (activeFocusTask.status === TaskStatus.RUNNING || activeFocusTask.status === TaskStatus.BREAK) {
+                    handlePauseTask(activeFocusTask.id);
+                  } else {
+                    handleStartTask(activeFocusTask.id);
+                  }
+                }}
+              />
+            </div>
           )}
         </div>
       </main>

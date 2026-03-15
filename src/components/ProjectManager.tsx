@@ -619,9 +619,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           </div>
 
         {/* Content Area */}
-        <div className="flex-1 relative overflow-hidden bg-neutral-50/20 dark:bg-neutral-900/10">
-           <div className="absolute inset-0 overflow-auto custom-scrollbar force-scrollbar p-8 md:p-12">
-                <div className="space-y-16 pb-24 min-w-max">
+        <div className="flex-1 overflow-auto custom-scrollbar bg-neutral-50/20 dark:bg-neutral-900/10">
+           <div className="p-8 md:p-12">
+                <div className="space-y-16 pb-24">
                    {projectTracks.length === 0 ? (
                      <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center text-center opacity-70">
                         <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6">
