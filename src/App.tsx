@@ -544,16 +544,20 @@ const App: React.FC = () => {
           </NavbarContent>
         </Navbar>
 
-        {/* Task List Hamburger Button - 水滴状紧贴右侧边框 */}
-        {/* Task List Hamburger Button - 水滴状紧贴右侧边框 */}
+        {/* Task List Toggle - 极简垂直 Chip，作为侧边栏结构的一部分 */}
         <button
           onClick={handleOpenTaskList}
-          className="absolute right-0 top-1/2 -translate-y-1/2 p-4 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-l-full rounded-r-lg transition-all motion-press border-l border-t border-b border-slate-200 dark:border-slate-700 shadow-lg z-40 hover:pr-5"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-40 group"
           aria-label="打开任务清单"
           aria-expanded={isTaskListOpen}
           data-testid="task-list-hamburger-button"
         >
-          <Menu className="w-6 h-6" />
+          <div className="flex flex-col items-center gap-1.5 px-2 py-4 rounded-l-xl border border-r-0 border-gray-200 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm transition-all duration-300 group-hover:border-gray-300 dark:group-hover:border-neutral-600 group-hover:bg-neutral-50 dark:group-hover:bg-neutral-800">
+            <Menu className="w-4 h-4 text-neutral-400 dark:text-neutral-500 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors stroke-[1.5]" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors writing-vertical-rl" style={{ writingMode: 'vertical-rl' }}>
+              任务
+            </span>
+          </div>
         </button>
 
         {/* Main Content Area Wrapper */}

@@ -140,14 +140,12 @@ const SingleTimer: React.FC<SingleTimerProps> = ({
   return (
     <div className={`
       relative w-full max-w-[90rem] mx-auto flex flex-col lg:flex-row
-      bg-neutral-100/90 dark:bg-neutral-900/90 backdrop-blur-2xl
-      border border-neutral-200/50 dark:border-neutral-800/50
-      rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl shadow-soft/40 dark:shadow-black/40
+      bg-white dark:bg-neutral-900
+      border border-neutral-200 dark:border-neutral-800
+      rounded-lg
       overflow-hidden transition-all duration-500 group
       ${isHero ? 'min-h-[60vh] lg:h-[80vh]' : 'h-auto'}
     `}>
-      {/* Background Decor */}
-      <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-br ${isRunning ? 'from-green-400/5 via-transparent to-green-300/5' : 'from-neutral-300/5 via-transparent to-neutral-500/5'} pointer-events-none`} />
 
       {/* LEFT SECTION: Timer Core */}
       <div
