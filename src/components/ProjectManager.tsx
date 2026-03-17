@@ -196,105 +196,122 @@ const ProjectForm = ({
   const selectedDays = data?.schedule?.days || data?.selectedDays || [];
 
   return (
-    // 居中容器 - 与 detail 视图保持一致
-    <div className="h-full flex items-center justify-center p-4 md:p-6 lg:p-8 overflow-hidden">
-      <div className="w-full max-w-6xl max-h-[calc(100vh-2rem)] md:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-4rem)] flex flex-col animate-in fade-in bg-white dark:bg-neutral-900 rounded-[2.5rem] shadow-2xl shadow-neutral-200/40 dark:shadow-black/40 border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden">
-        {/* Header - 固定在顶部 */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0 bg-white dark:bg-neutral-900">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button type="button" onClick={onCancel} className="p-2 sm:p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all border-2 border-neutral-200 dark:border-neutral-700 shrink-0">
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+    // 全屏居中容器 - 点击外部区域返回
+    <div
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-950 cursor-pointer"
+      onClick={onCancel}
+    >
+      {/* 卡片容器 - 固定高度 */}
+      <div
+        className="w-full max-w-6xl h-[calc(100vh-8rem)] flex flex-col bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-xl overflow-hidden cursor-default"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header - Linear 极简风格 */}
+        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white truncate leading-tight">{title}</h2>
+            <div>
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-white truncate">{title}</h2>
+              <p className="text-xs text-neutral-400 truncate">{mode === 'create' ? t.projectPlanner : (data?.name || '')}</p>
             </div>
           </div>
-          <Button onClick={onSubmit} className="motion-animate rounded-xl px-6 py-3 shadow-xl font-semibold text-sm border-2 shrink-0 bg-green-500 text-white hover:bg-green-600 transition-colors border-green-600">
+          <Button
+            onPress={onSubmit}
+            className="rounded-lg px-4 py-2 text-sm font-medium bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
+          >
             {mode === 'create' ? t.createProject : (language === 'zh-TW' ? '保存變更' : '保存更改')}
           </Button>
         </div>
 
-        {/* Content Canvas - 下半部分画布，支持垂直滚动 */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-gradient-to-b from-neutral-50/50 to-neutral-100/30 dark:from-neutral-800/20 dark:to-neutral-900/30">
-          <div className="p-8 md:p-12">
-         <div className="w-full max-w-5xl mx-auto space-y-12">
-            <div className="space-y-8">
-               <div>
-                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{t.projectName}</label>
-                  <input
-                    autoFocus
-                    required
-                    className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-semibold text-base transition-all"
-                    value={data?.name || ''}
-                    onChange={(e) => onChange('name', e.target.value)}
-                    placeholder="e.g. Q4 Marketing Campaign"
-                  />
-               </div>
-               <div>
-                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{t.description}</label>
-                  <textarea
-                    className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-medium text-base h-32 resize-none transition-all"
-                    value={data?.description || ''}
-                    onChange={(e) => onChange('description', e.target.value)}
-                    placeholder="Describe the main goals and deliverables..."
-                  />
-               </div>
-            </div>
+        {/* Content Canvas - 可滚动区域 */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-neutral-50 dark:bg-neutral-950">
+          <div className="p-6 md:p-8">
+            <div className="w-full max-w-3xl mx-auto space-y-6">
+              {/* 项目名称 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">{t.projectName}</label>
+                <input
+                  autoFocus
+                  required
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 outline-none focus:border-neutral-400 dark:focus:border-neutral-500 font-medium text-base transition-colors"
+                  value={data?.name || ''}
+                  onChange={(e) => onChange('name', e.target.value)}
+                  placeholder="e.g. Q4 Marketing Campaign"
+                />
+              </div>
 
-            <div>
-               <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{language === 'zh-TW' ? '時間軸' : '时间轴'}</label>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white dark:bg-neutral-800 rounded-xl border-2 border-neutral-200 dark:border-neutral-700">
+              {/* 描述 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">{t.description}</label>
+                <textarea
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 outline-none focus:border-neutral-400 dark:focus:border-neutral-500 font-medium text-base h-24 resize-none transition-colors"
+                  value={data?.description || ''}
+                  onChange={(e) => onChange('description', e.target.value)}
+                  placeholder="Describe the main goals and deliverables..."
+                />
+              </div>
+
+              {/* 时间轴 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">{language === 'zh-TW' ? '時間軸' : '时间轴'}</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
                   <div>
-                      <DatePicker
-                        label={t.startDate}
-                        value={data?.startDate || ''}
-                        onChange={(date) => onChange('startDate', date)}
-                        language={language}
-                      />
+                    <DatePicker
+                      label={t.startDate}
+                      value={data?.startDate || ''}
+                      onChange={(date) => onChange('startDate', date)}
+                      language={language}
+                    />
                   </div>
                   <div>
-                      <DatePicker
-                        label={t.endDate}
-                        value={data?.endDate || ''}
-                        onChange={(date) => onChange('endDate', date)}
-                        minDate={data?.startDate}
-                        language={language}
-                      />
+                    <DatePicker
+                      label={t.endDate}
+                      value={data?.endDate || ''}
+                      onChange={(date) => onChange('endDate', date)}
+                      minDate={data?.startDate}
+                      language={language}
+                    />
                   </div>
-               </div>
-            </div>
+                </div>
+              </div>
 
-            <div>
-               <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{t.schedule}</label>
-               <div className="bg-white dark:bg-neutral-800 p-2 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 flex gap-3">
-                   {['daily', 'weekly'].map(type => (
-                       <button
-                         key={type}
-                         type="button"
-                         onClick={() => onChange('scheduleType', type)}
-                         className={`flex-1 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${scheduleType === type ? 'bg-green-500 text-white shadow-lg' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
-                       >
-                         {type === 'daily' ? t.everyDay : t.specificDays}
-                       </button>
-                   ))}
-               </div>
-               {scheduleType === 'weekly' && (
-                  <div className="flex flex-wrap justify-center gap-2 mt-4 px-2">
-                     {DAYS_OF_WEEK.map((day: any) => (
-                       <button
-                         key={day}
-                         type="button"
-                         onClick={() => onChange('toggleDay', day)}
-                         className={`w-12 h-12 rounded-lg text-xs font-bold transition-all flex items-center justify-center border-2 ${selectedDays.includes(day) ? 'bg-green-500 text-white border-green-600 shadow-md' : 'bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:border-green-500'}`}
-                       >
-                         {t.days[day]}
-                       </button>
-                     ))}
+              {/* 日程安排 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">{t.schedule}</label>
+                <div className="bg-white dark:bg-neutral-800 p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 flex gap-2">
+                  {['daily', 'weekly'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => onChange('scheduleType', type)}
+                      className={`flex-1 py-2.5 rounded-md text-xs font-medium transition-all ${scheduleType === type ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900' : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
+                    >
+                      {type === 'daily' ? t.everyDay : t.specificDays}
+                    </button>
+                  ))}
+                </div>
+                {scheduleType === 'weekly' && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {DAYS_OF_WEEK.map((day: any) => (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => onChange('toggleDay', day)}
+                        className={`w-10 h-10 rounded-lg text-xs font-medium transition-all flex items-center justify-center border ${selectedDays.includes(day) ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-transparent' : 'bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-neutral-400'}`}
+                      >
+                        {t.days[day]}
+                      </button>
+                    ))}
                   </div>
-               )}
+                )}
+              </div>
             </div>
-
-         </div>
           </div>
         </div>
       </div>
@@ -388,18 +405,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     dl.click();
   };
 
-  const getTagColor = (tagName: string) => {
-    const cat = categories.find(c => c.name === tagName);
-    return cat ? cat.color : 'slate';
-  };
-
-  const getChipColor = (tagName: string): 'success' | 'warning' | 'danger' | 'default' => {
-    const color = getTagColor(tagName);
-    if (color === 'green') return 'success';
-    if (color === 'ochre') return 'warning';
-    if (color === 'terracotta') return 'danger';
-    return 'default';
-  };
   const TaskCard: React.FC<{ task: Task; isFirst: boolean; isLast: boolean; projectColor: string }> = ({ task, isFirst, isLast, projectColor }) => {
     const isLocked = task.parentTaskIds?.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED);
     const isCompleted = task.status === TaskStatus.COMPLETED;
@@ -600,51 +605,61 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     const enableStagger = totalCards <= 50;
 
     return (
-      // 居中容器 - 像专注卡片一样在画面中央
-      <div className="h-full flex items-center justify-center p-4 md:p-6 lg:p-8 overflow-hidden">
-        <div className="w-full max-w-6xl max-h-[calc(100vh-2rem)] md:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-4rem)] flex flex-col animate-in fade-in bg-white dark:bg-neutral-900 rounded-[2.5rem] shadow-2xl shadow-neutral-200/40 dark:shadow-black/40 border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden">
-          {/* Header - 固定在顶部 */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0 bg-white dark:bg-neutral-900">
-            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-              <button onClick={() => setView('list')} className="p-2 sm:p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all border-2 border-neutral-200 dark:border-neutral-700 shrink-0"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white truncate leading-tight">{selectedProject.name}</h2>
-                <p className="text-[10px] sm:text-xs font-bold text-neutral-400 uppercase tracking-wider truncate mt-1">{t.projectPlanner}</p>
+      // 全屏居中容器 - 点击外部区域返回列表
+      <div
+        className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-950 cursor-pointer"
+        onClick={() => setView('list')}
+      >
+        {/* 卡片容器 - 固定高度 */}
+        <div
+          className="w-full max-w-6xl h-[calc(100vh-8rem)] flex flex-col bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-xl overflow-hidden cursor-default"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header - Linear 极简风格 */}
+          <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setView('list')}
+                className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div>
+                <h2 className="text-lg font-bold text-neutral-900 dark:text-white truncate">{selectedProject.name}</h2>
+                <p className="text-xs text-neutral-400 truncate">{selectedProject.description || t.projectPlanner}</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-                <Button
-                  onClick={() => handleExportProject(selectedProject)}
-                  variant="bordered"
-                  className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0 font-semibold border-2 bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
-                >
-                  <Download className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.exportProject}</span>
-                </Button>
-                <Button
-                  onClick={() => handleEditProject(selectedProject)}
-                  variant="bordered"
-                  className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0 font-semibold border-2 bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
-                >
-                  <Pencil className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.projectName}</span>
-                </Button>
-                <Button
-                    color="danger"
-                    variant="bordered"
-                    onClick={() => {
-                      if (window.confirm(t.deleteProjectWarning)) {
-                        onDeleteProject(selectedProject.id);
-                        setView('list');
-                      }
-                    }}
-                    className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0 font-semibold border-2 bg-neutral-50 dark:bg-neutral-800 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.deleteProject}</span>
-                </Button>
-              </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onPress={() => handleExportProject(selectedProject)}
+                variant="light"
+                className="rounded-lg px-3 py-2 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button
+                onPress={() => handleEditProject(selectedProject)}
+                className="rounded-lg px-3 py-2 text-xs font-medium bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button
+                onPress={() => {
+                  if (window.confirm(t.deleteProjectWarning)) {
+                    onDeleteProject(selectedProject.id);
+                    setView('list');
+                  }
+                }}
+                variant="light"
+                className="rounded-lg px-3 py-2 text-xs font-medium text-neutral-400 hover:text-red-500 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </div>
+          </div>
 
-          {/* Content Canvas - 下半部分画布，支持垂直滚动查看多条流水线 */}
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-gradient-to-b from-neutral-50/50 to-neutral-100/30 dark:from-neutral-800/20 dark:to-neutral-900/30">
+          {/* Content Canvas - 可滚动区域 */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-neutral-50 dark:bg-neutral-950">
              <div className="p-4 md:p-6 pb-12">
                   {projectTracks.length === 0 ? (
                     <div className="h-full flex items-center justify-center min-h-[300px]">
@@ -1063,27 +1078,35 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full animate-in fade-in overflow-hidden">
-      <div className="flex items-center justify-between mb-6 shrink-0 px-2">
+      {/* Header - Linear 极简风格 */}
+      <div className="flex items-center justify-between shrink-0 px-8 py-6 border-b border-neutral-100 dark:border-neutral-800">
         <div>
-          <h2 className="text-4xl md:text-5xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight">{t.projectPlanner}</h2>
-          <p className="text-sm font-black text-neutral-400 uppercase tracking-[0.4em] mt-3">{t.projectPlannerDesc}</p>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{t.projectPlanner}</h2>
+          <p className="text-sm text-neutral-400 mt-1">{t.projectPlannerDesc}</p>
         </div>
-        <Button onClick={handleCreateProject} className="motion-animate rounded-2xl px-8 py-4 text-sm font-semibold shadow-lg bg-green-500 text-white border-2 border-green-600 hover:bg-green-600 transition-colors">
-          <GitBranchPlus className="w-4 h-4 mr-2" />
+        <Button
+          onClick={handleCreateProject}
+          className="rounded-lg px-4 py-2 text-sm font-medium bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
+        >
+          <Plus className="w-4 h-4 mr-2" />
           {t.newProject}
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2">
+      <div className="flex-1 overflow-y-auto px-8 py-6">
         {projects.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center py-20 animate-in fade-in duration-1000">
-            <div className="w-32 h-32 bg-neutral-50 dark:bg-neutral-800/50 rounded-[3rem] flex items-center justify-center mb-10 shadow-inner">
-              <GitBranchPlus className="w-12 h-12 text-slate-200" />
+            <div className="w-20 h-20 bg-neutral-50 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mb-8">
+              <GitBranchPlus className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
             </div>
-            <h3 className="text-2xl font-black text-neutral-900 dark:text-white mb-2">{t.noProjectsYet}</h3>
-            <p className="text-neutral-400 font-bold max-w-sm mx-auto leading-relaxed mb-8">{t.createProjectHint}</p>
-            <Button onClick={handleCreateProject} size="lg" className="motion-animate rounded-2xl px-12 py-4 shadow-xl bg-green-500 text-white font-semibold border-2 border-green-600 hover:bg-green-600 transition-colors">
-               {t.newProject}
+            <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{t.noProjectsYet}</h3>
+            <p className="text-neutral-400 text-sm max-w-sm mx-auto leading-relaxed mb-6">{t.createProjectHint}</p>
+            <Button
+              onClick={handleCreateProject}
+              className="rounded-lg px-6 py-2.5 text-sm font-medium bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {t.newProject}
             </Button>
           </div>
         ) : (
@@ -1106,55 +1129,61 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                 <div
                   key={project.id}
                   onClick={() => handleOpenDetail(project.id)}
-                  className="group flex flex-col p-4 md:p-5 bg-white dark:bg-neutral-900 rounded-[2rem] h-full min-h-[140px] border border-neutral-200/30 dark:border-neutral-800/30 hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.5)] transition-all cursor-pointer relative overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-black/20"
+                  className="group relative bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-green-400 dark:hover:border-green-600 transition-colors duration-200 cursor-pointer overflow-hidden"
                 >
-                  {/* Hover 时浮现的箭头提示 */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity">
-                    <ChevronRight className="w-6 h-6 text-neutral-400" />
-                  </div>
+                  {/* 卡片内容区 */}
+                  <div className="p-5 pb-6">
+                    {/* 标题行：标题 + 状态徽章 */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 truncate transition-colors leading-tight">
+                        {project.name}
+                      </h3>
+                      {/* Hover 时右上角浮现箭头 */}
+                      <div className="opacity-0 group-hover:opacity-40 transition-opacity shrink-0 -mt-0.5">
+                        <ChevronRight className="w-4 h-4 text-neutral-400" />
+                      </div>
+                    </div>
 
-                  {/* 标题行：标题 + 状态徽章 */}
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <h3 className="text-xl md:text-2xl font-black group-hover:text-green-600 truncate transition-colors leading-tight">{project.name}</h3>
-                    <span
-                      className={`
-                        shrink-0 uppercase px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-widest
+                    {/* 描述文字 */}
+                    <p className="text-neutral-400 dark:text-neutral-500 text-sm line-clamp-1 leading-relaxed mb-4">
+                      {project.description}
+                    </p>
+
+                    {/* 元数据行：状态 + 标签 + 步骤 */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {/* 状态药丸 */}
+                      <span className={`
+                        inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
                         ${isProjectCompleted
-                          ? 'bg-green-500 text-white shadow-md'
-                          : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400'}
-                      `}
-                    >
-                      {isProjectCompleted ? (language === 'zh-TW' ? '已完成' : '已完成') : (language === 'zh-TW' ? '進行中' : '进行中')}
-                    </span>
-                  </div>
+                          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-400/20'
+                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'}
+                      `}>
+                        {isProjectCompleted ? (language === 'zh-TW' ? '已完成' : '已完成') : (language === 'zh-TW' ? '進行中' : '进行中')}
+                      </span>
 
-                  {/* 描述文字 - 更淡的颜色 */}
-                  <p className="text-neutral-400 dark:text-neutral-500 text-sm line-clamp-1 leading-relaxed mb-3">{project.description}</p>
-
-                  {/* 水平进度条 */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${isProjectCompleted ? 'bg-green-500' : 'bg-neutral-400 dark:bg-neutral-500'}`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tabular-nums w-10 text-right">{progress}%</span>
-                  </div>
-
-                  {/* 底部：标签 + 步骤数 */}
-                  <div className="flex items-center justify-between mt-auto">
-                    <div className="flex flex-wrap gap-1.5 min-h-[24px]">
-                      {projectTags.length > 0 && projectTags.slice(0, 3).map(tag => (
-                        <Chip key={tag} color={getChipColor(tag)} className="px-2 py-0.5 text-[9px] uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity h-auto rounded-full">
+                      {/* 标签 */}
+                      {projectTags.slice(0, 2).map(tag => (
+                        <span key={tag} className="text-xs text-neutral-400 dark:text-neutral-500">
                           {tag}
-                        </Chip>
+                        </span>
                       ))}
-                      {projectTags.length > 3 && (
-                        <span className="text-[9px] text-neutral-400 px-1">+{projectTags.length - 3}</span>
+                      {projectTags.length > 2 && (
+                        <span className="text-xs text-neutral-300 dark:text-neutral-600">+{projectTags.length - 2}</span>
                       )}
+
+                      {/* 步骤数 */}
+                      <span className="text-xs text-neutral-300 dark:text-neutral-600 ml-auto">
+                        {completed}/{pTasks.length}
+                      </span>
                     </div>
-                    <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500">{completed} / {pTasks.length} {t.stepsCompleted}</p>
+                  </div>
+
+                  {/* 底部极细进度条 - Linear 风格签名元素 */}
+                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-neutral-100 dark:bg-neutral-800">
+                    <div
+                      className={`h-full transition-all duration-500 ease-out ${isProjectCompleted ? 'bg-green-500' : 'bg-neutral-300 dark:bg-neutral-600'}`}
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
                 </div>
               );
