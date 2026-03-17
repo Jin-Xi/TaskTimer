@@ -1099,11 +1099,6 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
               const allCompleted = pTasks.length > 0 && pTasks.every(tk => tk.status === TaskStatus.COMPLETED);
               const isProjectCompleted = hasTerminal ? (allCompleted && terminalCompleted) : allCompleted;
 
-              // Circle progress config
-              const radius = 36;
-              const circumference = 2 * Math.PI * radius;
-              const strokeDashoffset = circumference - (progress / 100) * circumference;
-
               // Aggregate all unique tags from tasks in this project
               const projectTags: string[] = Array.from(new Set(pTasks.flatMap(t => t.tags || [])));
 
@@ -1111,56 +1106,55 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                 <div
                   key={project.id}
                   onClick={() => handleOpenDetail(project.id)}
-                  className="group flex flex-col md:flex-row items-stretch gap-4 p-4 md:p-5 bg-white dark:bg-neutral-900 rounded-[2rem] h-full min-h-[180px] border border-neutral-200/30 dark:border-neutral-800/30 hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.5)] transition-all cursor-pointer relative overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-black/20"
+                  className="group flex flex-col p-4 md:p-5 bg-white dark:bg-neutral-900 rounded-[2rem] h-full min-h-[140px] border border-neutral-200/30 dark:border-neutral-800/30 hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.5)] transition-all cursor-pointer relative overflow-hidden shadow-lg shadow-slate-200/50 dark:shadow-black/20"
                 >
-                  <div className="relative w-20 h-20 md:w-24 md:h-24 shrink-0 mx-auto md:mx-0">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r={radius} className="stroke-slate-100 dark:stroke-slate-800 fill-none" strokeWidth="8" />
-                      <circle 
-                        cx="50" cy="50" r={radius} 
-                        className={`stroke-${project.color}-500 fill-none transition-all duration-1000`} 
-                        strokeWidth="8" 
-                        strokeLinecap="round" 
-                        style={{ strokeDasharray: circumference, strokeDashoffset }} 
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center font-black text-lg md:text-xl tabular-nums">
-                      {progress}%
-                    </div>
+                  {/* Hover 时浮现的箭头提示 */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity">
+                    <ChevronRight className="w-6 h-6 text-neutral-400" />
                   </div>
 
-                  <div className="flex-1 flex flex-col justify-center min-w-0 text-center md:text-left">
-                    <h3 className="text-xl md:text-2xl font-black group-hover:text-green-600 truncate transition-colors leading-tight mb-2">{project.name}</h3>
-                    <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                      {/* Status Badge */}
-                      <span
-                        className={`
-                          uppercase px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-widest border
-                          ${isProjectCompleted
-                            ? 'bg-green-500 text-white border-green-500 shadow-md'
-                            : 'bg-neutral-400 text-white border-neutral-400 shadow-md'}
-                        `}
-                      >
-                        {isProjectCompleted ? (language === 'zh-TW' ? '已完成' : '已完成') : (language === 'zh-TW' ? '進行中' : '进行中')}
-                      </span>
-                    </div>
+                  {/* 标题行：标题 + 状态徽章 */}
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <h3 className="text-xl md:text-2xl font-black group-hover:text-green-600 truncate transition-colors leading-tight">{project.name}</h3>
+                    <span
+                      className={`
+                        shrink-0 uppercase px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-widest
+                        ${isProjectCompleted
+                          ? 'bg-green-500 text-white shadow-md'
+                          : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400'}
+                      `}
+                    >
+                      {isProjectCompleted ? (language === 'zh-TW' ? '已完成' : '已完成') : (language === 'zh-TW' ? '進行中' : '进行中')}
+                    </span>
+                  </div>
 
-                    <div className="flex flex-wrap gap-1.5 justify-center md:justify-start mb-2 min-h-[28px]">
-                      {projectTags.length > 0 && projectTags.map(tag => (
-                        <Chip key={tag} color={getChipColor(tag)} className="px-2 py-0.5 text-[9px] uppercase tracking-wider opacity-80 group-hover:opacity-100 transition-opacity h-auto rounded-full">
+                  {/* 描述文字 - 更淡的颜色 */}
+                  <p className="text-neutral-400 dark:text-neutral-500 text-sm line-clamp-1 leading-relaxed mb-3">{project.description}</p>
+
+                  {/* 水平进度条 */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${isProjectCompleted ? 'bg-green-500' : 'bg-neutral-400 dark:bg-neutral-500'}`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tabular-nums w-10 text-right">{progress}%</span>
+                  </div>
+
+                  {/* 底部：标签 + 步骤数 */}
+                  <div className="flex items-center justify-between mt-auto">
+                    <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+                      {projectTags.length > 0 && projectTags.slice(0, 3).map(tag => (
+                        <Chip key={tag} color={getChipColor(tag)} className="px-2 py-0.5 text-[9px] uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity h-auto rounded-full">
                           {tag}
                         </Chip>
                       ))}
+                      {projectTags.length > 3 && (
+                        <span className="text-[9px] text-neutral-400 px-1">+{projectTags.length - 3}</span>
+                      )}
                     </div>
-
-                    <p className="text-neutral-500 dark:text-neutral-400 text-sm line-clamp-2 opacity-80 leading-relaxed mb-2 min-h-[40px]">{project.description}</p>
-                    <p className="text-[9px] font-black text-neutral-300 uppercase tracking-widest mt-auto">{completed} / {pTasks.length} {t.stepsCompleted}</p>
-                  </div>
-
-                  <div className="shrink-0 flex items-center justify-center border-t md:border-t-0 md:border-l-2 border-neutral-100 dark:border-neutral-800 pt-4 md:pt-0 md:pl-5">
-                    <div className="p-2.5 bg-white dark:bg-neutral-800 border-2 border-neutral-300 dark:border-neutral-600 text-neutral-400 group-hover:border-green-500 group-hover:text-green-600 rounded-xl transition-all group-hover:scale-110 shadow-sm font-semibold">
-                      <ChevronRight className="w-5 h-5" />
-                    </div>
+                    <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500">{completed} / {pTasks.length} {t.stepsCompleted}</p>
                   </div>
                 </div>
               );
