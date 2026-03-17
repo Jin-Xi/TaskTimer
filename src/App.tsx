@@ -22,8 +22,6 @@ import { TaskTimer } from './components/TaskTimer';
 import { Logo } from './components/Logo';
 import { TaskList } from './components/TaskList';
 import { Stats } from './components/Stats';
-import { AIInsights } from './components/AIInsights';
-import { AIProjectGenerator } from './components/AIProjectGenerator';
 import { ProjectManager } from './components/ProjectManager';
 import { FullscreenFocus } from './components/FullscreenFocus';
 import { AISettingsModal } from './components/AISettingsModal';
@@ -312,59 +310,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAIPlanGenerated = async (projectData: any, tasksData: any[]) => {
-    // Create the project
-    const projectId = generateUUID();
-    const updatedProjects = await addProject({
-      id: projectId,
-      name: projectData.name,
-      description: projectData.description,
-      color: projectData.color,
-      createdAt: Date.now()
-    } as Project);
-    setProjects(updatedProjects);
-
-    // Build ID mapping from temporary IDs to actual UUIDs
-    const idMapping = new Map<string, string>();
-    const tasksWithUUIDs = tasksData.map(task => {
-      const newId = generateUUID();
-      idMapping.set(task.id, newId);
-      return {
-        ...task,
-        _originalId: task.id,
-        id: newId
-      };
-    });
-
-    // Create tasks with proper field mappings
-    const tasksWithProject = tasksWithUUIDs.map(task => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      tags: task.tag ? [task.tag] : [],
-      status: TaskStatus.IDLE,
-      totalTime: 0,
-      estimatedTime: task.estimatedMinutes ? task.estimatedMinutes * 60 * 1000 : undefined,
-      createdAt: Date.now(),
-      logs: [],
-      milestones: [],
-      projectId,
-      // Map parentIds (temp IDs) to parentTaskIds (actual UUIDs)
-      parentTaskIds: (task.parentIds || []).map((parentId: string) => idMapping.get(parentId)).filter(Boolean) as string[]
-    }));
-
-    // Add all tasks and get the final updated tasks array
-    let finalTasks: Task[] = [];
-    for (const task of tasksWithProject) {
-      finalTasks = await addTask(task as Task);
-    }
-    // Update tasks state to reflect the changes
-    setTasks(finalTasks);
-
-    // Navigate to projects tab
-    setActiveTab('projects');
-  };
-
   const getSuggestedTasks = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 11) {
@@ -639,14 +584,6 @@ const App: React.FC = () => {
                   </div>
                 </AnimatedPage>
               )}
-              {activeTab === 'ai-planner' && (
-                <AnimatedPage key="ai-planner" direction={tabDirection}>
-                  <AIProjectGenerator
-                    language={language}
-                    onPlanGenerated={handleAIPlanGenerated}
-                  />
-                </AnimatedPage>
-              )}
               {activeTab === 'projects' && (
                 <AnimatedPage key="projects" direction={tabDirection} className="flex-1 flex items-stretch justify-center p-4 md:px-10">
                   <div className="w-full max-w-[1600px] mx-auto">
@@ -682,14 +619,7 @@ const App: React.FC = () => {
               {activeTab === 'dashboard' && (
                 <AnimatedPage key="dashboard" direction={tabDirection} className="flex-1 flex items-center justify-center p-4 md:px-10">
                   <div className="w-full max-w-[1600px] mx-auto">
-                    <Stats language={language} tasks={tasks} />
-                  </div>
-                </AnimatedPage>
-              )}
-              {activeTab === 'ai-insights' && (
-                <AnimatedPage key="ai-insights" direction={tabDirection}>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:px-10 md:py-12">
-                    <AIInsights language={language} tasks={tasks} />
+                    <Stats language={language} tasks={tasks} projects={projects} />
                   </div>
                 </AnimatedPage>
               )}

@@ -172,6 +172,28 @@ body {
   background: var(--color-accent-olive);
 }
 
+/* 水平滚动条 */
+.custom-scrollbar-x::-webkit-scrollbar {
+  height: 6px;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar-thumb {
+  background: rgba(132, 177, 121, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar-thumb:hover {
+  background: rgba(132, 177, 121, 0.5);
+}
+
+.dark .custom-scrollbar-x::-webkit-scrollbar-thumb {
+  background: rgba(132, 177, 121, 0.4);
+}
+
 /* ========================================
    实用类
    ======================================== */

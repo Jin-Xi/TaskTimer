@@ -93,9 +93,14 @@ export const modalVariants: Variants = {
 export const drawerVariants: Variants = {
   initial: (placement: 'left' | 'right' | 'top' | 'bottom' = 'right') => {
     const offset = '100%';
+    if (placement === 'left' || placement === 'right') {
+      return {
+        x: placement === 'left' ? offset : `-${offset}`,
+        opacity: 0,
+      };
+    }
     return {
-      [placement === 'left' || placement === 'right' ? 'x' : 'y']:
-        placement === 'left' || placement === 'top' ? offset : `-${offset}`,
+      y: placement === 'top' ? offset : `-${offset}`,
       opacity: 0,
     };
   },
@@ -104,20 +109,30 @@ export const drawerVariants: Variants = {
     y: 0,
     opacity: 1,
     transition: {
-      type: 'tween',
-      ease: [0.32, 0.72, 0, 1],
+      type: 'tween' as const,
+      ease: [0.32, 0.72, 0, 1] as const,
       duration: 0.5,
     },
   },
   exit: (placement: 'left' | 'right' | 'top' | 'bottom' = 'right') => {
     const offset = '100%';
+    if (placement === 'left' || placement === 'right') {
+      return {
+        x: placement === 'left' ? offset : `-${offset}`,
+        opacity: 0,
+        transition: {
+          type: 'tween' as const,
+          ease: 'easeIn' as const,
+          duration: 0.3,
+        },
+      };
+    }
     return {
-      [placement === 'left' || placement === 'right' ? 'x' : 'y']:
-        placement === 'left' || placement === 'top' ? offset : `-${offset}`,
+      y: placement === 'top' ? offset : `-${offset}`,
       opacity: 0,
       transition: {
-        type: 'tween',
-        ease: 'easeIn',
+        type: 'tween' as const,
+        ease: 'easeIn' as const,
         duration: 0.3,
       },
     };

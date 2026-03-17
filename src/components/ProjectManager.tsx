@@ -1,10 +1,13 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Trash2, ChevronRight, ChevronLeft, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronLeft, Pencil, X, ArrowLeft, Flag, Clock, Target, GitBranchPlus, Download, Calendar as CalendarIcon, Check, Circle } from 'lucide-react';
 import { Project, Task, TaskStatus, Category, DayOfWeek, Language } from '../types';
 import { TAG_COLORS, TRANSLATIONS, DEFAULT_CATEGORIES, COLOR_HEX_MAP } from '../constants';
 import { Button, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox, Tooltip, Card } from '@heroui/react';
 import { StaggeredList } from '../animations/components/StaggeredList';
+import { ProjectZeroState } from './ProjectZeroState';
+import { SplitActionButton } from './SplitActionButton';
+import { AIPlanningModal } from './AIPlanningModal';
 import { motion } from 'framer-motion';
 import { listItemVariants } from '../animations/variants';
 
@@ -177,15 +180,15 @@ const DatePicker = ({ label, value, onChange, minDate, language }: { label: stri
   );
 };
 
-const ProjectForm = ({ 
-  mode, 
-  title, 
-  data, 
-  onChange, 
-  onSubmit, 
-  onCancel, 
-  t, 
-  DAYS_OF_WEEK, 
+const ProjectForm = ({
+  mode,
+  title,
+  data,
+  onChange,
+  onSubmit,
+  onCancel,
+  t,
+  DAYS_OF_WEEK,
   TAG_COLORS,
   language
 }: any) => {
@@ -193,52 +196,56 @@ const ProjectForm = ({
   const selectedDays = data?.schedule?.days || data?.selectedDays || [];
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-neutral-900 rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
-      <div className="flex items-center justify-between px-8 md:px-12 py-8 border-b border-neutral-100 dark:border-neutral-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-10 sticky top-0">
-         <div className="flex items-center gap-8">
-            <button type="button" onClick={onCancel} className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50 hover:bg-neutral-100 dark:hover:bg-slate-700 text-neutral-500 transition-all active:scale-95 shadow-sm border border-neutral-200 dark:border-neutral-700">
-               <ArrowLeft className="w-6 h-6" />
+    // 居中容器 - 与 detail 视图保持一致
+    <div className="h-full flex items-center justify-center p-4 md:p-6 lg:p-8 overflow-hidden">
+      <div className="w-full max-w-6xl max-h-[calc(100vh-2rem)] md:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-4rem)] flex flex-col animate-in fade-in bg-white dark:bg-neutral-900 rounded-[2.5rem] shadow-2xl shadow-neutral-200/40 dark:shadow-black/40 border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden">
+        {/* Header - 固定在顶部 */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0 bg-white dark:bg-neutral-900">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button type="button" onClick={onCancel} className="p-2 sm:p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all border-2 border-neutral-200 dark:border-neutral-700 shrink-0">
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <div className="min-w-0">
-              <h2 className="text-2xl md:text-4xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight truncate">{title}</h2>
-              <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mt-2">{mode === 'create' ? t.projectPlanner : (data?.name || 'Project Detail')}</p>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white truncate leading-tight">{title}</h2>
             </div>
-         </div>
-         <Button onClick={onSubmit} className="motion-animate rounded-2xl px-8 md:px-10 py-4 shadow-xl shadow-green/20 font-black text-sm md:text-base uppercase tracking-wider shrink-0 hover:shadow-green/30 transition-shadow">
-            {mode === 'create' ? t.createProject : 'Save Changes'}
-         </Button>
-      </div>
+          </div>
+          <Button onClick={onSubmit} className="motion-animate rounded-xl px-6 py-3 shadow-xl font-semibold text-sm border-2 shrink-0 bg-green-500 text-white hover:bg-green-600 transition-colors border-green-600">
+            {mode === 'create' ? t.createProject : (language === 'zh-TW' ? '保存變更' : '保存更改')}
+          </Button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 md:p-12">
+        {/* Content Canvas - 下半部分画布，支持垂直滚动 */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-gradient-to-b from-neutral-50/50 to-neutral-100/30 dark:from-neutral-800/20 dark:to-neutral-900/30">
+          <div className="p-8 md:p-12">
          <div className="w-full max-w-5xl mx-auto space-y-12">
             <div className="space-y-8">
                <div>
-                  <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.projectName}</label>
-                  <input 
-                    autoFocus 
-                    required 
-                    className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-neutral-200 dark:border-neutral-700 rounded-[2rem] p-6 outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-green-500/50 focus:ring-8 focus:ring-green-500/5 font-black text-2xl shadow-inner transition-all duration-300" 
-                    value={data?.name || ''} 
-                    onChange={(e) => onChange('name', e.target.value)} 
+                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{t.projectName}</label>
+                  <input
+                    autoFocus
+                    required
+                    className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-semibold text-base transition-all"
+                    value={data?.name || ''}
+                    onChange={(e) => onChange('name', e.target.value)}
                     placeholder="e.g. Q4 Marketing Campaign"
                   />
                </div>
                <div>
-                  <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.description}</label>
-                  <textarea 
-                    className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-neutral-200 dark:border-neutral-700 rounded-[2rem] p-6 outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-green-500/50 focus:ring-8 focus:ring-green-500/5 font-medium text-lg h-48 resize-none shadow-inner leading-relaxed transition-all duration-300" 
-                    value={data?.description || ''} 
-                    onChange={(e) => onChange('description', e.target.value)} 
+                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{t.description}</label>
+                  <textarea
+                    className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-medium text-base h-32 resize-none transition-all"
+                    value={data?.description || ''}
+                    onChange={(e) => onChange('description', e.target.value)}
                     placeholder="Describe the main goals and deliverables..."
                   />
                </div>
             </div>
 
             <div>
-               <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-6 ml-2">Timeline</label>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-10 bg-slate-50/50 dark:bg-slate-800/30 rounded-[3rem] border border-neutral-200/50 dark:border-neutral-800/50">
+               <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{language === 'zh-TW' ? '時間軸' : '时间轴'}</label>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white dark:bg-neutral-800 rounded-xl border-2 border-neutral-200 dark:border-neutral-700">
                   <div>
-                      <DatePicker 
+                      <DatePicker
                         label={t.startDate}
                         value={data?.startDate || ''}
                         onChange={(date) => onChange('startDate', date)}
@@ -246,7 +253,7 @@ const ProjectForm = ({
                       />
                   </div>
                   <div>
-                      <DatePicker 
+                      <DatePicker
                         label={t.endDate}
                         value={data?.endDate || ''}
                         onChange={(date) => onChange('endDate', date)}
@@ -258,27 +265,27 @@ const ProjectForm = ({
             </div>
 
             <div>
-               <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.schedule}</label>
-               <div className="bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-[2.5rem] border border-neutral-200 dark:border-neutral-800 flex gap-3">
+               <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4 ml-2">{t.schedule}</label>
+               <div className="bg-white dark:bg-neutral-800 p-2 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 flex gap-3">
                    {['daily', 'weekly'].map(type => (
                        <button
                          key={type}
                          type="button"
                          onClick={() => onChange('scheduleType', type)}
-                         className={`flex-1 py-6 rounded-[2rem] text-sm font-black uppercase tracking-widest transition-all duration-300 ${scheduleType === type ? 'bg-white dark:bg-slate-700 text-green-600 shadow-xl scale-[1.02]' : 'text-neutral-400 hover:bg-neutral-100 dark:hover:bg-slate-800'}`}
+                         className={`flex-1 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${scheduleType === type ? 'bg-green-500 text-white shadow-lg' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
                        >
                          {type === 'daily' ? t.everyDay : t.specificDays}
                        </button>
                    ))}
                </div>
                {scheduleType === 'weekly' && (
-                  <div className="flex flex-wrap justify-center gap-4 mt-8 px-2 animate-in slide-in-from-top-2">
+                  <div className="flex flex-wrap justify-center gap-2 mt-4 px-2">
                      {DAYS_OF_WEEK.map((day: any) => (
                        <button
                          key={day}
                          type="button"
                          onClick={() => onChange('toggleDay', day)}
-                         className={`w-14 h-14 md:w-18 md:h-18 rounded-[1.5rem] text-xs md:text-sm font-black transition-all flex items-center justify-center ${selectedDays.includes(day) ? 'bg-green-500 text-white shadow-lg shadow-green/30 scale-110' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 hover:bg-slate-200'}`}
+                         className={`w-12 h-12 rounded-lg text-xs font-bold transition-all flex items-center justify-center border-2 ${selectedDays.includes(day) ? 'bg-green-500 text-white border-green-600 shadow-md' : 'bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:border-green-500'}`}
                        >
                          {t.days[day]}
                        </button>
@@ -288,6 +295,8 @@ const ProjectForm = ({
             </div>
 
          </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -301,6 +310,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
   const [isAddingTaskToProject, setIsAddingTaskToProject] = useState<string | null>(null);
   const [isAddingRoot, setIsAddingRoot] = useState(false);
+  const [showAIPlanning, setShowAIPlanning] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', parentTaskIds: [] as string[], isTerminal: false });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -405,100 +415,100 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           isPressable={!isLocked}
           isDisabled={isLocked}
           className={`
-            w-[280px] sm:w-[300px] h-[300px] p-4 sm:p-5 rounded-2xl transition-all duration-300 relative flex flex-col group/card shadow-md
-            ${isTerminal && !isCompleted ? 'ring-2 ring-terracotta-300 dark:ring-terracotta-600' : ''}
+            w-[180px] h-auto min-h-[120px] p-2.5 rounded-xl transition-all duration-300 relative flex flex-col group/card shadow-sm
+            ${isTerminal && !isCompleted ? 'ring-1.5 ring-terracotta-400 dark:ring-terracotta-500' : ''}
           `}
           classNames={{
             base: `
               ${isCompleted
-                ? 'bg-green-50/80 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                ? 'bg-green-50/90 dark:bg-green-900/30 border-green-400/60 dark:border-green-700'
                 : isLocked
-                  ? 'opacity-60 grayscale border-neutral-200 dark:border-neutral-800'
-                  : 'hover:shadow-2xl hover:-translate-y-1.5 hover:border-neutral-300 dark:hover:border-neutral-600'
+                  ? 'bg-neutral-100/80 dark:bg-neutral-800/60 border-neutral-300 dark:border-neutral-600 opacity-70'
+                  : 'hover:shadow-lg hover:border-neutral-300 dark:hover:border-neutral-500'
               }
             `,
           }}
           style={isCompleted || isLocked ? undefined : {
             borderColor: isRunning ? `${colors.main}CC` : `${colors.light}CC`,
-            borderWidth: '1.5px'
+            borderWidth: '1px'
           } as React.CSSProperties}
         >
-          {/* Terminal Node Badge */}
-          {isTerminal && (
-            <div className="absolute -top-2 -right-2 z-10">
-              <div className="bg-terracotta-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-wider shadow-lg">
-                {language === 'zh-TW' ? '終點' : '终点'}
-              </div>
+          {/* 状态标签 + 操作按钮 */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold"
+                 style={isCompleted ? { backgroundColor: '#d1fae5', color: '#059669' } : isTerminal ? { backgroundColor: '#FEE2E2', color: '#DC2626' } : { backgroundColor: colors.bg, color: colors.dark }}>
+              {isTerminal ? <Flag className="w-2 h-2" /> : isCompleted ? '✓' : isLocked ? '🔒' : isRunning ? '▶' : '○'}
+              <span>{isTerminal ? '终点' : isCompleted ? '完成' : isLocked ? '锁定' : isRunning ? '进行' : '就绪'}</span>
             </div>
-          )}
-
-          <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-wider"
-                 style={isCompleted ? { backgroundColor: '#d1fae5', color: '#059669' } : isTerminal ? { backgroundColor: '#FBE6E1', color: '#D27D67' } : { backgroundColor: colors.bg, color: colors.dark }}>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isCompleted ? '#10b981' : isTerminal ? '#D27D67' : colors.main }} />
-              {isCompleted ? 'DONE' : isLocked ? 'LOCKED' : isTerminal ? 'TERMINAL' : isRunning ? 'RUNNING' : 'READY'}
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
-              <button onClick={() => setEditingTask(task)} className="p-1 sm:p-1.5 text-neutral-400 hover:text-green-600 transition-all"><Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
-              <button onClick={() => onDeleteTask(task.id)} className="p-1 sm:p-1.5 text-neutral-400 hover:text-red-500 transition-all"><Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+              <button onClick={() => setEditingTask(task)} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-green-600 transition-all"><Pencil className="w-2.5 h-2.5" /></button>
+              <button onClick={() => onDeleteTask(task.id)} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-red-500 transition-all"><Trash2 className="w-2.5 h-2.5" /></button>
             </div>
           </div>
 
-          <Tooltip content={task.title} showArrow>
-            <h5 className="text-xs sm:text-sm md:text-base font-black text-neutral-900 dark:text-white mb-1.5 sm:mb-2 leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.25rem] truncate max-w-[200px]">{task.title}</h5>
-          </Tooltip>
+          {/* 标题 */}
+          <h5 className="text-[11px] font-bold text-neutral-900 dark:text-white leading-tight line-clamp-2 mb-1">{task.title}</h5>
 
+          {/* 描述 */}
+          {task.description && (
+            <p className="text-[9px] text-neutral-500 dark:text-neutral-400 leading-relaxed line-clamp-2 mb-1.5">{task.description}</p>
+          )}
+
+          {/* 标签 */}
           {task.tags && task.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-3">
+            <div className="flex flex-wrap gap-0.5 mb-1.5">
               {task.tags.map(tag => (
-                <Chip key={tag} color={getChipColor(tag)} className="text-[8px] sm:text-[9px] px-1 py-0.5 h-auto rounded-full">
+                <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300">
                   {tag}
-                </Chip>
+                </span>
               ))}
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 text-xs sm:text-sm font-black text-neutral-400 uppercase tracking-wider mt-auto pt-1.5 sm:pt-2 border-t border-neutral-100 dark:border-neutral-800/50 overflow-hidden">
-             <div className="flex items-center gap-1 min-w-0"><Flag className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" style={{ color: colors.main }} /><span className="truncate">{task.milestones?.length || 0}</span></div>
-             <div className="flex items-center gap-1 min-w-0 font-mono"><Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" /><span className="truncate">{Math.floor(task.totalTime / 60000)}m</span></div>
+          {/* 底部信息栏 */}
+          <div className="flex items-center justify-between text-[8px] text-neutral-400 mt-auto pt-1.5 border-t border-neutral-100/80 dark:border-neutral-700/50">
+             <div className="flex items-center gap-1">
+               <Flag className="w-2.5 h-2.5" style={{ color: colors.main }} />
+               <span>{task.milestones?.length || 0}</span>
+             </div>
+             <div className="flex items-center gap-1 font-mono">
+               <Clock className="w-2.5 h-2.5" />
+               <span>{Math.floor(task.totalTime / 60000)}分钟</span>
+             </div>
           </div>
         </Card>
-        {!isLast && !task.isTerminal ? (
-          <div className="flex items-center justify-center px-1 shrink-0 relative">
-             {/* Arrow line */}
+        {!isLast ? (
+          <div className="flex items-center justify-center px-0.5 shrink-0">
              <div className="flex items-center">
-               <div className="w-12 h-1.5 rounded-full" style={{ background: `linear-gradient(to right, ${colors.lighter}80, ${colors.main}99)` }} />
-               {/* Arrow head */}
-               <div className="w-0 h-0 ml-[-2px]" style={{
-                 borderLeft: `10px solid ${colors.main}`,
-                 borderTop: '6px solid transparent',
-                 borderBottom: '6px solid transparent'
+               <div className="w-6 h-0.5 rounded-full" style={{ background: `linear-gradient(to right, ${colors.lighter}90, ${colors.main})` }} />
+               <div className="w-0 h-0 ml-[-0.5px]" style={{
+                 borderLeft: `5px solid ${colors.main}`,
+                 borderTop: '3px solid transparent',
+                 borderBottom: '3px solid transparent'
                }} />
              </div>
           </div>
-        ) : (
-          <div className="flex items-center justify-center px-1 shrink-0">
+        ) : !task.isTerminal ? (
+          <div className="flex items-center justify-center px-0.5 shrink-0">
             <button
               onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [task.id], isTerminal: false }); setIsAddingTaskToProject(task.id); }}
               className="flex items-center group/add-btn"
             >
-              {/* Arrow line */}
-              <div className="w-8 h-1.5 rounded-full transition-all group-hover/add-btn:w-10" style={{
-                background: `linear-gradient(to right, ${colors.lighter}60, ${colors.light}80)`,
+              <div className="w-4 h-0.5 rounded-full transition-all group-hover/add-btn:w-6" style={{
+                background: `linear-gradient(to right, ${colors.lighter}70, ${colors.light}90)`,
               }} />
-              {/* Plus button */}
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 hover:shadow-md transition-all ml-1"
+              <div className="w-5 h-5 rounded-md flex items-center justify-center shadow-sm hover:scale-110 transition-all ml-0.5"
                    style={{
                      backgroundColor: colors.bg,
-                     border: `2px solid ${colors.light}`,
+                     border: `1px solid ${colors.light}`,
                    }}
                    onMouseEnter={(e) => e.currentTarget.style.borderColor = colors.main}
                    onMouseLeave={(e) => e.currentTarget.style.borderColor = colors.light}>
-                <Plus className="w-4 h-4 transition-all" style={{ color: colors.main }} />
+                <Plus className="w-2.5 h-2.5" style={{ color: colors.main }} />
               </div>
             </button>
           </div>
-        )}
+        ) : null}
       </div>
     );
   };
@@ -569,7 +579,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     return (
       <ProjectForm 
         mode={view} 
-        title={view === 'create' ? t.createProject : 'Edit Project'} 
+        title={view === 'create' ? t.createProject : (language === 'zh-TW' ? '編輯項目' : '编辑项目')} 
         data={formData} 
         onChange={handleFormChange}
         onSubmit={handleSubmit} 
@@ -584,139 +594,144 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
   if (view === 'detail' && selectedProject) {
     const pColor = selectedProject.color || 'green';
-    const colors = COLOR_HEX_MAP[themeColor] || COLOR_HEX_MAP.green;
+    const colors = COLOR_HEX_MAP[pColor] || COLOR_HEX_MAP.green;
     const themeColors = colors; // Alias for backward compatibility
     const totalCards = projectTracks.flat().length;
     const enableStagger = totalCards <= 50;
 
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden animate-in fade-in bg-white dark:bg-neutral-900 rounded-[2.5rem] shadow-2xl shadow-neutral-200/40 dark:shadow-black/40 border border-neutral-100 dark:border-neutral-800">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-md">
-          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <button onClick={() => setView('list')} className="p-2 sm:p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 transition-all shrink-0"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-neutral-900 dark:text-white truncate">{selectedProject.name}</h2>
-              <p className="text-[10px] sm:text-xs font-bold text-neutral-400 uppercase tracking-wider truncate mt-0.5">{t.projectPlanner}</p>
+      // 居中容器 - 像专注卡片一样在画面中央
+      <div className="h-full flex items-center justify-center p-4 md:p-6 lg:p-8 overflow-hidden">
+        <div className="w-full max-w-6xl max-h-[calc(100vh-2rem)] md:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-4rem)] flex flex-col animate-in fade-in bg-white dark:bg-neutral-900 rounded-[2.5rem] shadow-2xl shadow-neutral-200/40 dark:shadow-black/40 border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden">
+          {/* Header - 固定在顶部 */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0 bg-white dark:bg-neutral-900">
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <button onClick={() => setView('list')} className="p-2 sm:p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all border-2 border-neutral-200 dark:border-neutral-700 shrink-0"><ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white truncate leading-tight">{selectedProject.name}</h2>
+                <p className="text-[10px] sm:text-xs font-bold text-neutral-400 uppercase tracking-wider truncate mt-1">{t.projectPlanner}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-              <Button onClick={() => handleExportProject(selectedProject)} className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"><Download className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.exportProject}</span></Button>
-              <Button onClick={() => handleEditProject(selectedProject)} className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"><Pencil className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.projectName}</span></Button>
-              <Button
-                  color="danger"
-                  onClick={() => {
-                    if (window.confirm(t.deleteProjectWarning)) {
-                      onDeleteProject(selectedProject.id);
-                      setView('list');
-                    }
-                  }}
-                  className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0"
-              >
-                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.deleteProject}</span>
-              </Button>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+                <Button
+                  onClick={() => handleExportProject(selectedProject)}
+                  variant="bordered"
+                  className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0 font-semibold border-2 bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+                >
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.exportProject}</span>
+                </Button>
+                <Button
+                  onClick={() => handleEditProject(selectedProject)}
+                  variant="bordered"
+                  className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0 font-semibold border-2 bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+                >
+                  <Pencil className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.projectName}</span>
+                </Button>
+                <Button
+                    color="danger"
+                    variant="bordered"
+                    onClick={() => {
+                      if (window.confirm(t.deleteProjectWarning)) {
+                        onDeleteProject(selectedProject.id);
+                        setView('list');
+                      }
+                    }}
+                    className="motion-animate rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs shrink-0 font-semibold border-2 bg-neutral-50 dark:bg-neutral-800 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" /><span className="hidden sm:inline ml-1">{t.deleteProject}</span>
+                </Button>
+              </div>
             </div>
-          </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto custom-scrollbar bg-neutral-50/20 dark:bg-neutral-900/10">
-           <div className="p-8 md:p-12">
-                <div className="space-y-16 pb-24">
-                   {projectTracks.length === 0 ? (
-                     <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center text-center opacity-70">
-                        <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6">
-                           <GitBranchPlus className="w-10 h-10 text-neutral-400" />
-                        </div>
-                        <h3 className="text-2xl font-black text-neutral-900 dark:text-white mb-2">{t.noProjectTasks}</h3>
-                        <p className="text-neutral-500 font-bold mb-8">{t.addProjectTaskHint}</p>
-                        <button
-                          onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false }); setIsAddingRoot(true); }}
-                          className="px-8 py-4 rounded-2xl text-white font-black shadow-xl transition-all flex items-center gap-3 hover:shadow-2xl hover:-translate-y-0.5"
-                          style={{ backgroundColor: colors.main }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.dark}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.main}
-                        >
-                           <Plus className="w-5 h-5" />
-                           {language === 'zh-TW' ? '新增工作流' : '添加新工作流'}
-                        </button>
-                     </div>
-                   ) : (
-                     projectTracks.map((track, trackIdx) => {
-                       let cardIndex = 0;
-                       return (
-                       <div key={trackIdx} className={trackIdx > 0 ? "pt-16 border-t-2 border-neutral-100/80 dark:border-neutral-800/80" : ""}>
-                         <div className="flex flex-col gap-6">
-                            <div className="flex items-center gap-4 px-6">
-                               <div className="w-2 h-6 rounded-full opacity-70" style={{
-                                 backgroundColor: themeColors.main,
-                                 boxShadow: `0 0 10px ${themeColors.main}4d`
-                               }} />
-                               <h4 className="text-xs font-black text-neutral-400 uppercase tracking-[0.3em]">{language === 'zh-TW' ? `工作流支線 ${trackIdx + 1}` : `工作流支线 ${trackIdx + 1}`}</h4>
-                            </div>
-                            <div className="flex items-center px-6">
-                              {track.map((task, stepIdx) => {
-                                const currentIndex = cardIndex++;
-                                return (
-                                <motion.div
-                                  key={task.id}
-                                  custom={currentIndex * 0.03}
-                                  variants={listItemVariants}
-                                  initial="initial"
-                                  animate="animate"
-                                  exit="exit"
-                                  transition={{
-                                    delay: enableStagger ? currentIndex * 0.03 : 0,
-                                  }}
-                                >
-                                  <TaskCard
-                                    task={task}
-                                    isFirst={stepIdx === 0}
-                                    isLast={stepIdx === track.length - 1}
-                                    projectColor={pColor}
-                                  />
-                                </motion.div>
-                              );
-                              })}
-                            </div>
-                         </div>
-                       </div>
-                     );
-                     })
-                   )}
-                   {projectTracks.length > 0 && projectTracks.length < 5 && (
-                     <div className="px-6 mt-10 pt-16 border-t-2 border-neutral-100/80 dark:border-neutral-800/80">
-                        <button
-                          onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false }); setIsAddingRoot(true); }}
-                          className="w-[300px] h-[260px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-6 transition-all group bg-white/50 dark:bg-neutral-900/50 hover:bg-white dark:hover:bg-slate-900/80"
-                          style={{ borderColor: `${colors.light}60` }}
-                          onMouseEnter={(e) => e.currentTarget.style.borderColor = colors.main}
-                          onMouseLeave={(e) => e.currentTarget.style.borderColor = `${colors.light}60`}
-                        >
-                          <div className="w-16 h-16 rounded-[1.5rem] bg-neutral-50 dark:bg-neutral-800 group-hover:scale-110 flex items-center justify-center transition-all shadow-sm">
-                            <Plus className="w-8 h-8 text-neutral-300 group-hover:text-green-500" style={{ transition: 'color 0.2s' }} />
+          {/* Content Canvas - 下半部分画布，支持垂直滚动查看多条流水线 */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-gradient-to-b from-neutral-50/50 to-neutral-100/30 dark:from-neutral-800/20 dark:to-neutral-900/30">
+             <div className="p-4 md:p-6 pb-12">
+                  {projectTracks.length === 0 ? (
+                    <div className="h-full flex items-center justify-center min-h-[300px]">
+                      <ProjectZeroState
+                        onManualAdd={() => { setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false }); setIsAddingRoot(true); }}
+                        onAIGenerate={() => setShowAIPlanning(true)}
+                        language={language}
+                        projectColor={pColor}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {projectTracks.map((track, trackIdx) => {
+                        let cardIndex = 0;
+                        return (
+                        <div key={trackIdx} className={trackIdx > 0 ? "pt-8 border-t border-neutral-200/50 dark:border-neutral-700/50" : ""}>
+                          <div className="flex flex-col gap-3">
+                             {/* 支线标题 */}
+                             <div className="flex items-center gap-2 px-2 sticky left-0 bg-gradient-to-r from-neutral-50/80 to-transparent dark:from-neutral-800/80 dark:to-transparent py-1 z-10">
+                                <div className="w-1.5 h-4 rounded-full" style={{
+                                  backgroundColor: themeColors.main,
+                                  boxShadow: `0 0 8px ${themeColors.main}60`
+                                }} />
+                                <h4 className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-[0.15em]">{language === 'zh-TW' ? `支線 ${trackIdx + 1}` : `支线 ${trackIdx + 1}`}</h4>
+                             </div>
+                             {/* 任务流画布 - 支持水平滚动查看被裁剪的任务卡片 */}
+                             <div className="flex items-start gap-2 px-2 overflow-x-auto pb-3 custom-scrollbar-x">
+                               {track.map((task, stepIdx) => {
+                                 const currentIndex = cardIndex++;
+                                 return (
+                                 <motion.div
+                                   key={task.id}
+                                   custom={currentIndex * 0.03}
+                                   variants={listItemVariants}
+                                   initial="initial"
+                                   animate="animate"
+                                   exit="exit"
+                                   transition={{
+                                     delay: enableStagger ? currentIndex * 0.03 : 0,
+                                   }}
+                                   className="flex-shrink-0"
+                                 >
+                                   <TaskCard
+                                     task={task}
+                                     isFirst={stepIdx === 0}
+                                     isLast={stepIdx === track.length - 1}
+                                     projectColor={pColor}
+                                   />
+                                 </motion.div>
+                               );
+                               })}
+                             </div>
                           </div>
-                          <span className="text-sm font-black uppercase tracking-widest text-neutral-300 transition-all">{language === 'zh-TW' ? '新增工作流' : '添加新工作流'}</span>
-                        </button>
-                     </div>
-                   )}
-                </div>
+                        </div>
+                      );
+                      })}
+                      {/* 添加更多任务的按钮 */}
+                      {projectTracks.length > 0 && projectTracks.length < 5 && (
+                        <div className="px-2 mt-8 pt-8 border-t border-neutral-200/50 dark:border-neutral-700/50">
+                           <SplitActionButton
+                             onManualAdd={() => { setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false }); setIsAddingRoot(true); }}
+                             onAIGenerate={() => setShowAIPlanning(true)}
+                             language={language}
+                             projectColor={pColor}
+                           />
+                        </div>
+                      )}
+                    </div>
+                  )}
              </div>
-        </div>
+          </div>
         
         {/* Detail View Modals */}
         {(isAddingTaskToProject || isAddingRoot) && (
           <Modal
             isOpen={true}
+            hideCloseButton
             onClose={() => {
               setIsAddingTaskToProject(null);
               setIsAddingRoot(false);
               setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
             }}
-            size="2xl"
+            size="lg"
             classNames={{
               wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[100]",
-              base: "rounded-[3rem] shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden",
-              backdrop: "bg-gradient-to-b from-neutral-950/60 to-neutral-950/80",
+              base: "rounded-[2.5rem] shadow-2xl overflow-hidden",
+              backdrop: "bg-neutral-950/50",
             }}
             motionProps={{
               variants: {
@@ -725,7 +740,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
               }
             }}
           >
-            <ModalContent className="bg-white dark:bg-neutral-900 max-w-xl">
+            <ModalContent className="bg-white dark:bg-neutral-900">
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (newTask.title.trim() && selectedProjectId) {
@@ -735,35 +750,54 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
                 }
               }}>
-                <ModalHeader className="flex items-center justify-between pb-0">
-                  <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
+                <ModalHeader className="flex-col pt-10 pb-2">
+                  <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">
                     {isAddingRoot ? (language === 'zh-TW' ? '新增起始節點' : '添加起始节点') : t.addStep}
                   </h3>
+                  <p className="text-sm text-neutral-400 mt-1">
+                    {language === 'zh-TW' ? '為項目添加新的工作流步驟' : '为项目添加新的工作流步骤'}
+                  </p>
                 </ModalHeader>
-                <ModalBody className="gap-6">
-                  <input
-                    autoFocus
-                    required
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-black text-lg"
-                    placeholder={t.stepName}
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  />
-                  <Checkbox
-                    isSelected={newTask.isTerminal}
-                    onValueChange={(checked) => setNewTask({ ...newTask, isTerminal: checked })}
-                    color="success"
-                    classNames={{
-                      wrapper: "rounded-md",
-                    }}
-                  >
-                    {language === 'zh-TW' ? '設為終止節點（所有任務完成後到達此節點，項目標記為已完成）' : '设为终止节点（所有任务完成后到达此节点，项目标记为已完成）'}
-                  </Checkbox>
+                <ModalBody className="gap-5 py-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                      {language === 'zh-TW' ? '步驟名稱' : '步骤名称'}
+                    </label>
+                    <input
+                      autoFocus
+                      required
+                      className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-medium text-base transition-colors placeholder:text-neutral-400"
+                      placeholder={t.stepName}
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                    />
+                  </div>
+
+                  {/* 终止节点按钮 */}
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewTask({ ...newTask, isTerminal: !newTask.isTerminal })}
+                      className={`
+                        flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold text-base transition-all duration-200 w-full max-w-sm
+                        ${newTask.isTerminal
+                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                        }
+                      `}
+                    >
+                      {newTask.isTerminal && <Check className="w-5 h-5" />}
+                      <span>{language === 'zh-TW' ? '設為終止節點' : '设为终止节点'}</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-neutral-400 text-center">
+                    {language === 'zh-TW' ? '所有任務完成後到達此節點，項目將標記為已完成' : '所有任务完成后到达此节点，项目将标记为已完成'}
+                  </p>
                 </ModalBody>
-                <ModalFooter className="justify-end gap-3">
+                <ModalFooter className="justify-end gap-3 pt-2 pb-6">
                   <Button
-                    variant="light"
-                    className="rounded-2xl px-10 text-base font-medium"
+                    variant="bordered"
+                    className="rounded-xl px-8 font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                     onPress={() => {
                       setIsAddingTaskToProject(null);
                       setIsAddingRoot(false);
@@ -772,7 +806,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   >
                     {t.cancel}
                   </Button>
-                  <Button type="submit" color="success" className="motion-animate rounded-2xl px-14 font-black text-lg shadow-xl shadow-green-500/10">
+                  <Button type="submit" color="success" className="rounded-xl px-8 font-semibold border-2 border-green-600">
                     {t.add}
                   </Button>
                 </ModalFooter>
@@ -784,12 +818,13 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         {editingTask && (
           <Modal
             isOpen={true}
+            hideCloseButton
             onClose={() => setEditingTask(null)}
-            size="3xl"
+            size="2xl"
             classNames={{
               wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[110]",
-              base: "rounded-[3.5rem] shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden",
-              backdrop: "bg-gradient-to-b from-neutral-950/60 to-neutral-950/80",
+              base: "rounded-[2.5rem] shadow-2xl overflow-hidden",
+              backdrop: "bg-neutral-950/50",
             }}
             motionProps={{
               variants: {
@@ -798,7 +833,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
               }
             }}
           >
-            <ModalContent className="bg-white dark:bg-neutral-900 max-w-2xl max-h-[90vh] flex flex-col">
+            <ModalContent className="bg-white dark:bg-neutral-900 max-h-[90vh] flex flex-col">
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (editingTask.title.trim()) {
@@ -806,71 +841,85 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   setEditingTask(null);
                 }
               }}>
-                <ModalHeader className="flex items-center justify-between pb-2">
-                  <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">
+                <ModalHeader className="flex-col pt-10 pb-4">
+                  <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">
                     {language === 'zh-TW' ? '管理任務' : '管理任务'}
                   </h3>
+                  <p className="text-sm text-neutral-400 mt-1">
+                    {language === 'zh-TW' ? '編輯任務詳情、標籤和里程碑' : '编辑任务详情、标签和里程碑'}
+                  </p>
                 </ModalHeader>
-                <ModalBody className="space-y-8 overflow-y-auto custom-scrollbar flex-1">
-                  <div>
-                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.stepName}</label>
+                <ModalBody className="space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                  {/* 任务名称 */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                      {t.stepName}
+                    </label>
                     <input
                       autoFocus
                       required
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-black text-lg"
+                      className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-medium text-base transition-colors"
                       value={editingTask.title}
                       onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">{t.description}</label>
+
+                  {/* 描述 */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                      {t.description}
+                    </label>
                     <textarea
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-2xl p-6 outline-none focus:ring-8 focus:ring-green-500/5 font-medium text-base h-32 resize-none shadow-inner leading-relaxed"
+                      className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-4 outline-none focus:border-green-500 dark:focus:border-green-400 font-medium text-base h-28 resize-none transition-colors placeholder:text-neutral-400"
+                      placeholder={language === 'zh-TW' ? '添加詳細描述...' : '添加详细描述...'}
                       value={editingTask.description || ''}
                       onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">
+
+                  {/* 标签 */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
                       {language === 'zh-TW' ? '標籤分類' : '标签分类'}
                     </label>
-                    <div className="flex flex-wrap gap-3 mb-6 p-6 bg-neutral-50 dark:bg-neutral-800/30 rounded-[2rem] border-2 border-neutral-100 dark:border-neutral-800">
+                    <div className="flex flex-wrap gap-2 p-4 bg-neutral-50 dark:bg-neutral-800/30 rounded-xl border border-neutral-200 dark:border-neutral-700">
                       {(editingTask.tags || []).length > 0 ? (editingTask.tags || []).map(tag => (
                         <Chip
                           key={tag}
                           color={((categories.find(c => c.name === tag)?.color === 'terracotta' ? 'danger' : categories.find(c => c.name === tag)?.color === 'ochre' ? 'warning' : 'default') as "success" | "warning" | "danger" | "default")}
                           onClose={() => setEditingTask({ ...editingTask, tags: editingTask.tags.filter(t => t !== tag) })}
-                          className="rounded-2xl text-[11px]"
+                          className="rounded-lg text-xs"
                         >
                           {tag}
                         </Chip>
-                      )) : <span className="text-xs text-neutral-300 font-bold uppercase tracking-widest">No tags</span>}
+                      )) : <span className="text-xs text-neutral-400">{language === 'zh-TW' ? '無標籤' : '无标签'}</span>}
                     </div>
-                    <div className="flex flex-wrap gap-3 px-2">
+                    <div className="flex flex-wrap gap-2">
                       {categories.filter(c => !(editingTask.tags || []).includes(c.name)).map(c => (
                         <button
                           key={c.id}
                           type="button"
                           onClick={() => setEditingTask({ ...editingTask, tags: [...(editingTask.tags || []), c.name] })}
-                          className="px-5 py-2.5 rounded-2xl border-2 border-neutral-100 dark:border-neutral-800 text-[11px] font-black uppercase tracking-widest text-neutral-400 hover:bg-neutral-100 dark:hover:bg-slate-800 transition-all"
+                          className="px-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
                         >
-                          {c.name}
+                          + {c.name}
                         </button>
                       ))}
                     </div>
 
-                    <div className="mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-800/50">
-                      <label className="block text-[10px] font-black text-neutral-300 uppercase tracking-[0.2em] mb-4 ml-2">
+                    {/* 新建标签 */}
+                    <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                      <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3 block">
                         {language === 'zh-TW' ? '新建標籤' : '新建标签'}
                       </label>
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl p-1.5 pl-4 flex items-center gap-3 focus-within:border-green-500/50 transition-colors">
-                          <div className={`w-3 h-3 rounded-full bg-${newTagColor}-500 shadow-sm shrink-0`} />
+                        <div className="flex-1 bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl p-2 flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLOR_HEX_MAP[newTagColor]?.main || '#84B179' }} />
                           <input
                             value={newTagName}
                             onChange={(e) => setNewTagName(e.target.value)}
                             placeholder={language === 'zh-TW' ? '標籤名稱...' : '标签名称...'}
-                            className="bg-transparent border-none outline-none text-sm font-bold w-full text-slate-700 dark:text-slate-200 placeholder:text-neutral-300"
+                            className="bg-transparent border-none outline-none text-sm w-full text-neutral-900 dark:text-white placeholder:text-neutral-400"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -891,72 +940,81 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                               setNewTagName('');
                             }
                           }}
-                          className="rounded-2xl w-12 h-12 flex items-center justify-center p-0 shrink-0"
+                          className="rounded-xl w-10 h-10 flex items-center justify-center p-0 shrink-0"
+                          color="success"
                         >
-                          <Plus className="w-5 h-5" />
+                          <Plus className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div className="flex flex-wrap gap-3 mt-4 px-1">
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {TAG_COLORS.map(c => (
                           <button
                             key={c}
                             type="button"
                             onClick={() => setNewTagColor(c)}
-                            className={`w-8 h-8 rounded-xl bg-${c}-500 transition-all duration-300 ${newTagColor === c ? 'ring-4 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900 ring-slate-200 dark:ring-slate-700 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
+                            className="w-7 h-7 rounded-lg transition-all duration-200"
+                            style={{
+                              backgroundColor: COLOR_HEX_MAP[c]?.main || '#84B179',
+                              opacity: newTagColor === c ? 1 : 0.4,
+                              transform: newTagColor === c ? 'scale(1.1)' : 'scale(1)',
+                              boxShadow: newTagColor === c ? `0 0 0 2px white, 0 0 0 4px ${COLOR_HEX_MAP[c]?.main || '#84B179'}` : 'none'
+                            }}
                           />
                         ))}
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-neutral-400 uppercase tracking-[0.2em] mb-4 ml-2">WBS 里程碑</label>
-                    <div className="space-y-3 mb-6">
+
+                  {/* 里程碑 */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                      WBS {language === 'zh-TW' ? '里程碑' : '里程碑'}
+                    </label>
+                    <div className="space-y-2">
                       {(editingTask.milestones || []).map(m => (
-                        <div key={m.id} className="flex items-center justify-between p-6 bg-neutral-50 dark:bg-neutral-800/50 rounded-[2rem] border-2 border-neutral-100 dark:border-neutral-800 group/mile">
-                          <div className="flex items-center gap-4">
-                            <Flag className="w-4.5 h-4.5 text-green-400" />
-                            <span className="text-base font-bold text-slate-700 dark:text-neutral-300">{m.title}</span>
+                        <div key={m.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 group/mile">
+                          <div className="flex items-center gap-3">
+                            <Flag className="w-4 h-4 text-green-500" />
+                            <span className="text-sm font-medium text-neutral-900 dark:text-white">{m.title}</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setEditingTask({ ...editingTask, milestones: editingTask.milestones.filter(x => x.id !== m.id) })}
-                            className="p-2.5 text-neutral-300 hover:text-red-500 transition-all opacity-0 group-hover/mile:opacity-100"
+                            className="p-2 text-neutral-400 hover:text-red-500 transition-all opacity-0 group-hover/mile:opacity-100"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
                     </div>
-                    <div className="relative">
-                      <input
-                        className="w-full bg-neutral-50 dark:bg-neutral-800 border-2 border-neutral-100 dark:border-neutral-800/50 rounded-[1.75rem] px-8 py-5 outline-none text-base font-bold focus:border-green-500 transition-all shadow-inner"
-                        placeholder={language === 'zh-TW' ? '輸入關鍵節點標題並回車...' : '输入关键节点标题并回车...'}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const val = (e.target as HTMLInputElement).value.trim();
-                            if (val) {
-                              setEditingTask({
-                                ...editingTask,
-                                milestones: [...(editingTask.milestones || []), {
-                                  id: Math.random().toString(36).substr(2, 9),
-                                  title: val,
-                                  timestamp: Date.now(),
-                                  branch: 'main'
-                                }]
-                              });
-                              (e.target as HTMLInputElement).value = '';
-                            }
+                    <input
+                      className="w-full bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 outline-none text-sm font-medium focus:border-green-500 dark:focus:border-green-400 transition-all placeholder:text-neutral-400"
+                      placeholder={language === 'zh-TW' ? '輸入關鍵節點標題並回車...' : '输入关键节点标题并回车...'}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = (e.target as HTMLInputElement).value.trim();
+                          if (val) {
+                            setEditingTask({
+                              ...editingTask,
+                              milestones: [...(editingTask.milestones || []), {
+                                id: Math.random().toString(36).substr(2, 9),
+                                title: val,
+                                timestamp: Date.now(),
+                                branch: 'main'
+                              }]
+                            });
+                            (e.target as HTMLInputElement).value = '';
                           }
-                        }}
-                      />
-                    </div>
+                        }
+                      }}
+                    />
                   </div>
                 </ModalBody>
-                <ModalFooter className="justify-end gap-3 border-t-2 border-neutral-100 dark:border-neutral-800">
+                <ModalFooter className="justify-end gap-3 pt-4 pb-6 border-t border-neutral-200 dark:border-neutral-700">
                   <Button
-                    variant="light"
-                    className="rounded-2xl px-10 text-base font-medium"
+                    variant="bordered"
+                    className="rounded-xl px-8 font-semibold border-2 border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                     onPress={() => setEditingTask(null)}
                   >
                     {t.cancel}
@@ -964,7 +1022,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   <Button
                     type="submit"
                     color="success"
-                    className="rounded-2xl px-14 font-black text-base md:text-lg shadow-xl shadow-green-500/10"
+                    className="rounded-xl px-8 font-semibold border-2 border-green-600"
                   >
                     {language === 'zh-TW' ? '保存更新' : '保存更新'}
                   </Button>
@@ -973,6 +1031,32 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </ModalContent>
           </Modal>
         )}
+
+        {/* AI Planning Modal */}
+        <AIPlanningModal
+          isOpen={showAIPlanning}
+          onClose={() => setShowAIPlanning(false)}
+          projectId={selectedProject.id}
+          projectName={projects.find(p => p.id === selectedProject.id)?.name || ''}
+          mode={tasks.filter(t => t.projectId === selectedProject.id).length === 0 ? 'zero-state' : 'continuation'}
+          existingTasks={tasks.filter(t => t.projectId === selectedProject.id)}
+          onConfirm={(taskPreviews) => {
+            // Convert TaskPreview to actual Tasks and add them
+            taskPreviews.forEach((preview) => {
+              onAddTask(
+                preview.title,
+                preview.description || '',
+                preview.tag ? [preview.tag] : [],
+                selectedProject.id,
+                preview.parentIds || [],
+                true
+              );
+            });
+            setShowAIPlanning(false);
+          }}
+          language={language}
+        />
+        </div>
       </div>
     );
   }
@@ -984,8 +1068,8 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           <h2 className="text-4xl md:text-5xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight">{t.projectPlanner}</h2>
           <p className="text-sm font-black text-neutral-400 uppercase tracking-[0.4em] mt-3">{t.projectPlannerDesc}</p>
         </div>
-        <Button onClick={handleCreateProject} className="motion-animate rounded-2xl px-10 py-5 text-sm font-black shadow-2xl shadow-green/20 hover:-translate-y-1 transition-all">
-          <GitBranchPlus className="w-5 h-5 mr-3" />
+        <Button onClick={handleCreateProject} className="motion-animate rounded-2xl px-8 py-4 text-sm font-semibold shadow-lg bg-green-500 text-white border-2 border-green-600 hover:bg-green-600 transition-colors">
+          <GitBranchPlus className="w-4 h-4 mr-2" />
           {t.newProject}
         </Button>
       </div>
@@ -998,7 +1082,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
             <h3 className="text-2xl font-black text-neutral-900 dark:text-white mb-2">{t.noProjectsYet}</h3>
             <p className="text-neutral-400 font-bold max-w-sm mx-auto leading-relaxed mb-8">{t.createProjectHint}</p>
-            <Button onClick={handleCreateProject} size="lg" className="motion-animate rounded-2xl px-12 py-4 shadow-xl">
+            <Button onClick={handleCreateProject} size="lg" className="motion-animate rounded-2xl px-12 py-4 shadow-xl bg-green-500 text-white font-semibold border-2 border-green-600 hover:bg-green-600 transition-colors">
                {t.newProject}
             </Button>
           </div>
@@ -1074,7 +1158,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   </div>
 
                   <div className="shrink-0 flex items-center justify-center border-t md:border-t-0 md:border-l-2 border-neutral-100 dark:border-neutral-800 pt-4 md:pt-0 md:pl-5">
-                    <div className="p-2 bg-slate-50/50 dark:bg-slate-800/50 text-neutral-400 group-hover:bg-green-600 group-hover:text-white rounded-xl transition-all group-hover:scale-110 shadow-sm">
+                    <div className="p-2.5 bg-white dark:bg-neutral-800 border-2 border-neutral-300 dark:border-neutral-600 text-neutral-400 group-hover:border-green-500 group-hover:text-green-600 rounded-xl transition-all group-hover:scale-110 shadow-sm font-semibold">
                       <ChevronRight className="w-5 h-5" />
                     </div>
                   </div>
@@ -1092,7 +1176,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-green-600 hover:border-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md"
+              className="p-2 rounded-xl bg-white dark:bg-neutral-800 border-2 border-neutral-300 dark:border-neutral-600 text-slate-600 dark:text-neutral-400 hover:text-green-600 hover:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md disabled:hover:shadow-sm font-semibold"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -1102,10 +1186,10 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg font-black text-sm transition-all ${
+                  className={`w-9 h-9 rounded-lg font-bold text-sm transition-all border-2 ${
                     currentPage === pageNum
-                      ? 'bg-green-400 text-white shadow-lg shadow-green/30'
-                      : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-green-600 hover:border-green-500/30'
+                      ? 'bg-green-500 text-white border-green-600 shadow-lg'
+                      : 'bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 text-slate-600 dark:text-neutral-400 hover:text-green-600 hover:border-green-500'
                   }`}
                 >
                   {pageNum}
@@ -1116,7 +1200,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             <button
               onClick={() => setCurrentPage(p => Math.min(Math.ceil(projects.length / ITEMS_PER_PAGE), p + 1))}
               disabled={currentPage === Math.ceil(projects.length / ITEMS_PER_PAGE)}
-              className="p-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-green-600 hover:border-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md"
+              className="p-2 rounded-xl bg-white dark:bg-neutral-800 border-2 border-neutral-300 dark:border-neutral-600 text-slate-600 dark:text-neutral-400 hover:text-green-600 hover:border-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md disabled:hover:shadow-sm font-semibold"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

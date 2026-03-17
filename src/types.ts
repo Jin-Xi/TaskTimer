@@ -77,3 +77,52 @@ export interface AIConfig {
   model: string;
   baseUrl?: string;
 }
+
+export enum AIMessageRole {
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  SYSTEM = 'system',
+}
+
+export interface AIMessage {
+  id: string;
+  role: AIMessageRole;
+  content: string;
+  timestamp: number;
+  taskPreview?: TaskPreview[];
+}
+
+export interface TaskPreview {
+  id: string;
+  title: string;
+  description?: string;
+  estimatedMinutes?: number;
+  tag?: string;
+  parentIds: string[];
+  isNew?: boolean;
+}
+
+export interface AIPlanningSession {
+  id: string;
+  projectId: string;
+  mode: 'zero-state' | 'continuation';
+  messages: AIMessage[];
+  currentTasks: TaskPreview[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ICSEvent {
+  uid: string;
+  startDate: Date;
+  endDate: Date;
+  summary: string;
+  description: string;
+  location?: string;
+}
+
+export interface ICSExportOptions {
+  productName: string;
+  timeZone: string;
+  fileName: string;
+}

@@ -1,5 +1,5 @@
 
-import { ChartColumn, LayoutDashboard, ListTodo, Zap, GitBranchPlus, BrainCircuit } from 'lucide-react';
+import { ChartColumn, LayoutDashboard, ListTodo, Zap, GitBranchPlus } from 'lucide-react';
 import { Category } from './types';
 
 export const APP_NAME = "ChronoFlow";
@@ -259,16 +259,14 @@ export const TRANSLATIONS = {
 
 export const NAV_ITEMS = [
   { id: 'tasks', labelKey: 'tasks', icon: ListTodo },
-  { id: 'ai-planner', labelKey: 'aiPlanner', icon: BrainCircuit },
   { id: 'projects', labelKey: 'projects', icon: GitBranchPlus },
   { id: 'dashboard', labelKey: 'analytics', icon: ChartColumn },
-  { id: 'ai-insights', labelKey: 'aiInsights', icon: Zap },
 ];
 
 export const AI_MODELS: Record<string, { name: string; models: string[]; defaultModel: string }[]> = {
   gemini: [
     { name: 'Gemini 2.5 Pro', models: ['gemini-2.5-pro-exp-03-25'], defaultModel: 'gemini-2.5-pro-exp-03-25' },
-    { name: 'Gemini 2.0 Flash', models: ['gemini-2.0-flash-exp'], defaultModel: 'gemini-2.0-flash-exp' },
+    { name: 'Gemini 2.5 Flash Lite', models: ['gemini-2.5-flash-lite'], defaultModel: 'gemini-2.5-flash-lite' },
     { name: 'Gemini 1.5 Pro', models: ['gemini-1.5-pro', 'gemini-1.5-pro-exp'], defaultModel: 'gemini-1.5-pro' },
     { name: 'Gemini 1.5 Flash', models: ['gemini-1.5-flash', 'gemini-1.5-flash-exp'], defaultModel: 'gemini-1.5-flash' },
   ],

@@ -1,0 +1,8 @@
+schema: standard-workflow
+version: 1.0.0
+title: AI Integration Redesign
+status: in_progress
+createdAt: 2026-03-16
+updatedAt: 2026-03-16
+authors:
+  - claude

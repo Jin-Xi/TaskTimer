@@ -27,7 +27,7 @@ const drawerVariants = {
     x: 0,
     opacity: 1,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 300,
       damping: 30,
       mass: 0.8,
@@ -37,7 +37,7 @@ const drawerVariants = {
     x: position === 'left' ? '-100%' : '100%',
     opacity: 0,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 400,
       damping: 35,
       mass: 0.5,

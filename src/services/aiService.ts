@@ -1,5 +1,5 @@
 
-import { Task, TaskStatus, AIAnalysisResult, AIConfig, Language, Project } from "../types";
+import { Task, TaskStatus, AIAnalysisResult, AIConfig, Language, Project, AIMessageRole, AIMessage, TaskPreview, AIPlanningSession } from "../types";
 
 // Provider endpoints for OpenAI-compatible APIs
 const PROVIDER_ENDPOINTS: Record<string, string> = {
@@ -244,4 +244,169 @@ export const generateProjectPlan = async (goal: string, context: string, config:
   }
 
   throw new Error(`不支持的提供商: ${config.provider}`);
+};
+
+// Multi-turn conversation functions for AI planning
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
+const buildConversationalPrompt = (
+  session: any,
+  userMessage: string,
+  language: Language
+): string => {
+  const { mode, projectId, currentTasks } = session;
+
+  const tasksSummary = currentTasks.length > 0
+    ? '\n## 当前已规划的任务\n' + currentTasks.map((t: any, i: number) => `
+${i + 1}. ${t.title}
+   - 描述: ${t.description || '无'}
+   - 预估: ${t.estimatedMinutes || '?'} 分钟
+   - 依赖: ${t.parentIds.join(', ') || '无'}`).join('\n')
+    : '\n## 当前状态\n尚未规划任何任务';
+
+  return `
+你是一个专业的项目规划顾问，正在与用户协作设计项目任务流。
+
+## 项目
+- 项目 ID: ${projectId}
+- 规划模式: ${mode === 'zero-state' ? '从零开始' : '延续现有'}
+
+${tasksSummary}
+
+## 用户最新请求
+${userMessage}
+
+## 你的任务
+
+1. **理解意图**：分析用户想要做什么（新增、修改、删除、细化任务）
+2. **保持上下文**：基于当前任务状态进行操作
+3. **自然对话**：用友好的语言回应用户
+4. **输出格式**：
+   - 必须以 JSON 格式返回任务列表
+   - 任务 ID 必须保持一致（已存在的任务保持原 ID）
+   - 新任务使用新的唯一 ID
+
+## 规划规则（必须遵守）
+
+1. **流水线数量限制**：最多生成 5 条独立的流水线（分支）
+2. **章节划分**：每条流水线代表一个章节/阶段（如：准备、开发、测试、部署、验收）
+3. **任务完整性**：每个章节必须至少包含 1 个可执行任务
+4. **依赖关系**：通过 parentIds 建立任务间的依赖关系，形成有意义的工作流
+
+## 响应格式
+
+{
+  "text": "你的回复文本，解释你做了什么",
+  "tasks": [
+    {
+      "id": "existing-or-new-id",
+      "title": "任务标题",
+      "description": "任务描述",
+      "estimatedMinutes": 30,
+      "tag": "工作",
+      "parentIds": ["parent-id"],
+      "isNew": true
+    }
+  ]
+}
+
+## 输出语言
+使用${language === 'zh-TW' ? '繁體中文' : '简体中文'}。
+`;
+};
+
+const parseAIResponse = (response: string): {
+  text: string;
+  tasks?: any[];
+} => {
+  try {
+    const parsed = JSON.parse(response);
+    return {
+      text: parsed.text || '',
+      tasks: parsed.tasks?.map((t: any) => ({
+        ...t,
+        isNew: t.isNew ?? false,
+      })) || [],
+    };
+  } catch (e) {
+    return {
+      text: response,
+      tasks: [],
+    };
+  }
+};
+
+export const continuePlanningConversation = async (
+  session: any,
+  userMessage: string,
+  config: AIConfig,
+  language: Language = 'zh-CN'
+): Promise<any> => {
+  const systemPrompt = buildConversationalPrompt(session, userMessage, language);
+
+  // Gemini provider - use single-turn API for now
+  if (config.provider === 'gemini') {
+    const { GoogleGenAI, Type } = await import("@google/genai");
+    const apiKey = config.apiKey || import.meta.env.VITE_API_KEY;
+    if (!apiKey) {
+      throw new Error(language === 'zh-TW' ? "未配置 AI API 密鑰" : "未配置 AI API 密钥");
+    }
+    const ai = new GoogleGenAI({ apiKey });
+
+    const response = await ai.models.generateContent({
+      model: config.model || 'gemini-2.5-pro-exp-03-25',
+      contents: systemPrompt,
+      config: {
+        systemInstruction: getSystemInstruction(language),
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            text: { type: Type.STRING },
+            tasks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  estimatedMinutes: { type: Type.NUMBER },
+                  tag: { type: Type.STRING },
+                  parentIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  isNew: { type: Type.BOOLEAN },
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) {
+      throw new Error("Empty response from Gemini.");
+    }
+
+    const parsedResponse = parseAIResponse(text);
+
+    return {
+      id: generateUUID(),
+      role: 'assistant',
+      content: parsedResponse.text,
+      timestamp: Date.now(),
+      taskPreview: parsedResponse.tasks,
+    };
+  }
+
+  // For other providers, throw error for now
+  throw new Error(`Multi-turn conversation currently only supports Gemini provider`);
 };
