@@ -15,10 +15,12 @@
   "dependencies": {
     "@google/genai": "^1.33.0",
     "@heroui/react": "^2.8.9",
+    "axios": "^1.13.6",
     "framer-motion": "^12.35.0",
     "lucide-react": "^0.460.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.13.1",
     "recharts": "^2.13.3"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HeroUIProvider } from '@heroui/react';
-import App from './App';
+import AppRouter from './routes';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -13,7 +13,7 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <HeroUIProvider>
-      <App />
+      <AppRouter />
     </HeroUIProvider>
   </React.StrictMode>
 );

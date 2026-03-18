@@ -1,23 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle } from 'lucide-react';
+import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle, LogOut, Cloud, HardDrive } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
-import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button } from '@heroui/react';
-import {
-  subscribeToTasks,
-  subscribeToCategories,
-  subscribeToProjects,
-  addTask,
-  updateTask,
-  deleteTask,
-  deleteTasks,
-  addCategory,
-  deleteCategory,
-  addProject,
-  updateProject,
-  deleteProject,
-  deleteTasksByProjectId,
-} from './services/storageService';
+import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from '@heroui/react';
 import { TaskTimer } from './components/TaskTimer';
 import { Logo } from './components/Logo';
 import { TaskList } from './components/TaskList';
@@ -31,6 +16,9 @@ import { AnimatePresence } from 'framer-motion';
 import { AnimatedPage } from './animations';
 import { GlobalTimerIndicator } from './components/GlobalTimerIndicator';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
+import { useTasks, useProjects, useCategories } from './hooks';
+import { useAuthContext } from './contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -42,10 +30,36 @@ const generateUUID = () => {
   });
 };
 
-const App: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+const MainApp: React.FC = () => {
+  // Data hooks with automatic mode switching
+  const {
+    tasks,
+    loading: tasksLoading,
+    addTask: dataAddTask,
+    updateTask: dataUpdateTask,
+    deleteTask: dataDeleteTask,
+    deleteTasks: dataDeleteTasks,
+  } = useTasks();
+
+  const {
+    projects,
+    loading: projectsLoading,
+    addProject: dataAddProject,
+    updateProject: dataUpdateProject,
+    deleteProject: dataDeleteProject,
+  } = useProjects();
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    addCategory: dataAddCategory,
+    deleteCategory: dataDeleteCategory,
+  } = useCategories();
+
+  // Auth context
+  const { user, isCloud, isOffline, logout, enterCloudMode } = useAuthContext();
+  const navigate = useNavigate();
+
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
   const [tabDirection, setTabDirection] = useState(1);
@@ -74,7 +88,7 @@ const App: React.FC = () => {
 
   const t = TRANSLATIONS[language];
   const [focusBgImage, setFocusBgImage] = useState<string | null>(() => localStorage.getItem('chrono_focus_bg'));
-  
+
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('chrono_dark_mode');
     if (stored !== null) return stored === 'true';
@@ -90,30 +104,20 @@ const App: React.FC = () => {
     localStorage.setItem('chrono_lang', language);
   }, [language]);
 
-  useEffect(() => {
-    const unsubTasks = subscribeToTasks(setTasks);
-    const unsubCats = subscribeToCategories(setCategories, DEFAULT_CATEGORIES);
-    const unsubProjs = subscribeToProjects(setProjects);
-    return () => { unsubTasks(); unsubCats(); unsubProjs(); };
-  }, []);
-
   // Calculate today's completed tasks
   useEffect(() => {
-    const unsubscribe = subscribeToTasks((tasks) => {
-      const today = new Date().toDateString();
-      const completedToday = tasks.filter(task => {
-        if (task.status !== 'COMPLETED') return false;
-        // Check milestones for completion timestamp
-        const completedMilestone = task.milestones.find(m => m.branch === 'completed');
-        const completedTime = completedMilestone
-          ? completedMilestone.timestamp
-          : task.createdAt;
-        return new Date(completedTime).toDateString() === today;
-      });
-      setTodayCompletedCount(completedToday.length);
+    const today = new Date().toDateString();
+    const completedToday = tasks.filter(task => {
+      if (task.status !== 'COMPLETED') return false;
+      // Check milestones for completion timestamp
+      const completedMilestone = task.milestones.find(m => m.branch === 'completed');
+      const completedTime = completedMilestone
+        ? completedMilestone.timestamp
+        : task.createdAt;
+      return new Date(completedTime).toDateString() === today;
     });
-    return unsubscribe;
-  }, []);
+    setTodayCompletedCount(completedToday.length);
+  }, [tasks]);
 
   // Space key shortcut for timer control
   useEffect(() => {
@@ -157,39 +161,32 @@ const App: React.FC = () => {
   const activeFocusTask = tasks.find(t => t.id === focusTaskId) || null;
 
   const handleAddTask = async (title: string, description: string, tags: string[], projectId?: string, parentTaskIds: string[] = [], isTerminal?: boolean) => {
-    const newTask: Task = {
-      id: generateUUID(),
+    await dataAddTask({
       title,
       description,
       tags: tags,
       status: TaskStatus.IDLE,
       totalTime: 0,
-      createdAt: Date.now(),
       logs: [],
       milestones: [],
       projectId,
       parentTaskIds,
       isTerminal
-    };
-    const updated = await addTask(newTask);
-    setTasks(updated);
+    });
   };
 
   const handleDeleteTask = async (id: string) => {
-    const updated = await deleteTask(id);
-    setTasks(updated);
+    await dataDeleteTask(id);
     if (focusTaskId === id) setFocusTaskId(null);
   };
 
   const handleDeleteTasks = async (ids: string[]) => {
-    const updated = await deleteTasks(ids);
-    setTasks(updated);
+    await dataDeleteTasks(ids);
     if (focusTaskId && ids.includes(focusTaskId)) setFocusTaskId(null);
   };
 
   const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
-    const updated = await updateTask(id, updates);
-    setTasks(updated);
+    await dataUpdateTask(id, updates);
   };
 
   const handlePauseTask = async (id: string) => {
@@ -200,20 +197,17 @@ const App: React.FC = () => {
         const newLogs = [...task.logs];
         const logDuration = now - task.logs[lastLogIdx].start;
         newLogs[lastLogIdx] = { ...task.logs[lastLogIdx], end: now };
-        
-        const updatedTotalTime = task.status === TaskStatus.RUNNING 
-          ? task.totalTime + logDuration 
+
+        const updatedTotalTime = task.status === TaskStatus.RUNNING
+          ? task.totalTime + logDuration
           : task.totalTime;
 
-        const updated = await updateTask(id, {
+        await dataUpdateTask(id, {
             status: TaskStatus.PAUSED,
             totalTime: updatedTotalTime,
             logs: newLogs
         });
-        setTasks(updated);
-        return updated;
     }
-    return tasks;
   };
 
   const handleStartBreak = async (id: string) => {
@@ -224,11 +218,14 @@ const App: React.FC = () => {
       await handlePauseTask(id);
     }
 
-    const updated = await updateTask(id, {
+    // Refetch the task after pause
+    const updatedTask = tasks.find(t => t.id === id);
+    if (!updatedTask) return;
+
+    await dataUpdateTask(id, {
         status: TaskStatus.BREAK,
-        logs: [...task.logs, { start: Date.now(), end: null }]
+        logs: [...updatedTask.logs, { start: Date.now(), end: null }]
     });
-    setTasks(updated);
   };
 
   const handleDismissFocus = async (id: string) => {
@@ -255,12 +252,11 @@ const App: React.FC = () => {
 
     setFocusTaskId(id);
     setActiveTab('tasks');
-    
-    const updated = await updateTask(id, {
+
+    await dataUpdateTask(id, {
         status: TaskStatus.RUNNING,
         logs: [...task.logs, { start: Date.now(), end: null }]
     });
-    setTasks(updated);
   };
 
   const handleEditMilestone = async (taskId: string, milestoneId: string, milestoneUpdates: Partial<Milestone>) => {
@@ -296,18 +292,24 @@ const App: React.FC = () => {
 
   const handleDeleteProject = async (id: string) => {
     // Delete all tasks in the project first
-    const updatedTasks = await deleteTasksByProjectId(id);
-    setTasks(updatedTasks);
+    const projectTasks = tasks.filter(t => t.projectId === id);
+    if (projectTasks.length > 0) {
+      await dataDeleteTasks(projectTasks.map(t => t.id));
+    }
 
     // Delete the project
-    const updatedProjects = await deleteProject(id);
-    setProjects(updatedProjects);
+    await dataDeleteProject(id);
 
     // Clear focus if the focused task was in the deleted project
     if (activeFocusTask && activeFocusTask.projectId === id) {
       setIsFocusMode(false);
       setFocusTaskId(null);
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
   const getSuggestedTasks = () => {
@@ -322,13 +324,13 @@ const App: React.FC = () => {
   };
 
   const SharedTaskList = () => (
-    <TaskList 
-      language={language} 
-      tasks={tasks} 
-      projects={projects} 
-      activeTaskId={null} 
-      onAdd={handleAddTask} 
-      onDelete={handleDeleteTask} 
+    <TaskList
+      language={language}
+      tasks={tasks}
+      projects={projects}
+      activeTaskId={null}
+      onAdd={handleAddTask}
+      onDelete={handleDeleteTask}
       onDeleteMany={handleDeleteTasks}
       onSelect={(id) => {
         const t = tasks.find(x => x.id === id);
@@ -337,16 +339,16 @@ const App: React.FC = () => {
         } else {
           handleStartTask(id);
         }
-      }} 
+      }}
       onUpdate={handleUpdateTask}
-      onAddMilestone={async (id, title, br) => { 
-        const task = tasks.find(t => t.id === id); 
-        if (task) await handleAddMilestoneWithDependency(id, title, br, task.milestones.length > 0 ? task.milestones[task.milestones.length - 1].id : null, task.totalTime); 
-      }} 
-      onEditMilestone={handleEditMilestone} 
-      categories={categories} 
-      onAddCategory={async (n, c) => { const updated = await addCategory({id: generateUUID(), name: n, color: c}); setCategories(updated); }} 
-      onDeleteCategory={async (id) => { const updated = await deleteCategory(id); setCategories(updated); }} 
+      onAddMilestone={async (id, title, br) => {
+        const task = tasks.find(t => t.id === id);
+        if (task) await handleAddMilestoneWithDependency(id, title, br, task.milestones.length > 0 ? task.milestones[task.milestones.length - 1].id : null, task.totalTime);
+      }}
+      onEditMilestone={handleEditMilestone}
+      categories={categories}
+      onAddCategory={async (n, c) => { await dataAddCategory({ name: n, color: c }); }}
+      onDeleteCategory={async (id) => { await dataDeleteCategory(id); }}
     />
   );
 
@@ -388,13 +390,32 @@ const App: React.FC = () => {
       </nav>
 
       <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-neutral-200 dark:border-neutral-700 mt-4">
-        <button
-          onClick={() => setShowAISettings(true)}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 transition-all font-bold text-xs uppercase tracking-widest"
-        >
-          <Key className="w-4 h-4" />
-          {t.aiSettings}
-        </button>
+        {/* AI Settings - Only show in offline mode */}
+        {isOffline && (
+          <button
+            onClick={() => setShowAISettings(true)}
+            className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 transition-all font-bold text-xs uppercase tracking-widest"
+          >
+            <Key className="w-4 h-4" />
+            {t.aiSettings}
+          </button>
+        )}
+
+        {/* Mode Indicator */}
+        <div className="flex items-center justify-center gap-2 py-2 text-xs text-neutral-500 dark:text-neutral-400">
+          {isCloud ? (
+            <>
+              <Cloud className="w-4 h-4" />
+              <span>云端模式</span>
+            </>
+          ) : (
+            <>
+              <HardDrive className="w-4 h-4" />
+              <span>单机模式</span>
+            </>
+          )}
+        </div>
+
         <div className="flex gap-4">
            <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/50 dark:border-neutral-700/50 hover:border-green-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-sm hover:shadow-md group">
              {darkMode ? <Sun className="w-5 h-5 text-green-400 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" />}
@@ -408,6 +429,18 @@ const App: React.FC = () => {
       </div>
     </div>
   );
+
+  // Show loading state
+  if (tasksLoading || projectsLoading || categoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-900">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500" />
+          <p className="text-sm text-neutral-500">加载数据中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 overflow-hidden relative selection:bg-green-400/20">
@@ -490,19 +523,21 @@ const App: React.FC = () => {
             </Tabs>
           </NavbarContent>
 
-          {/* Right: Settings, Dark Mode, Today's Count, GitHub */}
+          {/* Right: Settings, Dark Mode, Today's Count, User Menu */}
           <NavbarContent justify="end" className="gap-3">
-            {/* AI Settings Button */}
-            <Button
-              isIconOnly
-              size="sm"
-              color="default"
-              variant="light"
-              onPress={() => setShowAISettings(true)}
-              aria-label="AI 设置"
-            >
-              <Key className="w-4 h-4" />
-            </Button>
+            {/* AI Settings Button - Only in offline mode */}
+            {isOffline && (
+              <Button
+                isIconOnly
+                size="sm"
+                color="default"
+                variant="light"
+                onPress={() => setShowAISettings(true)}
+                aria-label="AI 设置"
+              >
+                <Key className="w-4 h-4" />
+              </Button>
+            )}
 
             {/* Dark Mode Toggle */}
             <Button
@@ -531,16 +566,58 @@ const App: React.FC = () => {
               <CheckCircle className="w-4 h-4 text-green-500" />
             </div>
 
-            {/* GitHub Link */}
-            <a
-              href="https://github.com/Jin-Xi/TaskTimer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-              aria-label="GitHub Repository"
-            >
-              <Github className="w-5 h-5" />
-            </a>
+            {/* User Menu (Cloud mode) or GitHub Link (Offline mode) */}
+            {isCloud && user ? (
+              <Dropdown placement="bottom-end">
+                <DropdownTrigger>
+                  <Button
+                    variant="light"
+                    className="flex items-center gap-2"
+                  >
+                    <Avatar
+                      name={user.username}
+                      size="sm"
+                      classNames={{
+                        base: 'bg-green-500 text-white',
+                      }}
+                    />
+                    <span className="hidden md:inline text-sm">{user.username}</span>
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="User menu">
+                  <DropdownItem
+                    key="mode"
+                    startContent={<HardDrive className="w-4 h-4" />}
+                    description="切换到单机模式"
+                    onPress={() => {
+                      enterCloudMode();
+                      navigate('/app');
+                    }}
+                  >
+                    单机模式
+                  </DropdownItem>
+                  <DropdownItem
+                    key="logout"
+                    className="text-danger"
+                    color="danger"
+                    startContent={<LogOut className="w-4 h-4" />}
+                    onPress={handleLogout}
+                  >
+                    退出登录
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            ) : (
+              <a
+                href="https://github.com/Jin-Xi/TaskTimer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+                aria-label="GitHub Repository"
+              >
+                <Github className="w-5 h-5" />
+              </a>
+            )}
           </NavbarContent>
         </Navbar>
 
@@ -596,16 +673,12 @@ const App: React.FC = () => {
                       projects={projects}
                       tasks={tasks}
                       onAddProject={async (data) => {
-                        const updated = await addProject({
+                        await dataAddProject({
                           ...data,
-                          id: generateUUID(),
-                          createdAt: Date.now()
-                        } as Project);
-                        setProjects(updated);
+                        });
                       }}
                       onUpdateProject={async (id, data) => {
-                        const updated = await updateProject(id, data);
-                        setProjects(updated);
+                        await dataUpdateProject(id, data);
                       }}
                       onDeleteProject={handleDeleteProject}
                       onAddTask={handleAddTask}
@@ -613,8 +686,7 @@ const App: React.FC = () => {
                       onUpdateTask={handleUpdateTask}
                       categories={categories}
                       onAddCategory={async (n, c) => {
-                        const updated = await addCategory({id: generateUUID(), name: n, color: c});
-                        setCategories(updated);
+                        await dataAddCategory({ name: n, color: c });
                       }}
                     />
                   </div>
@@ -672,7 +744,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {showAISettings && (
+      {/* AI Settings Modal - Only show in offline mode */}
+      {isOffline && showAISettings && (
         <AISettingsModal language={language} onClose={() => setShowAISettings(false)} />
       )}
 
@@ -682,4 +755,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default MainApp;

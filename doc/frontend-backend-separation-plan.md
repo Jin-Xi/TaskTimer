@@ -31,19 +31,74 @@
 | 后端 | Python 3.11+ + FastAPI | 高性能异步 API 框架 |
 | 数据库 | MySQL 8.0+ | 关系型数据库，事务支持 |
 | ORM | SQLAlchemy 2.0 | Python ORM 框架 |
-| 认证 | JWT + MySQL Session | 用户认证 |
+| 认证 | JWT + MySQL Session | 用户认证（用户名+密码） |
 | 部署 | 单机部署 Docker Compose | 前后端容器化部署 |
+
+### 1.3 核心设计决策
+
+#### 1.3.1 登录方式
+- **认证方式**：用户名 + 密码
+- **暂不实现**：第三方登录（Google、GitHub 等）
+- **密码要求**：至少 6 位，使用 bcrypt 哈希存储
+
+#### 1.3.2 双模式架构
+系统支持两种使用模式：
+
+| 模式 | 数据存储 | AI 服务 | 适用场景 |
+|------|----------|---------|----------|
+| **单机模式** | localStorage | 用户自行配置 API Key | 无需账号、离线使用 |
+| **云端模式** | MySQL 数据库 | 后台统一配置大模型 | 多设备同步、数据备份 |
+
+**模式切换流程：**
+```
+启动应用 → 显示登录界面
+              ├── 点击"单机使用" → 进入本地模式（使用 localStorage）
+              └── 输入用户名密码登录 → 进入云端模式（使用 API）
+```
+
+#### 1.3.3 API Key 管理策略
+
+| 模式 | API Key 来源 | 配置方式 |
+|------|-------------|----------|
+| 单机模式 | 用户自行配置 | 前端 AISettingsModal 配置，存储在 localStorage |
+| 云端模式 | 后台统一管理 | 后端环境变量配置，用户无需关心 |
+
+**后端 AI 配置（云端模式）：**
+```bash
+# backend/.env
+# 统一配置的大模型 API
+AI_PROVIDER=deepseek  # 或 openai、google 等
+AI_API_KEY=sk-xxxxx
+AI_MODEL=deepseek-chat
+```
+
+#### 1.3.4 功能规划分期
+
+| 功能 | 当前版本 | 后期规划 |
+|------|----------|----------|
+| 用户认证（用户名+密码） | ✅ 实现 | - |
+| 单机/云端双模式 | ✅ 实现 | - |
+| RESTful API | ✅ 实现 | - |
+| 数据导入导出 | ✅ 实现 | - |
+| WebSocket 多设备实时同步 | ❌ 暂不实现 | 🔮 后期规划 |
+| 第三方登录 | ❌ 暂不实现 | 🔮 后期规划 |
 
 **新数据流：**
 ```
+【云端模式】
 用户 → UI组件 → API Client → REST API → MySQL → UI更新
-                         ↑_____________WebSocket____________↑
-                                                   (实时同步)
+
+【单机模式】
+用户 → UI组件 → storageService → localStorage → UI更新
 ```
 
-**WebSocket 实时同步说明：**
+> **注意**：WebSocket 多设备实时同步功能暂不实现，作为后期规划。当前版本通过 REST API 轮询或手动刷新实现数据同步。
 
-WebSocket 是一种全双工通信协议，允许服务器主动向客户端推送消息。在本项目中，WebSocket 用于实现以下功能：
+**WebSocket 实时同步说明（后期规划）：**
+
+> ⚠️ **注意**：WebSocket 多设备实时同步功能当前版本暂不实现，以下为后期规划内容。
+
+WebSocket 是一种全双工通信协议，允许服务器主动向客户端推送消息。后期规划中，WebSocket 将用于实现以下功能：
 
 1. **多设备实时同步**
    - 当用户在设备 A 上创建/修改任务时
@@ -63,7 +118,7 @@ WebSocket 是一种全双工通信协议，允许服务器主动向客户端推�
    - 项目里程碑达成提醒
    - AI 分析完成通知
 
-**WebSocket 工作流程：**
+**WebSocket 工作流程（后期规划）：**
 ```
 客户端                                      服务器
    │                                           │
@@ -201,11 +256,27 @@ TaskTimer/
 
 #### 认证相关
 ```
-POST   /api/auth/register      # 用户注册
-POST   /api/auth/login         # 用户登录
+POST   /api/auth/register      # 用户注册（用户名 + 密码）
+POST   /api/auth/login         # 用户登录（用户名 + 密码）
 POST   /api/auth/logout        # 用户登出
 GET    /api/auth/me            # 获取当前用户信息
 POST   /api/auth/refresh       # 刷新 Token
+```
+
+**注册请求体：**
+```json
+{
+  "username": "string (至少3位)",
+  "password": "string (至少6位)"
+}
+```
+
+**登录请求体：**
+```json
+{
+  "username": "string",
+  "password": "string"
+}
 ```
 
 #### 任务相关
@@ -251,7 +322,9 @@ GET    /api/data/export        # 导出用户数据
 POST   /api/data/import        # 导入数据
 ```
 
-### 3.2 WebSocket 实时同步
+### 3.2 WebSocket 实时同步（后期规划）
+
+> ⚠️ **注意**：WebSocket 多设备实时同步功能当前版本暂不实现，以下为后期规划内容。
 
 ```python
 # WebSocket 事件类型
@@ -283,12 +356,12 @@ class WSEvent(BaseModel):
     timestamp: float
 ```
 
-**WebSocket 端点：**
+**WebSocket 端点（后期规划）：**
 ```
 WS     /ws                     # WebSocket 连接端点
 ```
 
-**连接流程：**
+**连接流程（后期规划）：**
 1. 客户端建立 WebSocket 连接，携带 JWT Token
 2. 服务器验证 Token，获取用户 ID
 3. 将连接加入用户的连接池
@@ -299,6 +372,40 @@ WS     /ws                     # WebSocket 连接端点
 
 ## 四、前端用户认证设计
 
+### 4.0 双模式架构说明
+
+ChronoFlow 支持两种使用模式，用户可以在登录界面选择：
+
+| 模式 | 入口 | 数据存储 | AI 配置 |
+|------|------|----------|---------|
+| **单机模式** | 点击"单机使用"按钮 | localStorage | 用户自行配置 API Key |
+| **云端模式** | 输入用户名密码登录 | MySQL 数据库 | 后台统一配置 |
+
+**登录界面设计：**
+```
+┌─────────────────────────────────────┐
+│           ChronoFlow                │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │ 用户名                      │   │
+│  └─────────────────────────────┘   │
+│  ┌─────────────────────────────┐   │
+│  │ 密码                        │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  [        登 录        ]            │
+│                                     │
+│  没有账户？[立即注册]               │
+│                                     │
+│  ─────────── 或 ───────────        │
+│                                     │
+│  [    单机使用（无需登录）    ]      │
+│                                     │
+│  💾 数据保存在本地浏览器             │
+│  🔑 AI 需自行配置 API Key           │
+└─────────────────────────────────────┘
+```
+
 ### 4.1 认证相关组件
 
 #### 登录页面组件
@@ -308,14 +415,16 @@ WS     /ws                     # WebSocket 连接端点
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useAppMode } from '../hooks/useAppMode';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { enterOfflineMode } = useAppMode();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -323,13 +432,18 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(username, password);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.detail || '登录失败');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOfflineMode = () => {
+    enterOfflineMode();
+    navigate('/');
   };
 
   return (
@@ -352,12 +466,12 @@ export function LoginPage() {
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="邮箱地址"
+                placeholder="用户名"
               />
             </div>
             <div>
@@ -395,6 +509,31 @@ export function LoginPage() {
             </p>
           </div>
         </form>
+
+        {/* 单机模式入口 */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500">或</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleOfflineMode}
+            className="mt-4 w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            单机使用（无需登录）
+          </button>
+
+          <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+            <p>💾 数据保存在本地浏览器</p>
+            <p>🔑 AI 需自行配置 API Key</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -410,10 +549,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export function RegisterPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -433,10 +571,15 @@ export function RegisterPage() {
       return;
     }
 
+    if (username.length < 3) {
+      setError('用户名长度至少为3位');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await register(email, password, username);
+      await register(username, password);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.detail || '注册失败');
@@ -470,17 +613,7 @@ export function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="用户名（可选）"
-              />
-            </div>
-            <div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="邮箱地址"
+                placeholder="用户名（至少3位）"
               />
             </div>
             <div>
@@ -546,15 +679,13 @@ interface LoginResponse {
   refresh_token: string;
   user: {
     id: string;
-    email: string;
-    username?: string;
+    username: string;
   };
 }
 
 interface User {
   id: string;
-  email: string;
-  username?: string;
+  username: string;
   language: string;
   theme: string;
 }
@@ -583,35 +714,28 @@ export function useAuth() {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     const response = await apiClient.post<LoginResponse>('/auth/login', {
-      email,
+      username,
       password,
     });
 
     localStorage.setItem('access_token', response.access_token);
     localStorage.setItem('refresh_token', response.refresh_token);
+    localStorage.setItem('app_mode', 'cloud');
     setUser(response.user);
-
-    // 连接 WebSocket
-    const { wsClient } = await import('../services/ws');
-    wsClient.connect(response.access_token);
   };
 
-  const register = async (email: string, password: string, username?: string) => {
+  const register = async (username: string, password: string) => {
     const response = await apiClient.post<LoginResponse>('/auth/register', {
-      email,
-      password,
       username,
+      password,
     });
 
     localStorage.setItem('access_token', response.access_token);
     localStorage.setItem('refresh_token', response.refresh_token);
+    localStorage.setItem('app_mode', 'cloud');
     setUser(response.user);
-
-    // 连接 WebSocket
-    const { wsClient } = await import('../services/ws');
-    wsClient.connect(response.access_token);
   };
 
   const logout = async () => {
@@ -620,11 +744,8 @@ export function useAuth() {
     } finally {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('app_mode');
       setUser(null);
-
-      // 断开 WebSocket
-      const { wsClient } = await import('../services/ws');
-      wsClient.disconnect();
     }
   };
 
@@ -650,6 +771,47 @@ export function useAuth() {
     register,
     logout,
     refreshToken,
+  };
+}
+```
+
+#### 应用模式 Hook
+
+```typescript
+// frontend/src/hooks/useAppMode.ts
+import { useState, useEffect } from 'react';
+
+type AppMode = 'offline' | 'cloud';
+
+export function useAppMode() {
+  const [mode, setMode] = useState<AppMode>(() => {
+    const savedMode = localStorage.getItem('app_mode');
+    return (savedMode as AppMode) || 'offline';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('app_mode', mode);
+  }, [mode]);
+
+  const enterOfflineMode = () => {
+    setMode('offline');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+  };
+
+  const enterCloudMode = () => {
+    setMode('cloud');
+  };
+
+  const isOffline = mode === 'offline';
+  const isCloud = mode === 'cloud';
+
+  return {
+    mode,
+    isOffline,
+    isCloud,
+    enterOfflineMode,
+    enterCloudMode,
   };
 }
 ```
@@ -866,15 +1028,13 @@ export function UserMenu() {
 -- 用户表
 CREATE TABLE users (
     id CHAR(36) PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    username VARCHAR(100),
     language VARCHAR(10) DEFAULT 'zh-CN',
     theme VARCHAR(10) DEFAULT 'dark',
-    ai_config JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email)
+    INDEX idx_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 项目表
@@ -962,6 +1122,47 @@ CREATE TABLE milestones (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
+### 5.2 默认数据初始化
+
+新用户注册时，系统会自动初始化默认分类数据（与现有 localStorage 版本保持一致）：
+
+```sql
+-- 新用户注册后自动创建的默认分类
+INSERT INTO categories (id, user_id, name, color) VALUES
+    (UUID(), :user_id, 'chronoflow', 'green'),
+    (UUID(), :user_id, 'ochre', 'ochre'),
+    (UUID(), :user_id, 'terracotta', 'terracotta'),
+    (UUID(), :user_id, 'slate-river', 'slate-river');
+```
+
+**后端实现（Python）：**
+
+```python
+# backend/app/crud/category.py
+from app.models.category import Category
+from app.core.default_data import DEFAULT_CATEGORIES
+
+async def create_default_categories(db, user_id: str):
+    """为新用户创建默认分类"""
+    for cat in DEFAULT_CATEGORIES:
+        category = Category(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            name=cat["name"],
+            color=cat["color"]
+        )
+        db.add(category)
+    await db.commit()
+
+# backend/app/core/default_data.py
+DEFAULT_CATEGORIES = [
+    {"name": "chronoflow", "color": "green"},
+    {"name": "ochre", "color": "ochre"},
+    {"name": "terracotta", "color": "terracotta"},
+    {"name": "slate-river", "color": "slate-river"},
+]
+```
+
 ---
 
 ## 六、前端 API 客户端改造
@@ -1035,7 +1236,9 @@ class APIClient {
 export const apiClient = new APIClient();
 ```
 
-### 6.2 WebSocket 客户端
+### 6.2 WebSocket 客户端（后期规划）
+
+> ⚠️ **注意**：WebSocket 功能当前版本暂不实现，以下代码供后期参考。
 
 ```typescript
 // frontend/src/services/ws.ts
@@ -1144,9 +1347,7 @@ export const wsClient = new WebSocketClient();
 ```typescript
 // frontend/src/hooks/useTasks.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
 import { apiClient } from '../services/api';
-import { wsClient } from '../services/ws';
 import type { Task } from '../types';
 
 export function useTasks() {
@@ -1157,34 +1358,8 @@ export function useTasks() {
     queryFn: () => apiClient.get<Task[]>('/tasks'),
   });
 
-  // WebSocket 实时更新
-  useEffect(() => {
-    const unsubscribeTaskCreated = wsClient.on('task.created', (newTask) => {
-      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) => {
-        return old ? [...old, newTask] : [newTask];
-      });
-    });
-
-    const unsubscribeTaskUpdated = wsClient.on('task.updated', (updatedTask) => {
-      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) => {
-        return old?.map(task =>
-          task.id === updatedTask.id ? updatedTask : task
-        );
-      });
-    });
-
-    const unsubscribeTaskDeleted = wsClient.on('task.deleted', ({ task_id }) => {
-      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) => {
-        return old?.filter(task => task.id !== task_id);
-      });
-    });
-
-    return () => {
-      unsubscribeTaskCreated();
-      unsubscribeTaskUpdated();
-      unsubscribeTaskDeleted();
-    };
-  }, [queryClient]);
+  // 注意：WebSocket 实时更新将在后期实现
+  // 当前版本通过手动刷新或页面切换获取最新数据
 
   const createTask = useMutation({
     mutationFn: (task: Omit<Task, 'id'>) =>
@@ -1369,21 +1544,16 @@ http {
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
-
-            # WebSocket 支持
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
         }
 
-        # WebSocket 支持
-        location /ws {
-            proxy_pass http://backend:8000/ws;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_read_timeout 86400;
-        }
+        # WebSocket 支持（后期规划）
+        # location /ws {
+        #     proxy_pass http://backend:8000/ws;
+        #     proxy_http_version 1.1;
+        #     proxy_set_header Upgrade $http_upgrade;
+        #     proxy_set_header Connection "upgrade";
+        #     proxy_read_timeout 86400;
+        # }
     }
 }
 ```
@@ -1415,25 +1585,38 @@ http {
 
 4. 实现用户认证系统
    - JWT Token 生成和验证
-   - 密码哈希存储
-   - 注册/登录 API
+   - 密码哈希存储（bcrypt）
+   - 注册/登录 API（用户名 + 密码）
    - Token 刷新机制
+
+5. **实现默认数据初始化**
+   - 新用户注册时自动创建默认分类
+   - 默认分类与 localStorage 版本保持一致
+   - 确保 `chronoflow`、`ochre`、`terracotta`、`slate-river` 四个分类
+
+6. **实现 AI 服务代理**
+   - 后端统一管理 AI API Key
+   - 提供 `/api/ai/analyze` 和 `/api/ai/plan` 端点
+   - 支持配置多个 AI 提供商（deepseek/openai/google）
+   - 云端模式用户无需配置 API Key
 
 **验证标准：**
 - 所有 API 端点可通过 Postman/curl 测试
 - 数据库表正确创建
 - 认证功能正常工作
+- 新用户注册后有默认分类数据
+- AI 分析接口正常工作（云端模式）
 
 ---
 
 ### 阶段二：前端认证系统开发
 
-**目标：** 完成前端用户认证功能
+**目标：** 完成前端用户认证功能和双模式切换
 
 **步骤清单：**
 1. 创建认证相关组件
-   - LoginPage 组件
-   - RegisterPage 组件
+   - LoginPage 组件（用户名 + 密码 + "单机使用"按钮）
+   - RegisterPage 组件（用户名 + 密码）
    - AuthGuard 组件
    - UserMenu 组件
 
@@ -1442,16 +1625,30 @@ http {
    - useAuth Hook
    - Token 存储和刷新逻辑
 
-3. 配置路由
+3. **实现双模式切换**
+   - useAppMode Hook（管理 offline/cloud 模式）
+   - 单机模式：使用 localStorage + 用户自行配置 API Key
+   - 云端模式：使用 API + 后台统一 AI 配置
+   - 模式状态持久化
+
+4. 配置路由
    - 设置 React Router
    - 添加路由守卫
    - 处理未登录重定向
+   - **单机模式下无需登录验证**
+
+5. **实现 AI 配置差异**
+   - 单机模式：显示 AISettingsModal，用户配置自己的 API Key
+   - 云端模式：隐藏 API Key 配置，使用后台统一配置
 
 **验证标准：**
-- 用户可以成功注册
+- 用户可以成功注册（用户名 + 密码）
 - 用户可以登录/登出
-- 未登录访问受保护页面自动跳转登录页
-- Token 过期自动刷新
+- 点击"单机使用"可进入离线模式
+- 单机模式下数据保存在 localStorage
+- 云端模式下数据保存在 MySQL
+- 单机模式需要用户配置 API Key
+- 云端模式无需配置 API Key
 
 ---
 
@@ -1486,7 +1683,9 @@ http {
 
 ---
 
-### 阶段四：WebSocket 实时同步
+### 阶段四：WebSocket 实时同步（后期规划）
+
+> ⚠️ **注意**：此阶段当前版本暂不实现，作为后期规划。
 
 **目标：** 实现多设备实时数据同步
 
@@ -1621,12 +1820,20 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 # CORS 配置
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,https://your-domain.com
 
-# AI 服务（后端代理，保护 API Key）
-OPENAI_API_KEY=sk-xxx
-DEEPSEEK_API_KEY=sk-xxx
+# ============ AI 服务配置（云端模式统一管理） ============
+# AI 提供商：deepseek / openai / google
+AI_PROVIDER=deepseek
 
-# Redis（可选，用于 WebSocket 广播）
-REDIS_URL=redis://localhost:6379/0
+# 对应的 API Key（云端模式用户无需配置）
+AI_API_KEY=sk-xxxxx
+
+# 模型名称
+AI_MODEL=deepseek-chat
+
+# 可选：备用提供商（当主提供商不可用时切换）
+# AI_FALLBACK_PROVIDER=openai
+# AI_FALLBACK_API_KEY=sk-xxxxx
+# AI_FALLBACK_MODEL=gpt-4o-mini
 ```
 
 ### 9.2 前端环境变量
@@ -1634,7 +1841,8 @@ REDIS_URL=redis://localhost:6379/0
 ```bash
 # frontend/.env
 VITE_API_URL=http://localhost:8000/api
-VITE_WS_URL=ws://localhost:8000
+# WebSocket URL（后期规划，当前版本不需要）
+# VITE_WS_URL=ws://localhost:8000
 ```
 
 ### 9.3 生产环境变量
@@ -1642,7 +1850,8 @@ VITE_WS_URL=ws://localhost:8000
 ```bash
 # .env.production
 VITE_API_URL=https://api.your-domain.com/api
-VITE_WS_URL=wss://api.your-domain.com
+# WebSocket URL（后期规划，当前版本不需要）
+# VITE_WS_URL=wss://api.your-domain.com
 ```
 
 ---
@@ -1718,13 +1927,18 @@ docker-compose down
 
 前后端分离改造后，ChronoFlow 将获得：
 
-✅ **多设备同步**：随时随地访问您的任务数据
+✅ **双模式支持**：单机模式（离线）+ 云端模式（在线）
+✅ **用户认证**：用户名 + 密码登录（暂不支持第三方登录）
 ✅ **数据安全**：MySQL 持久化，定期备份
-✅ **Python 生态**：丰富的库和工具，便于维护
+✅ **Python 生态**：FastAPI + SQLAlchemy，便于维护
 ✅ **性能提升**：异步框架 + 数据库优化
 ✅ **可扩展性**：单机部署，便于后续扩展
-✅ **实时协作**：WebSocket 支持多设备实时同步
-✅ **用户认证**：安全的多用户支持
+✅ **AI 统一管理**：云端模式用户无需关心 API Key
+✅ **默认数据**：新用户自动初始化默认分类
+
+🔮 **后期规划**：
+- WebSocket 多设备实时同步
+- 第三方登录（Google、GitHub 等）
 
 **关键文件清单：**
 
@@ -1732,3 +1946,14 @@ docker-compose down
 - 前端：`frontend/src/services/api.ts`, `frontend/src/hooks/`, `frontend/src/pages/`
 - 部署：`docker-compose.yml`, `deploy/nginx/`
 - 数据库：`deploy/mysql/init.sql`
+
+**核心设计决策摘要：**
+
+| 决策项 | 选择 |
+|--------|------|
+| 登录方式 | 用户名 + 密码（暂不支持第三方登录） |
+| 双模式 | 单机模式（localStorage）+ 云端模式（MySQL） |
+| 后端框架 | FastAPI (Python) + MySQL |
+| API Key 管理 | 单机模式：用户配置 / 云端模式：后台统一 |
+| WebSocket 同步 | 后期规划，当前版本不实现 |
+| 默认数据 | 新用户注册时自动初始化默认分类 |

@@ -2,19 +2,25 @@ schema: spec-driven
 
 # Project context (optional)
 # This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: TypeScript, React 19, Vite, TailwindCSS, HeroUI v2
+  Backend (planned): Python 3.11+, FastAPI, MySQL 8.0+, SQLAlchemy 2.0
+  We use conventional commits
+  Domain: Productivity app with task timing and AI-powered analysis
+
+  Architecture Decisions (2026-03-18):
+  - 登录方式: 用户名 + 密码（暂不支持第三方登录）
+  - 双模式: 单机模式（localStorage）+ 云端模式（MySQL）
+  - API Key: 单机模式用户配置 / 云端模式后台统一
+  - WebSocket: 后期规划，当前版本不实现
+  - 默认数据: 新用户注册时自动初始化默认分类
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Keep proposals focused and actionable
+    - Always include impact analysis
+  tasks:
+    - Break tasks into chunks of max 4 hours
+    - Include verification criteria
