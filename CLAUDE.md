@@ -46,14 +46,14 @@ ChronoFlow is a React 19 + TypeScript productivity application with AI-powered t
 - **Type Definitions** (`src/types.ts`):
   - Core types: `Task`, `Project`, `Category`, `Milestone`, `TimeLog`
   - Task statuses: `IDLE`, `RUNNING`, `PAUSED`, `COMPLETED`, `BREAK`
-  - Task dependencies via `parentTaskIds` array
+  - Task dependencies via `parentTaskId` (single parent, null for pipeline root)
   - Milestone system with Git-like branching (main branch + custom branches)
 
 ### Key Architectural Patterns
 
 1. **Subscription Pattern**: The storage service uses `subscribeTo*()` functions that return unsubscribe callbacks. This is how React components stay in sync with data changes.
 
-2. **Task Dependencies**: Projects can define parent-child task relationships. Tasks with `parentTaskIds` cannot be started until all parents are `COMPLETED`. This enforcement happens in `handleStartTask()` in `App.tsx:165-171`.
+2. **Task Dependencies**: Projects can define parent-child task relationships. Tasks with `parentTaskId` cannot be started until the parent task is `COMPLETED`. This enforcement happens in `handleStartTask()` in `App.tsx`.
 
 3. **Milestone System**: Tasks track progress through milestones. Each milestone stores the `taskTime` (total elapsed time at creation), enabling Git-like branching visualization.
 

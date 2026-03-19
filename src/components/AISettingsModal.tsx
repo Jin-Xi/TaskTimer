@@ -21,9 +21,9 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ language, onCl
   const t = TRANSLATIONS[language];
   const [saved, setSaved] = useState(false);
   const [config, setConfig] = useState<AIConfig>({
-    provider: 'gemini',
+    provider: 'deepseek',
     apiKey: '',
-    model: 'gemini-2.5-flash-lite',
+    model: 'deepseek-ai/DeepSeek-V3.2',
     baseUrl: ''
   });
 

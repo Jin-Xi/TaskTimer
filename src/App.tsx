@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle, LogOut, Cloud, HardDrive } from 'lucide-react';
+import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle, HardDrive } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
-import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from '@heroui/react';
+import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button } from '@heroui/react';
 import { TaskTimer } from './components/TaskTimer';
 import { Logo } from './components/Logo';
 import { TaskList } from './components/TaskList';
@@ -17,8 +17,6 @@ import { AnimatedPage } from './animations';
 import { GlobalTimerIndicator } from './components/GlobalTimerIndicator';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
 import { useTasks, useProjects, useCategories } from './hooks';
-import { useAuthContext } from './contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -56,9 +54,9 @@ const MainApp: React.FC = () => {
     deleteCategory: dataDeleteCategory,
   } = useCategories();
 
-  // Auth context
-  const { user, isCloud, isOffline, logout, enterCloudMode } = useAuthContext();
-  const navigate = useNavigate();
+  // App mode - always offline/local mode (auth system disabled)
+  const isCloud = false;
+  const isOffline = true;
 
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
@@ -160,8 +158,8 @@ const MainApp: React.FC = () => {
 
   const activeFocusTask = tasks.find(t => t.id === focusTaskId) || null;
 
-  const handleAddTask = async (title: string, description: string, tags: string[], projectId?: string, parentTaskIds: string[] = [], isTerminal?: boolean) => {
-    await dataAddTask({
+  const handleAddTask = async (title: string, description: string, tags: string[], projectId?: string, parentTaskId: string | null = null, isTerminal?: boolean): Promise<string> => {
+    const newTask = await dataAddTask({
       title,
       description,
       tags: tags,
@@ -170,9 +168,10 @@ const MainApp: React.FC = () => {
       logs: [],
       milestones: [],
       projectId,
-      parentTaskIds,
+      parentTaskId,
       isTerminal
     });
+    return newTask.id;
   };
 
   const handleDeleteTask = async (id: string) => {
@@ -237,10 +236,10 @@ const MainApp: React.FC = () => {
     const task = tasks.find(t => t.id === id);
     if (!task || task.status === TaskStatus.RUNNING) return;
 
-    if (task.parentTaskIds?.length > 0) {
-      const unfinished = tasks.filter(t => task.parentTaskIds.includes(t.id) && t.status !== TaskStatus.COMPLETED);
-      if (unfinished.length > 0) {
-        alert(`请先完成前置任务：${unfinished.map(p => p.title).join(', ')}`);
+    if (task.parentTaskId) {
+      const parentTask = tasks.find(t => t.id === task.parentTaskId);
+      if (parentTask && parentTask.status !== TaskStatus.COMPLETED) {
+        alert(`请先完成前置任务：${parentTask.title}`);
         return;
       }
     }
@@ -305,11 +304,6 @@ const MainApp: React.FC = () => {
       setIsFocusMode(false);
       setFocusTaskId(null);
     }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
   };
 
   const getSuggestedTasks = () => {
@@ -401,19 +395,10 @@ const MainApp: React.FC = () => {
           </button>
         )}
 
-        {/* Mode Indicator */}
+        {/* Mode Indicator - Always offline mode */}
         <div className="flex items-center justify-center gap-2 py-2 text-xs text-neutral-500 dark:text-neutral-400">
-          {isCloud ? (
-            <>
-              <Cloud className="w-4 h-4" />
-              <span>云端模式</span>
-            </>
-          ) : (
-            <>
-              <HardDrive className="w-4 h-4" />
-              <span>单机模式</span>
-            </>
-          )}
+          <HardDrive className="w-4 h-4" />
+          <span>单机模式</span>
         </div>
 
         <div className="flex gap-4">
@@ -566,58 +551,16 @@ const MainApp: React.FC = () => {
               <CheckCircle className="w-4 h-4 text-green-500" />
             </div>
 
-            {/* User Menu (Cloud mode) or GitHub Link (Offline mode) */}
-            {isCloud && user ? (
-              <Dropdown placement="bottom-end">
-                <DropdownTrigger>
-                  <Button
-                    variant="light"
-                    className="flex items-center gap-2"
-                  >
-                    <Avatar
-                      name={user.username}
-                      size="sm"
-                      classNames={{
-                        base: 'bg-green-500 text-white',
-                      }}
-                    />
-                    <span className="hidden md:inline text-sm">{user.username}</span>
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu aria-label="User menu">
-                  <DropdownItem
-                    key="mode"
-                    startContent={<HardDrive className="w-4 h-4" />}
-                    description="切换到单机模式"
-                    onPress={() => {
-                      enterCloudMode();
-                      navigate('/app');
-                    }}
-                  >
-                    单机模式
-                  </DropdownItem>
-                  <DropdownItem
-                    key="logout"
-                    className="text-danger"
-                    color="danger"
-                    startContent={<LogOut className="w-4 h-4" />}
-                    onPress={handleLogout}
-                  >
-                    退出登录
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
-            ) : (
-              <a
-                href="https://github.com/Jin-Xi/TaskTimer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-                aria-label="GitHub Repository"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-            )}
+            {/* GitHub Link */}
+            <a
+              href="https://github.com/Jin-Xi/TaskTimer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+              aria-label="GitHub Repository"
+            >
+              <Github className="w-5 h-5" />
+            </a>
           </NavbarContent>
         </Navbar>
 

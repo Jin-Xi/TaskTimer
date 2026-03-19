@@ -1,11 +1,10 @@
 /**
  * Data Service Abstraction Layer
  *
- * Provides a unified interface for data operations that works
- * with both offline (localStorage) and cloud (API) modes.
+ * Provides a unified interface for data operations using localStorage.
+ * (Cloud mode has been removed - app is offline-only now)
  */
 import type { Task, Project, Category, AIAnalysisResult, TaskPreview } from '../types';
-import { apiClient } from './apiClient';
 
 // ============ Service Interface ============
 
@@ -142,10 +141,23 @@ class LocalStorageDataService implements DataService {
 
   async deleteTask(id: string): Promise<boolean> {
     const tasks = this.getTasksSync();
-    const index = tasks.findIndex(t => t.id === id);
-    if (index === -1) return false;
-    tasks.splice(index, 1);
-    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+    const taskToDelete = tasks.find(t => t.id === id);
+    if (!taskToDelete) return false;
+
+    const parentTaskId = taskToDelete.parentTaskId;
+
+    // 更新所有以该任务为父任务的子任务，将它们的父任务指向被删除任务的父任务
+    // 这样可以保持流水线的链表结构
+    const updated = tasks
+      .filter(t => t.id !== id)
+      .map(t => {
+        if (t.parentTaskId === id) {
+          return { ...t, parentTaskId };
+        }
+        return t;
+      });
+
+    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updated));
     this.notifyTasksChanged();
     return true;
   }
@@ -302,294 +314,17 @@ class LocalStorageDataService implements DataService {
   }
 }
 
-// ============ API Implementation ============
-
-class APIDataService implements DataService {
-  // Tasks
-  async getTasks(): Promise<Task[]> {
-    const response = await apiClient.get<{ tasks: any[] }>('/tasks');
-    return response.tasks.map(this.transformTaskFromAPI);
-  }
-
-  async getTask(id: string): Promise<Task | null> {
-    try {
-      const task = await apiClient.get<any>(`/tasks/${id}`);
-      return this.transformTaskFromAPI(task);
-    } catch {
-      return null;
-    }
-  }
-
-  async createTask(task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> {
-    const response = await apiClient.post<any>('/tasks', this.transformTaskToAPI(task));
-    return this.transformTaskFromAPI(response);
-  }
-
-  async updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
-    try {
-      const response = await apiClient.put<any>(`/tasks/${id}`, this.transformTaskToAPI(updates));
-      return this.transformTaskFromAPI(response);
-    } catch {
-      return null;
-    }
-  }
-
-  async deleteTask(id: string): Promise<boolean> {
-    try {
-      await apiClient.delete(`/tasks/${id}`);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  async deleteTasks(ids: string[]): Promise<number> {
-    const response = await apiClient.delete<{ deleted_count: number }>(`/tasks?task_ids=${ids.join(',')}`);
-    return response.deleted_count;
-  }
-
-  // Projects
-  async getProjects(): Promise<Project[]> {
-    const projects = await apiClient.get<any[]>('/projects');
-    return projects.map(this.transformProjectFromAPI);
-  }
-
-  async getProject(id: string): Promise<Project | null> {
-    try {
-      const project = await apiClient.get<any>(`/projects/${id}`);
-      return this.transformProjectFromAPI(project);
-    } catch {
-      return null;
-    }
-  }
-
-  async createProject(project: Omit<Project, 'id' | 'createdAt'>): Promise<Project> {
-    const response = await apiClient.post<any>('/projects', this.transformProjectToAPI(project));
-    return this.transformProjectFromAPI(response);
-  }
-
-  async updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
-    try {
-      const response = await apiClient.put<any>(`/projects/${id}`, this.transformProjectToAPI(updates));
-      return this.transformProjectFromAPI(response);
-    } catch {
-      return null;
-    }
-  }
-
-  async deleteProject(id: string): Promise<boolean> {
-    try {
-      await apiClient.delete(`/projects/${id}`);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // Categories
-  async getCategories(): Promise<Category[]> {
-    const categories = await apiClient.get<any[]>('/categories');
-    return categories.map(this.transformCategoryFromAPI);
-  }
-
-  async createCategory(category: Omit<Category, 'id'>): Promise<Category> {
-    const response = await apiClient.post<any>('/categories', category);
-    return this.transformCategoryFromAPI(response);
-  }
-
-  async deleteCategory(id: string): Promise<boolean> {
-    try {
-      await apiClient.delete(`/categories/${id}`);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // Data
-  async exportData(): Promise<{ tasks: Task[]; projects: Project[]; categories: Category[] }> {
-    const data = await apiClient.get<{
-      tasks: any[];
-      projects: any[];
-      categories: any[];
-    }>('/data/export');
-    return {
-      tasks: data.tasks.map(this.transformTaskFromAPI),
-      projects: data.projects.map(this.transformProjectFromAPI),
-      categories: data.categories.map(this.transformCategoryFromAPI),
-    };
-  }
-
-  async importData(data: { tasks?: Task[]; projects?: Project[]; categories?: Category[] }): Promise<{ imported: number; errors: string[] }> {
-    const response = await apiClient.post<{
-      tasks_imported: number;
-      projects_imported: number;
-      categories_imported: number;
-      errors: string[];
-    }>('/data/import', {
-      tasks: data.tasks?.map(this.transformTaskToAPI),
-      projects: data.projects?.map(this.transformProjectToAPI),
-      categories: data.categories,
-    });
-
-    return {
-      imported: response.tasks_imported + response.projects_imported + response.categories_imported,
-      errors: response.errors,
-    };
-  }
-
-  // AI
-  async analyzeProductivity(taskIds?: string[]): Promise<AIAnalysisResult> {
-    const response = await apiClient.post<{
-      score: number;
-      summary: string;
-      suggestions: string[];
-    }>('/ai/analyze', { task_ids: taskIds });
-
-    return {
-      productivityScore: response.score,
-      summary: response.summary,
-      suggestions: response.suggestions,
-    };
-  }
-
-  async generateProjectPlan(goal: string, context?: string): Promise<{ projectName: string; tasks: TaskPreview[] }> {
-    const response = await apiClient.post<{
-      project_name: string;
-      tasks: Array<{
-        title: string;
-        description?: string;
-        estimated_time?: number;
-        dependencies?: string[];
-      }>;
-    }>('/ai/plan', { goal, context });
-
-    return {
-      projectName: response.project_name,
-      tasks: response.tasks.map(t => ({
-        id: crypto.randomUUID(),
-        title: t.title,
-        description: t.description,
-        estimatedMinutes: t.estimated_time,
-        parentIds: [],
-        tag: undefined,
-        isNew: true,
-      })),
-    };
-  }
-
-  // Subscriptions (polling-based for now, WebSocket can be added later)
-  subscribeToTasks(callback: (tasks: Task[]) => void): () => void {
-    // Initial fetch
-    this.getTasks().then(callback);
-
-    // Poll for updates (every 30 seconds)
-    const intervalId = setInterval(() => {
-      this.getTasks().then(callback);
-    }, 30000);
-
-    return () => clearInterval(intervalId);
-  }
-
-  subscribeToProjects(callback: (projects: Project[]) => void): () => void {
-    this.getProjects().then(callback);
-    const intervalId = setInterval(() => {
-      this.getProjects().then(callback);
-    }, 30000);
-    return () => clearInterval(intervalId);
-  }
-
-  subscribeToCategories(callback: (categories: Category[]) => void): () => void {
-    this.getCategories().then(callback);
-    const intervalId = setInterval(() => {
-      this.getCategories().then(callback);
-    }, 30000);
-    return () => clearInterval(intervalId);
-  }
-
-  // Transform helpers
-  private transformTaskFromAPI(apiTask: any): Task {
-    return {
-      id: apiTask.id,
-      title: apiTask.title,
-      description: apiTask.description,
-      tags: apiTask.tags || [],
-      status: apiTask.status,
-      totalTime: apiTask.total_time,
-      estimatedTime: apiTask.estimated_time,
-      createdAt: new Date(apiTask.created_at).getTime(),
-      logs: (apiTask.time_logs || []).map((log: any) => ({
-        start: log.start_time,
-        end: log.end_time,
-      })),
-      milestones: (apiTask.milestones || []).map((m: any) => ({
-        id: m.id,
-        title: m.name,
-        timestamp: new Date(m.created_at).getTime(),
-        branch: m.branch_name || 'main',
-        taskTime: m.task_time,
-      })),
-      projectId: apiTask.project_id,
-      parentTaskIds: apiTask.parent_task_ids || [],
-    };
-  }
-
-  private transformTaskToAPI(task: Partial<Task>): any {
-    return {
-      title: task.title,
-      description: task.description,
-      tags: task.tags,
-      status: task.status,
-      total_time: task.totalTime,
-      estimated_time: task.estimatedTime,
-      project_id: task.projectId,
-      parent_task_ids: task.parentTaskIds,
-    };
-  }
-
-  private transformProjectFromAPI(apiProject: any): Project {
-    return {
-      id: apiProject.id,
-      name: apiProject.name,
-      description: apiProject.description,
-      createdAt: new Date(apiProject.created_at).getTime(),
-      color: apiProject.color,
-      startDate: apiProject.start_date,
-      endDate: apiProject.end_date,
-    };
-  }
-
-  private transformProjectToAPI(project: Partial<Project>): any {
-    return {
-      name: project.name,
-      description: project.description,
-      color: project.color,
-      start_date: project.startDate,
-      end_date: project.endDate,
-    };
-  }
-
-  private transformCategoryFromAPI(apiCategory: any): Category {
-    return {
-      id: apiCategory.id,
-      name: apiCategory.name,
-      color: apiCategory.color,
-    };
-  }
-}
-
 // ============ Service Factory ============
 
+// Singleton instance (offline mode only now)
 let currentService: DataService | null = null;
 
-export function getDataService(mode: 'offline' | 'cloud'): DataService {
-  if (!currentService || (mode === 'offline' && !(currentService instanceof LocalStorageDataService)) ||
-      (mode === 'cloud' && !(currentService instanceof APIDataService))) {
-    currentService = mode === 'offline' ? new LocalStorageDataService() : new APIDataService();
+export function getDataService(_mode?: 'offline' | 'cloud'): DataService {
+  if (!currentService) {
+    currentService = new LocalStorageDataService();
   }
   return currentService;
 }
 
-// Export singleton instances for direct use
+// Export singleton instance for direct use
 export const localStorageDataService = new LocalStorageDataService();
-export const apiDataService = new APIDataService();

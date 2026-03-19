@@ -18,7 +18,7 @@ interface ProjectManagerProps {
   onAddProject: (project: Omit<Project, 'id' | 'createdAt'>) => void;
   onUpdateProject: (id: string, updates: Partial<Project>) => void;
   onDeleteProject: (id: string) => void;
-  onAddTask: (title: string, description: string, tags: string[], projectId?: string, parentTaskIds?: string[], isTerminal?: boolean) => void;
+  onAddTask: (title: string, description: string, tags: string[], projectId?: string, parentTaskId?: string | null, isTerminal?: boolean) => Promise<string>;
   onDeleteTask: (id: string) => void;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   categories?: Category[]; 
@@ -233,7 +233,7 @@ const ProjectForm = ({
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-neutral-50 dark:bg-neutral-950">
           <div className="p-6 md:p-8">
             <div className="w-full max-w-3xl mx-auto space-y-6">
-              {/* 项目名称 */}
+              {/* 规划名称 */}
               <div>
                 <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">{t.projectName}</label>
                 <input
@@ -242,7 +242,7 @@ const ProjectForm = ({
                   className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 outline-none focus:border-neutral-400 dark:focus:border-neutral-500 font-medium text-base transition-colors"
                   value={data?.name || ''}
                   onChange={(e) => onChange('name', e.target.value)}
-                  placeholder="e.g. Q4 Marketing Campaign"
+                  placeholder="e.g. 运动计划"
                 />
               </div>
 
@@ -253,7 +253,7 @@ const ProjectForm = ({
                   className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 outline-none focus:border-neutral-400 dark:focus:border-neutral-500 font-medium text-base h-24 resize-none transition-colors"
                   value={data?.description || ''}
                   onChange={(e) => onChange('description', e.target.value)}
-                  placeholder="Describe the main goals and deliverables..."
+                  placeholder="简单描述您的计划"
                 />
               </div>
 
@@ -328,7 +328,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [isAddingTaskToProject, setIsAddingTaskToProject] = useState<string | null>(null);
   const [isAddingRoot, setIsAddingRoot] = useState(false);
   const [showAIPlanning, setShowAIPlanning] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', description: '', parentTaskIds: [] as string[], isTerminal: false });
+  const [newTask, setNewTask] = useState({ title: '', description: '', parentTaskId: null as string | null, isTerminal: false });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [newTagName, setNewTagName] = useState('');
@@ -406,7 +406,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   };
 
   const TaskCard: React.FC<{ task: Task; isFirst: boolean; isLast: boolean; projectColor: string }> = ({ task, isFirst, isLast, projectColor }) => {
-    const isLocked = task.parentTaskIds?.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED);
+    const isLocked = task.parentTaskId ? tasks.find(pt => pt.id === task.parentTaskId)?.status !== TaskStatus.COMPLETED : false;
     const isCompleted = task.status === TaskStatus.COMPLETED;
     const isRunning = task.status === TaskStatus.RUNNING;
     const isTerminal = task.isTerminal;
@@ -496,7 +496,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
         ) : !task.isTerminal ? (
           <div className="flex items-center justify-center px-0.5 shrink-0">
             <button
-              onClick={() => { setNewTask({ title: '', description: '', parentTaskIds: [task.id], isTerminal: false }); setIsAddingTaskToProject(task.id); }}
+              onClick={() => { setNewTask({ title: '', description: '', parentTaskId: task.id, isTerminal: false }); setIsAddingTaskToProject(task.id); }}
               className="flex items-center group/add-btn"
             >
               <div className="w-4 h-0.5 rounded-full transition-all group-hover/add-btn:w-6" style={{
@@ -525,14 +525,14 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     
     // Find roots (tasks with no parents OR parents that are not in this project, though strictly they should be in project)
     // We assume strict projectId containment.
-    const roots = pTasks.filter(t => !t.parentTaskIds || t.parentTaskIds.length === 0 || !pTasks.some(pt => t.parentTaskIds.includes(pt.id)));
+    const roots = pTasks.filter(t => !t.parentTaskId || !pTasks.some(pt => pt.id === t.parentTaskId));
     
     const tracks: Task[][] = [];
     
     const buildChain = (current: Task, chain: Task[]) => {
       chain.push(current);
       // Find children: tasks in this project that have current.id as parent
-      const child = pTasks.find(t => t.parentTaskIds?.includes(current.id));
+      const child = pTasks.find(t => t.parentTaskId === current.id);
       if (child && !chain.includes(child)) {
         buildChain(child, chain);
       }
@@ -584,7 +584,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     return (
       <ProjectForm 
         mode={view} 
-        title={view === 'create' ? t.createProject : (language === 'zh-TW' ? '編輯項目' : '编辑项目')} 
+        title={view === 'create' ? t.createProject : (language === 'zh-TW' ? '編輯規劃' : '编辑规划')} 
         data={formData} 
         onChange={handleFormChange}
         onSubmit={handleSubmit} 
@@ -660,11 +660,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
 
           {/* Content Canvas - 可滚动区域 */}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-neutral-50 dark:bg-neutral-950">
-             <div className="p-4 md:p-6 pb-12">
+             <div className="p-4 md:p-6 pb-12 h-full">
                   {projectTracks.length === 0 ? (
-                    <div className="h-full flex items-center justify-center min-h-[300px]">
+                    <div className="h-full flex items-center justify-center">
                       <ProjectZeroState
-                        onManualAdd={() => { setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false }); setIsAddingRoot(true); }}
+                        onManualAdd={() => { setNewTask({ title: '', description: '', parentTaskId: null, isTerminal: false }); setIsAddingRoot(true); }}
                         onAIGenerate={() => setShowAIPlanning(true)}
                         language={language}
                         projectColor={pColor}
@@ -718,9 +718,9 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                       })}
                       {/* 添加更多任务的按钮 */}
                       {projectTracks.length > 0 && projectTracks.length < 5 && (
-                        <div className="px-2 mt-8 pt-8 border-t border-neutral-200/50 dark:border-neutral-700/50">
+                        <div className="flex justify-center px-2 mt-8 pt-8 border-t border-neutral-200/50 dark:border-neutral-700/50">
                            <SplitActionButton
-                             onManualAdd={() => { setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false }); setIsAddingRoot(true); }}
+                             onManualAdd={() => { setNewTask({ title: '', description: '', parentTaskId: null, isTerminal: false }); setIsAddingRoot(true); }}
                              onAIGenerate={() => setShowAIPlanning(true)}
                              language={language}
                              projectColor={pColor}
@@ -740,18 +740,17 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             onClose={() => {
               setIsAddingTaskToProject(null);
               setIsAddingRoot(false);
-              setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
+              setNewTask({ title: '', description: '', parentTaskId: null, isTerminal: false });
             }}
-            size="lg"
+            size="md"
             classNames={{
-              wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[100]",
-              base: "rounded-[2.5rem] shadow-2xl overflow-hidden",
-              backdrop: "bg-neutral-950/50",
+              wrapper: "items-center justify-center",
+              base: "rounded-lg shadow-xl mx-4 max-w-md",
             }}
             motionProps={{
               variants: {
-                enter: { scale: 1, opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
-                exit: { scale: 0.95, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
+                enter: { scale: 1, opacity: 1, transition: { duration: 0.2 } },
+                exit: { scale: 0.95, opacity: 0, transition: { duration: 0.15 } }
               }
             }}
           >
@@ -759,10 +758,10 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (newTask.title.trim() && selectedProjectId) {
-                  onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskIds, newTask.isTerminal);
+                  onAddTask(newTask.title.trim(), newTask.description, [], selectedProjectId, newTask.parentTaskId, newTask.isTerminal);
                   setIsAddingTaskToProject(null);
                   setIsAddingRoot(false);
-                  setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
+                  setNewTask({ title: '', description: '', parentTaskId: null, isTerminal: false });
                 }
               }}>
                 <ModalHeader className="flex-col pt-10 pb-2">
@@ -770,7 +769,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                     {isAddingRoot ? (language === 'zh-TW' ? '新增起始節點' : '添加起始节点') : t.addStep}
                   </h3>
                   <p className="text-sm text-neutral-400 mt-1">
-                    {language === 'zh-TW' ? '為項目添加新的工作流步驟' : '为项目添加新的工作流步骤'}
+                    {language === 'zh-TW' ? '為規劃添加新的工作流步驟' : '为规划添加新的工作流步骤'}
                   </p>
                 </ModalHeader>
                 <ModalBody className="gap-5 py-4">
@@ -806,7 +805,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                     </button>
                   </div>
                   <p className="text-xs text-neutral-400 text-center">
-                    {language === 'zh-TW' ? '所有任務完成後到達此節點，項目將標記為已完成' : '所有任务完成后到达此节点，项目将标记为已完成'}
+                    {language === 'zh-TW' ? '所有任務完成後到達此節點，規劃將標記為已完成' : '所有任务完成后到达此节点，规划将标记为已完成'}
                   </p>
                 </ModalBody>
                 <ModalFooter className="justify-end gap-3 pt-2 pb-6">
@@ -816,7 +815,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                     onPress={() => {
                       setIsAddingTaskToProject(null);
                       setIsAddingRoot(false);
-                      setNewTask({ title: '', description: '', parentTaskIds: [], isTerminal: false });
+                      setNewTask({ title: '', description: '', parentTaskId: null, isTerminal: false });
                     }}
                   >
                     {t.cancel}
@@ -1055,18 +1054,30 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           projectName={projects.find(p => p.id === selectedProject.id)?.name || ''}
           mode={tasks.filter(t => t.projectId === selectedProject.id).length === 0 ? 'zero-state' : 'continuation'}
           existingTasks={tasks.filter(t => t.projectId === selectedProject.id)}
-          onConfirm={(taskPreviews) => {
-            // Convert TaskPreview to actual Tasks and add them
-            taskPreviews.forEach((preview) => {
-              onAddTask(
+          onConfirm={async (taskPreviews) => {
+            // 建立临时 ID 到真实 ID 的映射
+            const idMap = new Map<string, string>();
+
+            // 按顺序创建任务，确保父任务先创建
+            for (const preview of taskPreviews) {
+              // 获取真实的 parentId（如果有的话）
+              const realParentId = preview.parentId ? idMap.get(preview.parentId) || null : null;
+
+              // 创建任务并获取真实 ID
+              const newTaskId = await onAddTask(
                 preview.title,
                 preview.description || '',
                 preview.tag ? [preview.tag] : [],
                 selectedProject.id,
-                preview.parentIds || [],
+                realParentId,
                 true
               );
-            });
+
+              // 将临时 ID 映射到真实 ID
+              if (preview.id) {
+                idMap.set(preview.id, newTaskId);
+              }
+            }
             setShowAIPlanning(false);
           }}
           language={language}
@@ -1101,13 +1112,13 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </div>
             <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{t.noProjectsYet}</h3>
             <p className="text-neutral-400 text-sm max-w-sm mx-auto leading-relaxed mb-6">{t.createProjectHint}</p>
-            <Button
+            {/* <Button
               onClick={handleCreateProject}
               className="rounded-lg px-6 py-2.5 text-sm font-medium bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               {t.newProject}
-            </Button>
+            </Button> */}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 px-6 pt-4 auto-rows-fr">

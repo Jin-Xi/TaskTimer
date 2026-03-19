@@ -59,7 +59,7 @@ export interface Task {
   logs: TimeLog[];
   milestones: Milestone[];
   projectId?: string;
-  parentTaskIds: string[];
+  parentTaskId: string | null; // 前置任务 ID，null 表示流水线起点
   isTerminal?: boolean; // 是否为终止节点
 }
 
@@ -98,7 +98,7 @@ export interface TaskPreview {
   description?: string;
   estimatedMinutes?: number;
   tag?: string;
-  parentIds: string[];
+  parentId: string | null; // 前置任务 ID，null 表示流水线起点
   isNew?: boolean;
 }
 

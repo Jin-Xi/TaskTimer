@@ -29,9 +29,9 @@ const getAiConfig = (): AIConfig => {
   const saved = localStorage.getItem('chrono_ai_config');
   if (saved) return JSON.parse(saved);
   return {
-    provider: 'gemini' as const,
+    provider: 'deepseek' as const,
     apiKey: '',
-    model: 'gemini-2.5-flash-lite',
+    model: 'deepseek-ai/DeepSeek-V3.2',
     baseUrl: ''
   };
 };
@@ -119,7 +119,7 @@ export const AIPlanningModal: React.FC<AIPlanningModalProps> = ({
           description: t.description,
           estimatedMinutes: t.estimatedTime ? Math.round(t.estimatedTime / 60000) : undefined,
           tag: t.tags?.[0],
-          parentIds: t.parentTaskIds || [],
+          parentId: t.parentTaskId || null,
         })),
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -132,11 +132,11 @@ export const AIPlanningModal: React.FC<AIPlanningModalProps> = ({
         role: AIMessageRole.ASSISTANT,
         content: mode === 'zero-state'
           ? (language === 'zh-TW'
-            ? `你好！我是 AI 项目规划助手。\\n\\n项目「${projectName}」当前还没有任务流。\\n\\n請描述你的项目目標，我會為你生成完整的任務分解結構。`
-            : `你好！我是 AI 项目规划助手。\\n\\n项目「${projectName}」当前还没有任务流。\\n\\n请描述你的项目目标，我会为你生成完整的任务分解结构。`)
+            ? `你好！我是 AI 规划助手。\\n\\n规划「${projectName}」当前还没有任务流。\\n\\n請描述你的规划目標，我會為你生成完整的任務分解結構。`
+            : `你好！我是 AI 规划助手。\\n\\n规划「${projectName}」当前还没有任务流。\\n\\n请描述你的规划目标，我会为你生成完整的任务分解结构。`)
           : (language === 'zh-TW'
-            ? `你好！我是 AI 项目规划助手。\\n\\n项目「${projectName}」已有 ${existingTasks.length} 个任务。\\n\\n你可以要求我：\\n- 细化某个任务\\n- 添加新的任务\\n- 修改现有任务\\n\\n请告诉我你需要什么帮助？`
-            : `你好！我是 AI 项目规划助手。\\n\\n项目「${projectName}」已有 ${existingTasks.length} 个任务。\\n\\n你可以要求我：\\n- 细化某个任务\\n- 添加新的任务\\n- 修改现有任务\\n\\n请告诉我你需要什么帮助？`),
+            ? `你好！我是 AI 规划助手。\\n\\n规划「${projectName}」已有 ${existingTasks.length} 个任务。\\n\\n你可以要求我：\\n- 细化某个任务\\n- 添加新的任务\\n- 修改现有任务\\n\\n请告诉我你需要什么帮助？`
+            : `你好！我是 AI 规划助手。\\n\\n规划「${projectName}」已有 ${existingTasks.length} 个任务。\\n\\n你可以要求我：\\n- 细化某个任务\\n- 添加新的任务\\n- 修改现有任务\\n\\n请告诉我你需要什么帮助？`),
         timestamp: Date.now()
       };
       setSession({ ...newSession, messages: [welcomeMessage] });
@@ -214,23 +214,23 @@ export const AIPlanningModal: React.FC<AIPlanningModalProps> = ({
       size="2xl"
       hideCloseButton
       classNames={{
-        wrapper: "bg-neutral-950/70 backdrop-blur-sm z-[120]",
-        base: "rounded-[2.5rem] shadow-2xl overflow-hidden",
-        backdrop: "bg-neutral-950/50",
+        wrapper: "items-center justify-center z-[120]",
+        base: "rounded-lg shadow-xl mx-4 overflow-hidden",
+        backdrop: "bg-neutral-950/70 backdrop-blur-sm",
       }}
       motionProps={{
         variants: {
-          enter: { scale: 1, opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
-          exit: { scale: 0.95, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
+          enter: { scale: 1, opacity: 1, transition: { duration: 0.2 } },
+          exit: { scale: 0.95, opacity: 0, transition: { duration: 0.15 } }
         }
       }}
     >
-      <ModalContent className="bg-white dark:bg-neutral-900 max-h-[85vh] flex flex-col">
+      <ModalContent className="bg-white dark:bg-neutral-900 h-[calc(100vh-8rem)] max-w-2xl w-full flex flex-col border border-neutral-200 dark:border-neutral-800">
         <ModalHeader className="flex-col items-start pt-6 pb-3 px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-2xl">✨</span>
             <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
-              {language === 'zh-TW' ? 'AI 項目規劃' : 'AI 项目规划'}
+              {language === 'zh-TW' ? 'AI 規劃' : 'AI 规划'}
             </h3>
           </div>
           <p className="text-sm text-neutral-400 mt-1 ml-9">{projectName}</p>

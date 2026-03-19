@@ -15,3 +15,20 @@
 - [ ] 每条流水线有明确的章节标识
 - [ ] 每个章节至少包含 1 个任务
 - [ ] 任务之间的依赖关系正确
+
+## 实现完成状态
+
+**Build**: ✅ 通过
+**Tests**: ✅ 15/15 通过
+
+### 已完成修改
+1. `generateProjectPlan` Gemini response schema: `parentIds: array` → `parentId: string, nullable: true`
+2. `continuePlanningConversation` Gemini response schema: 同样修改
+3. `validateAndFixTasks` 函数: 验证并修复 AI 返回的任务结构
+4. OpenAI/DeepSeek 兼容性: 添加 `parseAIResponse` 函数处理响应
+
+### 需要用户测试
+使用 DeepSeek 模型测试 "我想为半程马拉松做训练"，验证：
+- 流水线数量 ≤ 5
+- 每条流水线是完整的任务链 (A→B→C→D)
+- 每条流水线至少 2 个任务

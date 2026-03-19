@@ -7,7 +7,7 @@
 - [x] 配置 Python 项目（requirements.txt, pyproject.toml）
 - [x] 设置 FastAPI 应用入口（main.py）
 - [x] 配置数据库连接（database.py）
-- [ ] 配置 Alembic 数据库迁移
+- [x] 配置 Alembic 数据库迁移
 
 ### 1.2 数据库模型
 - [x] 创建 User 模型（用户名 + 密码）
@@ -16,7 +16,7 @@
 - [x] 创建 Task 模型（含依赖关系）
 - [x] 创建 TimeLog 模型
 - [x] 创建 Milestone 模型
-- [ ] 编写 Alembic 初始迁移脚本
+- [x] 编写 Alembic 初始迁移脚本
 
 ### 1.3 CRUD 操作
 - [x] 实现 User CRUD
@@ -106,7 +106,7 @@
 - [x] 创建 Nginx 配置
 
 ### 4.2 部署脚本
-- [ ] 创建部署脚本（deploy.sh）
+- [x] 创建部署脚本（deploy.sh）
 - [x] 创建环境变量示例文件
 
 ---
@@ -135,6 +135,12 @@ backend/
 ├── pyproject.toml            # 项目配置
 ├── Dockerfile                # 后端容器配置
 ├── .env.example              # 环境变量示例
+├── alembic.ini               # Alembic 配置
+├── alembic/
+│   ├── env.py                # Alembic 环境配置
+│   ├── script.py.mako        # 迁移脚本模板
+│   └── versions/
+│       └── 001_initial.py    # 初始迁移脚本
 └── app/
     ├── __init__.py
     ├── main.py               # FastAPI 应用入口
@@ -193,6 +199,7 @@ src/
 ├── docker-compose.yml        # Docker 编排配置
 ├── Dockerfile.frontend       # 前端容器配置
 └── deploy/
+    ├── deploy.sh             # 部署脚本
     └── nginx/
         └── nginx.conf        # Nginx 配置
 ```

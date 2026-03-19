@@ -38,7 +38,7 @@ export const generateICS = (
     'X-WR-CALDESC:ChronoFlow 应用导出的任务时间记录',
   ];
 
-  // 按日期和项目分组
+  // 按日期和规划分组
   const grouped = groupTasksByDateAndProject(tasks, projects, year, month);
 
   grouped.forEach(({ date, project, durationMinutes, taskList }) => {
@@ -96,7 +96,7 @@ export const groupTasksByDateAndProject = (
   const tasksByDate = groupTasksByDate(tasks, year, month);
 
   Object.entries(tasksByDate).forEach(([dateKey, dayTasks]) => {
-    // 按项目分组
+    // 按规划分组
     const projectDurations = groupTasksByProject(dayTasks, projects);
 
     projectDurations.forEach(({ project, durationMinutes }) => {

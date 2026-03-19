@@ -21,7 +21,7 @@ const DEMO_DATA = {
       createdAt: minsAgo(180),
       logs: [{ start: minsAgo(150), end: minsAgo(120) }],
       milestones: [],
-      parentTaskIds: []
+      parentTaskId: null
     },
     {
       id: 'task-demo-2',
@@ -34,7 +34,7 @@ const DEMO_DATA = {
       logs: [{ start: minsAgo(290), end: minsAgo(245) }],
       milestones: [{ id: 'm-gym-1', title: '完成热身', timestamp: minsAgo(280), branch: 'main' }],
       projectId: 'project-demo-life',
-      parentTaskIds: []
+      parentTaskId: null
     },
     {
       id: 'task-demo-3',
@@ -47,7 +47,7 @@ const DEMO_DATA = {
       logs: [],
       milestones: [],
       projectId: 'project-demo-work',
-      parentTaskIds: []
+      parentTaskId: null
     },
     {
       id: 'task-demo-4',
@@ -60,7 +60,7 @@ const DEMO_DATA = {
       logs: [],
       milestones: [],
       projectId: 'project-demo-work',
-      parentTaskIds: ['task-demo-3']
+      parentTaskId: 'task-demo-3'
     }
   ] as Task[],
   projects: [
@@ -152,7 +152,22 @@ export const updateTask = async (taskId: string, updates: Partial<Task>) => {
 
 export const deleteTask = async (taskId: string) => {
   const tasks = getLocal<Task[]>(STORAGE_KEYS.TASKS, []);
-  const updated = tasks.filter(t => t.id !== taskId);
+
+  // 找到被删除的任务
+  const taskToDelete = tasks.find(t => t.id === taskId);
+  const parentTaskId = taskToDelete?.parentTaskId || null;
+
+  // 更新所有以该任务为父任务的子任务，将它们的父任务指向被删除任务的父任务
+  // 这样可以保持流水线的链表结构
+  const updated = tasks
+    .filter(t => t.id !== taskId)
+    .map(t => {
+      if (t.parentTaskId === taskId) {
+        return { ...t, parentTaskId };
+      }
+      return t;
+    });
+
   saveLocal(STORAGE_KEYS.TASKS, updated);
   return updated;
 };

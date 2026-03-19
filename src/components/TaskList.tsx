@@ -11,7 +11,7 @@ interface TaskListProps {
   tasks: Task[];
   projects: Project[];
   activeTaskId: string | null;
-  onAdd: (title: string, description: string, tags: string[], projectId?: string, parentTaskIds?: string[]) => void;
+  onAdd: (title: string, description: string, tags: string[], projectId?: string, parentTaskId?: string | null) => void;
   onDelete: (id: string) => void;
   onDeleteMany?: (ids: string[]) => void;
   onSelect: (id: string) => void;
@@ -192,7 +192,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   const renderTask = (task: Task, isProjectChild: boolean = false, projectColor: string = 'indigo') => {
     const isRunning = task.status === TaskStatus.RUNNING;
     const isCompleted = task.status === TaskStatus.COMPLETED;
-    const isLocked = task.parentTaskIds?.some(pid => tasks.find(pt => pt.id === pid)?.status !== TaskStatus.COMPLETED);
+    const isLocked = task.parentTaskId ? tasks.find(pt => pt.id === task.parentTaskId)?.status !== TaskStatus.COMPLETED : false;
     const hasMilestones = task.milestones && task.milestones.length > 0;
     const isSelected = selectedIds.has(task.id);
     const showEstimated = task.totalTime === 0 && task.estimatedTime && task.estimatedTime > 0;
