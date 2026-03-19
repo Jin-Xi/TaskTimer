@@ -669,11 +669,9 @@ const MainApp: React.FC = () => {
         onClose={() => setIsTaskListOpen(false)}
         position="right"
         ariaLabel="任务清单"
+        title={t.taskExplorer}
       >
-        <div className="p-6">
-          <h2 className="text-xl font-black text-neutral-900 dark:text-white mb-4">{t.taskExplorer}</h2>
-          <SharedTaskList />
-        </div>
+        <SharedTaskList />
       </Drawer>
 
       {isFocusMode && activeFocusTask && (

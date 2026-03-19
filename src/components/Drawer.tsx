@@ -10,6 +10,7 @@ interface DrawerProps {
   children: React.ReactNode;
   position?: 'left' | 'right';
   ariaLabel?: string;
+  title?: string;
 }
 
 const overlayVariants = {
@@ -50,7 +51,8 @@ export const Drawer: React.FC<DrawerProps> = ({
   onClose,
   children,
   position = 'left',
-  ariaLabel = 'Drawer'
+  ariaLabel = 'Drawer',
+  title
 }) => {
   const drawerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -183,15 +185,18 @@ export const Drawer: React.FC<DrawerProps> = ({
               flex flex-col
             `}
           >
-            {/* Close Button */}
-            <div className="flex justify-end p-4 border-b border-neutral-100 dark:border-neutral-800">
+            {/* Header with Title and Close Button */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-800">
+              {title && (
+                <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{title}</h2>
+              )}
               <Button
                 isIconOnly
                 size="sm"
                 variant="light"
                 onPress={onClose}
                 aria-label="关闭"
-                className="motion-animate"
+                className={`motion-animate ${!title ? 'ml-auto' : ''}`}
               >
                 <X className="w-5 h-5" />
               </Button>

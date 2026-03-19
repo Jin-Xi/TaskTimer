@@ -2,7 +2,7 @@
 import React, { useState, useId } from 'react';
 import { Play, Pause, Trash2, Plus, RotateCcw, ChevronDown, ChevronRight, Lock, Sparkles, Flag, Tag as TagIcon, Check, X, PlusCircle, CheckCircle2, Circle, Layers, Zap, Clock, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from '../types';
-import { Button, Chip, Checkbox, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Card } from '@heroui/react';
+import { Button, Chip, Checkbox, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { TRANSLATIONS, TAG_COLORS } from '../constants';
 import { StaggeredList } from '../animations/components/StaggeredList';
 
@@ -54,41 +54,38 @@ const CollapsibleGroup: React.FC<CollapsibleGroupProps> = ({
   ) : children;
 
   return (
-    <div className="mb-4 last:mb-20">
+    <div className="mb-3 last:mb-20">
       <button
         type="button"
         aria-expanded={isOpen}
         aria-controls={contentId}
-        className="w-full flex items-center justify-between group select-none mb-2 px-1 py-1 sticky top-0 bg-[#f8fafc]/90 dark:bg-[#020617]/90 backdrop-blur-sm z-20"
+        className="w-full flex items-center justify-between group select-none py-2 sticky top-0 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur-sm z-20"
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }}
       >
-        <div className="flex items-center gap-2">
-           <div className={`p-1 rounded-md transition-colors duration-300 ${isOpen ? `text-${color}-600 dark:text-${color}-400` : 'text-neutral-800'}`}>
-             <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
-           </div>
-
-           <h4 className="font-bold text-neutral-500 dark:text-neutral-400 text-xs flex items-center gap-2">
-             {title}
-             <span className="px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-400 text-[10px] font-bold min-w-[1.5rem] text-center">{count}</span>
-           </h4>
+        <div className="flex items-center gap-1.5">
+          <ChevronDown className={`w-3 h-3 text-neutral-300 transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+          <span className="text-xs font-medium text-neutral-400">
+            {title}
+            <span className="text-neutral-300 ml-1">({count})</span>
+          </span>
         </div>
 
         {progress !== undefined && (
-           <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity pr-2">
-             <div className="w-12 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                <div style={{ width: `${progress}%` }} className={`h-full bg-${color}-500 rounded-full transition-all duration-1000 ease-out`} />
-             </div>
-           </div>
+          <div className="flex items-center opacity-50 group-hover:opacity-80 transition-opacity">
+            <div className="w-10 h-0.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+              <div style={{ width: `${progress}%` }} className={`h-full bg-${color}-400 rounded-full transition-all duration-1000 ease-out`} />
+            </div>
+          </div>
         )}
       </button>
 
       <div
         id={contentId}
         role="region"
-        className={`space-y-1.5 transition-all duration-300 origin-top ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 h-0 overflow-hidden'}`}
+        className={`flex flex-col gap-3 transition-all duration-300 origin-top ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 h-0 overflow-hidden'}`}
       >
-           {content}
+        {content}
       </div>
     </div>
   );
@@ -197,147 +194,126 @@ export const TaskList: React.FC<TaskListProps> = ({
     const isSelected = selectedIds.has(task.id);
     const showEstimated = task.totalTime === 0 && task.estimatedTime && task.estimatedTime > 0;
 
+    // 极简微卡片风格
     return (
-      <Card
+      <div
         key={task.id}
-        isPressable={!isLocked}
-        isDisabled={isLocked}
-        onPress={() => {
+        onClick={() => {
           if (isSelectionMode) toggleSelection(task.id);
         }}
-        classNames={{
-          base: `group relative transition-all duration-200 overflow-hidden shadow-sm rounded-2xl ${
-            isSelectionMode
-              ? isSelected
-                ? 'bg-green-50 dark:bg-green-900/10 border-2 border-green-500 shadow-md z-10'
-                : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
-              : isRunning
-                ? 'bg-white dark:bg-slate-900 border-2 border-l-4 border-l-green-500 border-neutral-300 dark:border-neutral-600 shadow-md z-10'
-                : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:shadow-md hover:border-neutral-300 dark:hover:border-neutral-600'
-          } ${isCompleted ? 'opacity-60 grayscale-[0.3]' : ''} ${!isSelectionMode && isLocked ? 'opacity-50 bg-neutral-50 dark:bg-neutral-900 pointer-events-none' : ''}`,
-        }}
+        className={`
+          group flex items-center justify-between px-3 py-2.5 mb-2
+          border border-gray-200 dark:border-neutral-700/50 rounded-md
+          transition-all duration-150 cursor-pointer
+          ${isSelectionMode
+            ? isSelected
+              ? 'bg-green-50/50 dark:bg-green-900/10 border-green-400'
+              : 'bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-gray-300'
+            : isRunning
+              ? 'bg-white dark:bg-neutral-900 border-l-2 border-l-green-500 border-gray-200 dark:border-neutral-700/50'
+              : 'bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-gray-300 dark:hover:border-neutral-600'
+          }
+          ${isCompleted ? 'opacity-50' : ''}
+          ${!isSelectionMode && isLocked ? 'opacity-40 pointer-events-none' : ''}
+        `}
       >
-        <div className="flex items-center gap-0 min-h-[3.5rem]">
-           {/* Color Strip for Projects */}
-           {isProjectChild && (
-             <div className={`w-1 self-stretch bg-${projectColor}-500 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity`} />
-           )}
-
-           <div className="flex-1 flex items-center p-2 gap-3 overflow-hidden">
-            {/* Status Button / Checkbox - Using HeroUI Checkbox for selection mode */}
-            {isSelectionMode ? (
-              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
-                <Checkbox
-                  isSelected={isSelected}
-                  onValueChange={() => toggleSelection(task.id)}
-                  isDisabled={isLocked}
-                  classNames={{
-                    wrapper: 'w-8 h-8 rounded-lg',
-                  }}
-                />
-              </div>
-            ) : (
-              <Button
+        {/* 左侧：图标 + 任务名称 */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {isSelectionMode ? (
+            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+              <Checkbox
+                isSelected={isSelected}
+                onValueChange={() => toggleSelection(task.id)}
                 isDisabled={isLocked}
-                isIconOnly
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelect(task.id);
-                }}
-                className={`motion-animate shrink-0 w-8 h-8 min-w-0 rounded-lg shadow-sm group/btn ${
-                  isCompleted
-                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                    : isRunning
-                    ? 'bg-ochre-300 text-white'
-                    : isLocked
-                    ? 'bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-600'
-                    : 'bg-neutral-50 text-neutral-400 hover:bg-green-500 hover:text-white dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-green-600'
-                }`}
-              >
-                {isCompleted ? <RotateCcw className="w-3.5 h-3.5" /> : isRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : isLocked ? <Lock className="w-3 h-3" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
-              </Button>
+                classNames={{ wrapper: 'w-4 h-4 rounded' }}
+              />
+            </div>
+          ) : (
+            <button
+              disabled={isLocked}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(task.id);
+              }}
+              className={`shrink-0 transition-colors focus:outline-none ${
+                isCompleted
+                  ? 'text-green-400'
+                  : isRunning
+                  ? 'text-ochre-400'
+                  : isLocked
+                  ? 'text-neutral-200'
+                  : 'text-neutral-300 hover:text-green-500'
+              }`}
+            >
+              {isCompleted ? (
+                <RotateCcw className="w-4 h-4" strokeWidth={2} />
+              ) : isRunning ? (
+                <Pause className="w-4 h-4 fill-current" strokeWidth={2} />
+              ) : isLocked ? (
+                <Lock className="w-3.5 h-3.5" strokeWidth={2} />
+              ) : (
+                <Play className="w-4 h-4 fill-current ml-0.5" strokeWidth={2} />
+              )}
+            </button>
+          )}
+
+          {/* 任务名称和标签 */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`text-sm truncate max-w-[180px] ${
+              isCompleted ? 'line-through text-neutral-400' : 'text-neutral-700 dark:text-neutral-300'
+            }`}>
+              {task.title}
+            </span>
+            {isLocked && !isSelectionMode && (
+              <Lock className="w-3 h-3 text-ochre-400 shrink-0" />
             )}
-
-            {/* Task Info - Compact Layout */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-               <div className="flex items-center gap-2">
-                 <h4 className={`text-sm font-semibold truncate leading-tight ${isCompleted ? 'line-through text-neutral-400 decoration-neutral-300' : 'text-neutral-900 dark:text-neutral-200'}`}>
-                    {task.title}
-                 </h4>
-                 {isLocked && !isSelectionMode && (
-                    <Lock className="w-3 h-3 text-ochre-400 shrink-0" />
-                 )}
-               </div>
-
-               {(hasMilestones || (task.tags && task.tags.length > 0)) && (
-                 <div className="flex flex-wrap items-center gap-1.5 h-4">
-                    {hasMilestones && (
-                        <div className="flex items-center gap-0.5 text-neutral-800">
-                          <Flag className="w-2.5 h-2.5" />
-                          <span className="text-[9px] font-bold">{task.milestones.length}</span>
-                        </div>
-                    )}
-
-                    {(task.tags || []).map(tag => (
-                      <Chip key={tag} color={getChipColor(tag)} size="sm" className="h-5 text-[9px] px-1.5 min-h-0">
-                        {tag}
-                      </Chip>
-                    ))}
-                 </div>
-               )}
-            </div>
-
-            {/* Meta & Actions - Right Aligned */}
-            <div className="flex items-center gap-2 pl-1 shrink-0">
-               <div className={`font-mono text-xs tabular-nums font-medium ${isRunning ? 'text-green-600 dark:text-green-400' : 'text-neutral-800 dark:text-slate-500'}`}>
-                 {showEstimated ? (
-                   <span className="text-neutral-700 dark:text-neutral-600">Est: {formatDuration(task.estimatedTime || 0)}</span>
-                 ) : (
-                   formatDuration(task.totalTime)
-                 )}
-               </div>
-
-               {!isSelectionMode && (
-                 <div className="flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-all sm:translate-x-2 group-hover:translate-x-0">
-                     <Button
-                       isIconOnly
-                       size="sm"
-                       variant="light"
-                       onClick={(e) => { e.stopPropagation(); setTaskToTag(task.id); }}
-                       className="hidden sm:block"
-                     >
-                       <TagIcon className="w-3.5 h-3.5" />
-                     </Button>
-
-                     <Button
-                       isIconOnly
-                       size="sm"
-                       variant={isCompleted ? "solid" : "light"}
-                       color={isCompleted ? "success" : "default"}
-                       onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { status: isCompleted ? TaskStatus.IDLE : TaskStatus.COMPLETED }); }}
-                       title={isCompleted ? "Mark as Incomplete" : "Mark as Done"}
-                     >
-                       {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                     </Button>
-
-                     <Button
-                       isIconOnly
-                       size="sm"
-                       color="danger"
-                       variant="light"
-                       onClick={(e) => { e.stopPropagation(); if(window.confirm('Delete this task?')) onDelete(task.id); }}
-                       className="hidden sm:block"
-                       title="Delete Task"
-                     >
-                       <Trash2 className="w-3.5 h-3.5" />
-                     </Button>
-                 </div>
-               )}
-            </div>
-           </div>
+            {hasMilestones && (
+              <div className="flex items-center gap-0.5 text-neutral-400 shrink-0">
+                <Flag className="w-2.5 h-2.5" />
+                <span className="text-[9px]">{task.milestones.length}</span>
+              </div>
+            )}
+            {(task.tags || []).slice(0, 2).map(tag => (
+              <span
+                key={tag}
+                className="text-[10px] text-neutral-400 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 shrink-0"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
-      </Card>
+
+        {/* 右侧：时间 + 操作按钮 */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-gray-400 text-xs font-mono tracking-wider">
+            {showEstimated ? `Est: ${formatDuration(task.estimatedTime || 0)}` : formatDuration(task.totalTime)}
+          </span>
+
+          {!isSelectionMode && (
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={(e) => { e.stopPropagation(); setTaskToTag(task.id); }}
+                className="p-1 text-neutral-300 hover:text-neutral-500 transition-colors"
+              >
+                <TagIcon className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { status: isCompleted ? TaskStatus.IDLE : TaskStatus.COMPLETED }); }}
+                className={`p-1 transition-colors ${isCompleted ? 'text-green-400' : 'text-neutral-300 hover:text-green-500'}`}
+              >
+                {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); if(window.confirm('Delete this task?')) onDelete(task.id); }}
+                className="p-1 text-neutral-300 hover:text-red-400 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     );
   };
 
@@ -353,70 +329,51 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div className="h-full flex flex-col relative bg-neutral-50 dark:bg-neutral-950">
-      {/* Header & Controls - Compact & Sticky */}
+      {/* Header & Controls - 极简风格 */}
       <div className="flex flex-col gap-3 mb-2 shrink-0 px-3 pt-3 pb-2 sticky top-0 z-30 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur-md">
          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-               <div className="w-1 h-4 bg-green-500 rounded-full" />
-               <h2 className="text-sm font-black text-neutral-900 dark:text-white uppercase tracking-tight">{t.taskExplorer}</h2>
+            {/* 左侧：纯文字 Tab 筛选器 */}
+            <div className="flex items-center gap-1">
+               {(['all', 'active', 'completed'] as const).map((f, idx) => (
+                 <button
+                   key={f}
+                   onClick={() => setFilter(f)}
+                   className={`text-[13px] transition-all duration-200 ${
+                     filter === f
+                       ? 'text-neutral-800 dark:text-neutral-200 font-medium'
+                       : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-400'
+                   } ${idx > 0 ? 'before:content-["·"] before:mx-1.5 before:text-neutral-300' : ''}`}
+                 >
+                   {f === 'all' ? '全部' : f === 'active' ? '活跃' : '已完成'}
+                 </button>
+               ))}
             </div>
 
-            <div className="flex items-center gap-2">
-               <div className="bg-neutral-100 dark:bg-neutral-800/50 p-0.5 rounded-lg flex items-center gap-0.5">
-                  {(['all', 'active', 'completed'] as const).map(f => {
-                    const Icon = filterIcons[f];
-                    return (
-                      <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`
-                          p-1.5 rounded-md transition-all duration-300
-                          ${filter === f
-                            ? 'bg-white dark:bg-neutral-900 text-green-600 shadow-sm'
-                            : 'text-neutral-800 hover:text-slate-600 dark:hover:text-neutral-400'
-                          }
-                        `}
-                        title={(t as any)[f]}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                      </button>
-                    );
-                  })}
-               </div>
-
+            {/* 右侧：功能按钮 */}
+            <div className="flex items-center gap-1">
                {isSelectionMode && selectedIds.size > 0 ? (
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    color="danger"
+                  <button
                     onClick={handleBulkDelete}
-                    className="motion-animate animate-in zoom-in"
+                    className="p-1.5 text-red-400 hover:text-red-500 transition-colors"
+                    title="删除选中"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-               ) : (
-                  <>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant={isSelectionMode ? "solid" : "bordered"}
-                      color={isSelectionMode ? "success" : "default"}
-                      onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }}
-                      title="Select"
-                    >
-                      {isSelectionMode ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                    </Button>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="bordered"
-                      onClick={() => setIsManagingTags(true)}
-                      title={t.manageCategories}
-                    >
-                      <TagIcon className="w-3.5 h-3.5" />
-                    </Button>
-                  </>
-               )}
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+               ) : null}
+               <button
+                 onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); }}
+                 className={`p-1.5 transition-colors ${isSelectionMode ? 'text-green-500' : 'text-neutral-400 hover:text-neutral-600'}`}
+                 title="多选"
+               >
+                 {isSelectionMode ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+               </button>
+               <button
+                 onClick={() => setIsManagingTags(true)}
+                 className="p-1.5 text-neutral-400 hover:text-neutral-600 transition-colors"
+                 title="管理分类"
+               >
+                 <TagIcon className="w-4 h-4" />
+               </button>
             </div>
          </div>
 
