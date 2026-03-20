@@ -2,10 +2,11 @@
  * LoginModal Component
  *
  * Modal for login/register with offline mode option
+ * 极简线条风格
  */
 import { useState } from 'react';
-import { Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Tabs, Tab } from '@heroui/react';
-import { HardDrive, Cloud, User, Lock, LogIn, UserPlus } from 'lucide-react';
+import { Modal, ModalContent } from '@heroui/react';
+import { HardDrive, User, Lock, X } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
@@ -17,17 +18,20 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ isOpen, onClose, language }: LoginModalProps) {
-  const [selectedTab, setSelectedTab] = useState<string>('login');
+  const [view, setView] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const { login, register, enterOfflineMode } = useAuthContext();
   const t = TRANSLATIONS[language];
 
   const handleLogin = async () => {
     setError('');
+    setSuccess('');
     if (!username.trim() || !password.trim()) {
       setError('请输入用户名和密码');
       return;
@@ -36,7 +40,10 @@ export function LoginModal({ isOpen, onClose, language }: LoginModalProps) {
     setLoading(true);
     try {
       await login(username.trim(), password);
-      onClose();
+      setSuccess('登录成功！');
+      setTimeout(() => {
+        onClose();
+      }, 800);
     } catch (err: any) {
       setError(err.response?.data?.detail || '登录失败，请检查用户名和密码');
     } finally {
@@ -46,6 +53,7 @@ export function LoginModal({ isOpen, onClose, language }: LoginModalProps) {
 
   const handleRegister = async () => {
     setError('');
+    setSuccess('');
     if (!username.trim() || !password.trim()) {
       setError('请输入用户名和密码');
       return;
@@ -59,7 +67,10 @@ export function LoginModal({ isOpen, onClose, language }: LoginModalProps) {
     setLoading(true);
     try {
       await register(username.trim(), password);
-      onClose();
+      setSuccess('注册成功，即将进入应用！');
+      setTimeout(() => {
+        onClose();
+      }, 800);
     } catch (err: any) {
       setError(err.response?.data?.detail || '注册失败，请稍后重试');
     } finally {
@@ -72,26 +83,43 @@ export function LoginModal({ isOpen, onClose, language }: LoginModalProps) {
     onClose();
   };
 
+  const handleSubmit = () => {
+    if (view === 'login') {
+      handleLogin();
+    } else {
+      handleRegister();
+    }
+  };
+
   const resetForm = () => {
     setUsername('');
     setPassword('');
     setError('');
+    setSuccess('');
     setLoading(false);
+    setFocusedField(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const switchView = (newView: 'login' | 'register') => {
+    setView(newView);
+    resetForm();
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={() => {
-        resetForm();
-        onClose();
-      }}
+      onClose={handleClose}
       size="sm"
       placement="center"
       hideCloseButton
       classNames={{
         wrapper: "bg-neutral-950/60 backdrop-blur-sm items-center",
-        base: "rounded-2xl max-h-[90vh]",
+        base: "rounded-2xl",
       }}
       motionProps={{
         variants: {
@@ -100,159 +128,129 @@ export function LoginModal({ isOpen, onClose, language }: LoginModalProps) {
         }
       }}
     >
-      <ModalContent className="bg-white dark:bg-neutral-900">
-        <ModalHeader className="flex flex-col gap-0.5 pt-4 pb-0 px-4">
-          <h2 className="text-base font-bold text-neutral-900 dark:text-white">ChronoFlow</h2>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">选择使用方式</p>
-        </ModalHeader>
+      <ModalContent className="bg-white dark:bg-neutral-900 p-6 relative">
+        {/* Close button - top right */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 p-1 text-neutral-300 hover:text-neutral-500 transition-colors"
+        >
+          <X className="w-5 h-5" strokeWidth={1.5} />
+        </button>
 
-        <ModalBody className="py-3 px-4">
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg text-xs">
-              {error}
-            </div>
-          )}
-
-          <Tabs
-            selectedKey={selectedTab}
-            onSelectionChange={(key) => {
-              setSelectedTab(key as string);
-              resetForm();
-            }}
-            variant="bordered"
-            fullWidth
-            classNames={{
-              tabList: "gap-0",
-              tab: "data-[selected=true]:bg-green-50 dark:data-[selected=true]:bg-green-900/20 text-xs py-1",
-            }}
+        {/* Tab switcher - centered */}
+        <div className="flex items-center justify-center gap-6 mb-6">
+          <button
+            onClick={() => switchView('login')}
+            className={`pb-2 text-sm transition-all ${
+              view === 'login'
+                ? 'text-neutral-800 dark:text-neutral-200 border-b-2 border-emerald-500'
+                : 'text-neutral-400 hover:text-neutral-600'
+            }`}
           >
-            <Tab
-              key="login"
-              title={
-                <div className="flex items-center gap-1.5">
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span className="text-xs">登录</span>
-                </div>
-              }
-            >
-              <div className="space-y-2 pt-3">
-                <Input
-                  type="text"
-                  placeholder="用户名"
-                  value={username}
-                  onValueChange={setUsername}
-                  startContent={<User className="w-3.5 h-3.5 text-neutral-400" />}
-                  size="sm"
-                  labelPlacement="outside"
-                  classNames={{ inputWrapper: 'rounded-lg' }}
-                />
-                <Input
-                  type="password"
-                  placeholder="密码"
-                  value={password}
-                  onValueChange={setPassword}
-                  startContent={<Lock className="w-3.5 h-3.5 text-neutral-400" />}
-                  size="sm"
-                  labelPlacement="outside"
-                  classNames={{ inputWrapper: 'rounded-lg' }}
-                />
-                <Button
-                  color="primary"
-                  size="sm"
-                  className="w-full rounded-lg"
-                  isLoading={loading}
-                  isDisabled={loading}
-                  onPress={handleLogin}
-                >
-                  登录
-                </Button>
-              </div>
-            </Tab>
+            登录
+          </button>
+          <button
+            onClick={() => switchView('register')}
+            className={`pb-2 text-sm transition-all ${
+              view === 'register'
+                ? 'text-neutral-800 dark:text-neutral-200 border-b-2 border-emerald-500'
+                : 'text-neutral-400 hover:text-neutral-600'
+            }`}
+          >
+            注册
+          </button>
+        </div>
 
-            <Tab
-              key="register"
-              title={
-                <div className="flex items-center gap-1.5">
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span className="text-xs">注册</span>
-                </div>
-              }
-            >
-              <div className="space-y-2 pt-3">
-                <Input
-                  type="text"
-                  placeholder="用户名"
-                  value={username}
-                  onValueChange={setUsername}
-                  startContent={<User className="w-3.5 h-3.5 text-neutral-400" />}
-                  size="sm"
-                  labelPlacement="outside"
-                  classNames={{ inputWrapper: 'rounded-lg' }}
-                />
-                <Input
-                  type="password"
-                  placeholder="密码（至少6位）"
-                  value={password}
-                  onValueChange={setPassword}
-                  startContent={<Lock className="w-3.5 h-3.5 text-neutral-400" />}
-                  size="sm"
-                  labelPlacement="outside"
-                  classNames={{ inputWrapper: 'rounded-lg' }}
-                />
-                <Button
-                  color="success"
-                  size="sm"
-                  className="w-full rounded-lg"
-                  isLoading={loading}
-                  isDisabled={loading}
-                  onPress={handleRegister}
-                >
-                  注册
-                </Button>
-              </div>
-            </Tab>
-          </Tabs>
+        {/* Success Message */}
+        {success && (
+          <div className="text-green-500 text-xs text-center mb-4">
+            {success}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="text-red-500 text-xs text-center mb-4">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <div className="space-y-5">
+          {/* Username input - single line style */}
+          <div className={`flex items-center gap-3 py-2 border-b transition-colors ${
+            focusedField === 'username' ? 'border-emerald-500' : 'border-gray-200 dark:border-neutral-700'
+          }`}>
+            <User className={`w-4 h-4 shrink-0 transition-colors ${
+              focusedField === 'username' ? 'text-emerald-500' : 'text-neutral-300'
+            }`} strokeWidth={1.5} />
+            <input
+              type="text"
+              placeholder="用户名"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onFocus={() => setFocusedField('username')}
+              onBlur={() => setFocusedField(null)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              className="flex-1 bg-transparent border-none outline-none text-sm text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-300"
+            />
+          </div>
+
+          {/* Password input - single line style */}
+          <div className={`flex items-center gap-3 py-2 border-b transition-colors ${
+            focusedField === 'password' ? 'border-emerald-500' : 'border-gray-200 dark:border-neutral-700'
+          }`}>
+            <Lock className={`w-4 h-4 shrink-0 transition-colors ${
+              focusedField === 'password' ? 'text-emerald-500' : 'text-neutral-300'
+            }`} strokeWidth={1.5} />
+            <input
+              type="password"
+              placeholder={view === 'register' ? '密码（至少6位）' : '密码'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setFocusedField('password')}
+              onBlur={() => setFocusedField(null)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              className="flex-1 bg-transparent border-none outline-none text-sm text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-300"
+            />
+          </div>
+
+          {/* Submit button - outlined style */}
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className={`w-full py-2.5 rounded-md border text-sm font-medium transition-all ${
+              loading
+                ? 'border-neutral-200 text-neutral-400 cursor-not-allowed'
+                : view === 'login'
+                  ? 'border-emerald-500 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                  : 'border-green-500 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'
+            }`}
+          >
+            {loading ? '处理中...' : view === 'login' ? '登录' : '注册'}
+          </button>
 
           {/* Divider */}
-          <div className="relative my-1.5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-200 dark:border-neutral-700" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-white dark:bg-neutral-900 text-neutral-400">或</span>
-            </div>
+          <div className="flex items-center gap-3 py-2">
+            <div className="flex-1 border-t border-gray-100 dark:border-neutral-800" />
+            <span className="text-xs text-neutral-300">或</span>
+            <div className="flex-1 border-t border-gray-100 dark:border-neutral-800" />
           </div>
 
-          {/* Offline Mode */}
-          <Button
-            variant="bordered"
-            size="sm"
-            className="w-full rounded-lg"
-            onPress={handleOfflineMode}
-            startContent={<HardDrive className="w-3.5 h-3.5" />}
+          {/* Offline mode button - lighter border */}
+          <button
+            onClick={handleOfflineMode}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md border border-gray-200 dark:border-neutral-700 text-sm text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all"
           >
-            单机使用（无需登录）
-          </Button>
+            <HardDrive className="w-4 h-4" strokeWidth={1.5} />
+            <span>单机使用</span>
+          </button>
 
-          <div className="text-center text-[10px] text-neutral-400 space-y-0">
-            <p>💾 数据保存在本地浏览器 · 🔑 AI 需自行配置 API Key</p>
-          </div>
-        </ModalBody>
-
-        <ModalFooter className="pt-0 pb-3 px-4">
-          <Button
-            variant="light"
-            size="sm"
-            onPress={() => {
-              resetForm();
-              onClose();
-            }}
-            className="w-full"
-          >
-            取消
-          </Button>
-        </ModalFooter>
+          {/* Hint text */}
+          <p className="text-center text-[10px] text-neutral-400">
+            数据保存在本地浏览器 · AI 需自行配置 API Key
+          </p>
+        </div>
       </ModalContent>
     </Modal>
   );

@@ -35,7 +35,7 @@ function AuthWrapper() {
       <Route
         path="/login"
         element={
-          isCloud && isAuthenticated ? (
+          (!isCloud) || (isCloud && isAuthenticated) ? (
             <Navigate to="/app" replace />
           ) : (
             <LoginPage onRegisterClick={() => navigate('/register')} />
@@ -47,7 +47,7 @@ function AuthWrapper() {
       <Route
         path="/register"
         element={
-          isCloud && isAuthenticated ? (
+          (!isCloud) || (isCloud && isAuthenticated) ? (
             <Navigate to="/app" replace />
           ) : (
             <RegisterPage onLoginClick={() => navigate('/login')} />

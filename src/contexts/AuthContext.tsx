@@ -38,8 +38,31 @@ interface AuthProviderProps {
  * Auth Provider component
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const auth = useAuth();
   const appMode = useAppMode();
+  
+  // Use a custom auth hook wrapper or just intercept the calls
+  const rawAuth = useAuth();
+  
+  const auth = {
+    ...rawAuth,
+    login: async (username: string, password: string) => {
+      await rawAuth.login(username, password);
+      appMode.enterCloudMode();
+    },
+    register: async (username: string, password: string) => {
+      await rawAuth.register(username, password);
+      appMode.enterCloudMode();
+    },
+    logout: async () => {
+      await rawAuth.logout();
+      appMode.enterOfflineMode();
+    },
+    checkAuth: async () => {
+      await rawAuth.checkAuth();
+      // If we checked auth and user exists, we should be in cloud mode
+      // However, checkAuth in useAuth reads app_mode from storage implicitly by checking token
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -63,6 +86,3 @@ export function useAuthContext(): AuthContextValue {
   }
   return context;
 }
-
-// Export types
-export type { AuthContextValue };
