@@ -85,7 +85,7 @@ jobs:
             # 强制用新镜像重启后端容器
             cd /root/TaskTimer_full
             # 修改 docker-compose.yml 让它使用拉下来的远程镜像而不是本地 build
-            sed -i 's|build:|#build:|g' docker-compose.yml
-            sed -i 's|context: ./backend|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|g' docker-compose.yml
-            sed -i 's|dockerfile: Dockerfile|#dockerfile: Dockerfile|g' docker-compose.yml
+            sed -i 's|    build:|    #build:|g' docker-compose.yml
+            sed -i 's|      context: ./backend|    image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|g' docker-compose.yml
+            sed -i 's|      dockerfile: Dockerfile|    #dockerfile: Dockerfile|g' docker-compose.yml
             podman-compose up -d backend
