@@ -71,6 +71,15 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Upload production compose file
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/root/TaskTimer_full/"
+
       - name: Deploy backend to Server
         uses: appleboy/ssh-action@master
         with:
@@ -82,10 +91,10 @@ jobs:
             podman login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
             # 拉取最新镜像
             podman pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            # 强制用新镜像重启后端容器
+            # 使用生产环境专用配置启动
             cd /root/TaskTimer_full
-            # 修改 docker-compose.yml 让它使用拉下来的远程镜像而不是本地 build
-            sed -i 's|    build:|    #build:|g' docker-compose.yml
-            sed -i 's|      context: ./backend|    image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest|g' docker-compose.yml
-            sed -i 's|      dockerfile: Dockerfile|    #dockerfile: Dockerfile|g' docker-compose.yml
-            podman-compose up -d backend
+            # 备份并清理旧的可能损坏的文件
+            mv docker-compose.yml docker-compose.yml.bak 2>/dev/null || true
+            cp docker-compose.prod.yml docker-compose.yml
+            # 启动服务
+            podman-compose up -d
