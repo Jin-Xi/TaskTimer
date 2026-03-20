@@ -37,7 +37,7 @@ export const TRANSLATIONS = {
     all: "全部",
     active: "进行中",
     done: "已完成",
-    quickAdd: "输入任务名称（例如：阅读30分钟）...",
+    quickAdd: "输入快速添加的任务名称（例如：阅读30分钟）...",
     noTasksYet: "享受当下",
     createTaskHint: "在上方添加一个任务开始计时吧。",
     projectPlanner: "规划管理",

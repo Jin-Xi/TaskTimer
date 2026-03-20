@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle, HardDrive } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle, HardDrive, Cloud, LogOut, User } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
-import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button } from '@heroui/react';
+import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from '@heroui/react';
 import { TaskTimer } from './components/TaskTimer';
 import { Logo } from './components/Logo';
 import { TaskList } from './components/TaskList';
@@ -10,6 +11,7 @@ import { Stats } from './components/Stats';
 import { ProjectManager } from './components/ProjectManager';
 import { FullscreenFocus } from './components/FullscreenFocus';
 import { AISettingsModal } from './components/AISettingsModal';
+import { LoginModal } from './components/LoginModal';
 import { Drawer } from './components/Drawer';
 import { TimerToast } from './components/TimerToast';
 import { AnimatePresence } from 'framer-motion';
@@ -17,6 +19,7 @@ import { AnimatedPage } from './animations';
 import { GlobalTimerIndicator } from './components/GlobalTimerIndicator';
 import { APP_NAME, NAV_ITEMS, DEFAULT_CATEGORIES, TRANSLATIONS } from './constants';
 import { useTasks, useProjects, useCategories } from './hooks';
+import { useAuthContext } from './contexts/AuthContext';
 
 const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -29,6 +32,10 @@ const generateUUID = () => {
 };
 
 const MainApp: React.FC = () => {
+  // Auth context for mode switching
+  const { isCloud, isOffline, user, logout } = useAuthContext();
+  const navigate = useNavigate();
+
   // Data hooks with automatic mode switching
   const {
     tasks,
@@ -54,10 +61,6 @@ const MainApp: React.FC = () => {
     deleteCategory: dataDeleteCategory,
   } = useCategories();
 
-  // App mode - always offline/local mode (auth system disabled)
-  const isCloud = false;
-  const isOffline = true;
-
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('tasks');
   const [tabDirection, setTabDirection] = useState(1);
@@ -65,9 +68,16 @@ const MainApp: React.FC = () => {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isTaskListOpen, setIsTaskListOpen] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [todayCompletedCount, setTodayCompletedCount] = useState(0);
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   // Drawer exclusive logic
   const handleOpenNav = () => {
@@ -395,11 +405,37 @@ const MainApp: React.FC = () => {
           </button>
         )}
 
-        {/* Mode Indicator - Always offline mode */}
+        {/* Mode Indicator */}
         <div className="flex items-center justify-center gap-2 py-2 text-xs text-neutral-500 dark:text-neutral-400">
-          <HardDrive className="w-4 h-4" />
-          <span>单机模式</span>
+          {isCloud ? (
+            <>
+              <Cloud className="w-4 h-4" />
+              <span>云端模式</span>
+            </>
+          ) : (
+            <>
+              <HardDrive className="w-4 h-4" />
+              <span>单机模式</span>
+            </>
+          )}
         </div>
+
+        {/* Cloud Mode: User Info & Logout */}
+        {isCloud && user && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
+              <User className="w-4 h-4" />
+              <span>{user.username}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all text-xs font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              退出登录
+            </button>
+          </div>
+        )}
 
         <div className="flex gap-4">
            <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/50 dark:border-neutral-700/50 hover:border-green-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-sm hover:shadow-md group">
@@ -551,6 +587,48 @@ const MainApp: React.FC = () => {
               <CheckCircle className="w-4 h-4 text-green-500" />
             </div>
 
+            {/* Cloud Mode: User Menu */}
+            {isCloud && user && (
+              <Dropdown placement="bottom-end">
+                <DropdownTrigger>
+                  <Button
+                    variant="light"
+                    className="flex items-center gap-2 px-2"
+                  >
+                    <Avatar
+                      name={user.username}
+                      size="sm"
+                      className="cursor-pointer"
+                    />
+                    <span className="hidden sm:inline text-sm">{user.username}</span>
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="用户菜单">
+                  <DropdownItem
+                    key="logout"
+                    color="danger"
+                    startContent={<LogOut className="w-4 h-4" />}
+                    onPress={handleLogout}
+                  >
+                    退出登录
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            )}
+
+            {/* Offline Mode: Login Button */}
+            {isOffline && (
+              <Button
+                size="sm"
+                color="primary"
+                variant="flat"
+                startContent={<User className="w-4 h-4" />}
+                onPress={() => setShowLoginModal(true)}
+              >
+                登录
+              </Button>
+            )}
+
             {/* GitHub Link */}
             <a
               href="https://github.com/Jin-Xi/TaskTimer"
@@ -688,6 +766,15 @@ const MainApp: React.FC = () => {
       {/* AI Settings Modal - Only show in offline mode */}
       {isOffline && showAISettings && (
         <AISettingsModal language={language} onClose={() => setShowAISettings(false)} />
+      )}
+
+      {/* Login Modal */}
+      {isOffline && (
+        <LoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          language={language}
+        />
       )}
 
       {/* Timer Toast */}
