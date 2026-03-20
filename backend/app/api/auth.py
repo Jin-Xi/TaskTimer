@@ -36,7 +36,7 @@ async def register(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered"
+            detail="用户名已被注册"
         )
 
     # Create user
@@ -66,12 +66,12 @@ async def login(
 
     Returns access and refresh tokens
     """
-    user = await authenticate_user(db, credentials.username, credentials.password)
+    user, error = await authenticate_user(db, credentials.username, credentials.password)
 
-    if not user:
+    if error:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail=error,
             headers={"WWW-Authenticate": "Bearer"},
         )
 

@@ -47,14 +47,22 @@ async def authenticate_user(
     db: AsyncSession,
     username: str,
     password: str
-) -> Optional[User]:
-    """Authenticate a user by username and password"""
+) -> tuple[Optional[User], Optional[str]]:
+    """
+    Authenticate a user by username and password
+
+    Returns:
+        tuple: (user, error_message)
+        - (User, None) - authentication successful
+        - (None, "用户不存在") - username not found
+        - (None, "密码错误") - password incorrect
+    """
     user = await get_user_by_username(db, username)
     if not user:
-        return None
+        return None, "用户不存在"
     if not verify_password(password, user.password_hash):
-        return None
-    return user
+        return None, "密码错误"
+    return user, None
 
 
 async def update_user(
