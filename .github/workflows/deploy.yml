@@ -1,10 +1,9 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for openclaw_branch
 
 on:
   push:
     branches:
       - openclaw_branch
-      - main
 
 env:
   REGISTRY: ghcr.io
