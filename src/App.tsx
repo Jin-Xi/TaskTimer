@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Zap, Timer as TimerIcon, Moon, Sun, Download, Upload, GitBranchPlus, Languages, Menu, HelpCircle, Key, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Github, CheckCircle, HardDrive, Cloud, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, Zap, Moon, Sun, Menu, Key, Github, CheckCircle, LogOut, User } from 'lucide-react';
 import { Task, TaskStatus, Milestone, Category, Project, Language } from './types';
 import { Navbar, NavbarBrand, NavbarContent, Tabs, Tab, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from '@heroui/react';
 import { TaskTimer } from './components/TaskTimer';
@@ -357,15 +357,8 @@ const MainApp: React.FC = () => {
   );
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full py-8 md:py-10 px-6">
-      <div className="flex items-center gap-4 px-2 shrink-0 mb-8 animate-in fade-in slide-in-from-left-2 duration-500">
-        <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-green/20">
-          <TimerIcon className="w-6 h-6" />
-        </div>
-        <h1 className="text-2xl font-black text-neutral-900 dark:text-neutral-100 tracking-tight uppercase font-sans">{APP_NAME}</h1>
-      </div>
-
-      <nav className="flex-1 flex flex-col space-y-3">
+    <div className="flex flex-col h-full py-4 px-4 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur-sm">
+      <nav className="flex-1 flex flex-col gap-2">
         {NAV_ITEMS.map(item => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -379,75 +372,18 @@ const MainApp: React.FC = () => {
                 setActiveTab(item.id);
                 setIsNavOpen(false);
               }}
-              className={`w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-300 group relative overflow-hidden ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 isActive
-                  ? 'bg-green-400 text-white shadow-lg shadow-green/25 scale-[1.02]'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900/50 hover:text-neutral-900 dark:hover:text-neutral-100'
+                  ? 'bg-green-400 text-white shadow-md shadow-green/20'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-neutral-100'
               }`}
             >
-              <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-green-100' : 'text-neutral-400 group-hover:text-green-500'}`} />
-              <span className="uppercase tracking-wider">{(t as any)[item.labelKey]}</span>
-              {isActive && <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />}
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-green-500'}`} />
+              <span>{(t as any)[item.labelKey]}</span>
             </button>
           );
         })}
       </nav>
-
-      <div className="pt-8 flex flex-col gap-3 shrink-0 border-t border-neutral-200 dark:border-neutral-700 mt-4">
-        {/* AI Settings - Only show in offline mode */}
-        {isOffline && (
-          <button
-            onClick={() => setShowAISettings(true)}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 transition-all font-bold text-xs uppercase tracking-widest"
-          >
-            <Key className="w-4 h-4" />
-            {t.aiSettings}
-          </button>
-        )}
-
-        {/* Mode Indicator */}
-        <div className="flex items-center justify-center gap-2 py-2 text-xs text-neutral-500 dark:text-neutral-400">
-          {isCloud ? (
-            <>
-              <Cloud className="w-4 h-4" />
-              <span>云端模式</span>
-            </>
-          ) : (
-            <>
-              <HardDrive className="w-4 h-4" />
-              <span>单机模式</span>
-            </>
-          )}
-        </div>
-
-        {/* Cloud Mode: User Info & Logout */}
-        {isCloud && user && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
-              <User className="w-4 h-4" />
-              <span>{user.username}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all text-xs font-medium"
-            >
-              <LogOut className="w-4 h-4" />
-              退出登录
-            </button>
-          </div>
-        )}
-
-        <div className="flex gap-4">
-           <button onClick={() => setDarkMode(!darkMode)} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/50 dark:border-neutral-700/50 hover:border-green-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-sm hover:shadow-md group">
-             {darkMode ? <Sun className="w-5 h-5 text-green-400 group-hover:scale-110 transition-transform" /> : <Moon className="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" />}
-             <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-neutral-500 dark:group-hover:text-neutral-300">{darkMode ? t.lightMode : t.darkMode}</span>
-           </button>
-           <button onClick={() => setLanguage(language === 'zh-CN' ? 'zh-TW' : 'zh-CN')} className="flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/50 dark:border-neutral-700/50 hover:border-green-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-sm hover:shadow-md group">
-             <Languages className="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-neutral-500 dark:group-hover:text-neutral-300">{t.langName}</span>
-           </button>
-        </div>
-      </div>
     </div>
   );
 
@@ -480,9 +416,10 @@ const MainApp: React.FC = () => {
         <Navbar
           maxWidth="full"
           isBordered
+          height="4rem"
           classNames={{
-            base: "bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700",
-            wrapper: "px-4",
+            base: "bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700 h-16 sm:h-14",
+            wrapper: "px-4 h-full",
           }}
         >
           {/* Mobile: Navigation Menu Button */}
@@ -618,15 +555,30 @@ const MainApp: React.FC = () => {
 
             {/* Offline Mode: Login Button */}
             {isOffline && (
-              <Button
-                size="sm"
-                color="primary"
-                variant="flat"
-                startContent={<User className="w-4 h-4" />}
-                onPress={() => setShowLoginModal(true)}
-              >
-                登录
-              </Button>
+              <>
+                {/* Mobile: Icon only */}
+                <Button
+                  isIconOnly
+                  size="sm"
+                  color="primary"
+                  variant="light"
+                  onPress={() => setShowLoginModal(true)}
+                  className="flex sm:hidden"
+                >
+                  <User className="w-4 h-4" />
+                </Button>
+                {/* Desktop: Icon + Text */}
+                <Button
+                  size="sm"
+                  color="primary"
+                  variant="flat"
+                  startContent={<User className="w-4 h-4" />}
+                  onPress={() => setShowLoginModal(true)}
+                  className="hidden sm:flex"
+                >
+                  登录
+                </Button>
+              </>
             )}
 
             {/* GitHub Link */}

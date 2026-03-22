@@ -179,7 +179,7 @@ export const Drawer: React.FC<DrawerProps> = ({
               md:w-[60%] md:max-w-[400px]
               lg:w-[400px] lg:max-w-[400px]
               ${position === 'left' ? 'left-0' : 'right-0'}
-              bg-white dark:bg-slate-900
+              bg-neutral-50 dark:bg-neutral-900
               shadow-2xl
               border-r border-neutral-200 dark:border-neutral-700
               flex flex-col
