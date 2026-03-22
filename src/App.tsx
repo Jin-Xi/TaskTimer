@@ -418,12 +418,12 @@ const MainApp: React.FC = () => {
           isBordered
           height="4rem"
           classNames={{
-            base: "bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700 h-16 sm:h-14",
+            base: "bg-neutral-100/80 dark:bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-700 h-16 md:h-14",
             wrapper: "px-4 h-full",
           }}
         >
           {/* Mobile: Navigation Menu Button */}
-          <NavbarContent className="flex sm:hidden">
+          <NavbarContent className="flex md:hidden">
             <Button
               isIconOnly
               size="sm"
@@ -445,7 +445,7 @@ const MainApp: React.FC = () => {
           </NavbarBrand>
 
           {/* Center: Tabs for navigation */}
-          <NavbarContent className="hidden sm:flex gap-4" justify="center">
+          <NavbarContent className="hidden md:flex gap-4" justify="center">
             <Tabs
               selectedKey={activeTab}
               onSelectionChange={(key) => {
@@ -519,7 +519,7 @@ const MainApp: React.FC = () => {
             </Button>
 
             {/* Today's Completed Count */}
-            <div className="hidden sm:flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+            <div className="hidden md:flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
               <span>今日完成: {todayCompletedCount}</span>
               <CheckCircle className="w-4 h-4 text-green-500" />
             </div>
@@ -537,7 +537,7 @@ const MainApp: React.FC = () => {
                       size="sm"
                       className="cursor-pointer"
                     />
-                    <span className="hidden sm:inline text-sm">{user.username}</span>
+                    <span className="hidden md:inline text-sm">{user.username}</span>
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="用户菜单">
@@ -563,7 +563,7 @@ const MainApp: React.FC = () => {
                   color="primary"
                   variant="light"
                   onPress={() => setShowLoginModal(true)}
-                  className="flex sm:hidden"
+                  className="flex md:hidden"
                 >
                   <User className="w-4 h-4" />
                 </Button>
@@ -574,7 +574,7 @@ const MainApp: React.FC = () => {
                   variant="flat"
                   startContent={<User className="w-4 h-4" />}
                   onPress={() => setShowLoginModal(true)}
-                  className="hidden sm:flex"
+                  className="hidden md:flex"
                 >
                   登录
                 </Button>
